@@ -53,9 +53,14 @@ func (m *Metrics) SendToServer(addr string) {
 		name := iVal.Type().Field(i).Name
 		value := fmt.Sprint(f.Interface())
 
-		postUrl := fmt.Sprintf("%s/update/%s/%s/%s", addr, f.Type().Name(), name, value)
-		log.Println(postUrl)
-		_, err := http.Post(postUrl, "text/plain", nil)
+		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, f.Type().Name(), name, value)
+		log.Println(postURL)
+		resp, err := http.Post(postURL, "text/plain", nil)
+
+		if err := resp.Body.Close(); err != nil {
+			log.Fatalf("Couldn't close response body")
+		}
+
 		if err != nil {
 			log.Fatalf("Couldn't send metric %s to server", name)
 		}
