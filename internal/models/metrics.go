@@ -65,5 +65,4 @@ func (m *Metrics) SendToServer(addr string) {
 			log.Fatalf("Couldn't send metric %s to server", name)
 		}
 	}
-	return
 }
