@@ -2,6 +2,7 @@ package main
 
 import (
 	"go-metricscol/internal/agent"
+	"log"
 	"time"
 )
 
@@ -11,15 +12,17 @@ const reportInterval time.Duration = 10 * time.Second
 func main() {
 	metrics := agent.CreateMetrics()
 
-	pollTimer := time.NewTimer(pollInterval)
-	reportTimer := time.NewTimer(reportInterval)
+	pollTimer := time.NewTicker(pollInterval)
+	reportTimer := time.NewTicker(reportInterval)
 
 	for {
 		select {
 		case <-pollTimer.C:
+			log.Println("Update metrics")
 			agent.UpdateMetrics(metrics)
 		case <-reportTimer.C:
-			metrics.SendToServer(":8080")
+			log.Println("Send to server")
+			metrics.SendToServer("http://127.0.0.1:8080")
 		}
 	}
 }

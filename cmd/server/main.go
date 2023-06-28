@@ -7,5 +7,5 @@ import (
 )
 
 func main() {
-	log.Fatal(http.ListenAndServe(":8080", server.GetServeMux()))
+	log.Fatal(http.ListenAndServe("127.0.0.1:8080", server.GetServeMux()))
 }

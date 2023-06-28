@@ -47,7 +47,6 @@ type Metrics struct {
 // TODO: Насколько Reflect снижает производительность? Как можно сделать иначе?
 
 func (m *Metrics) SendToServer(addr string) {
-
 	iVal := reflect.ValueOf(m).Elem()
 	for i := 0; i < iVal.NumField(); i++ {
 		f := iVal.Field(i)
