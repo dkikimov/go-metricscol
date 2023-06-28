@@ -6,44 +6,44 @@ import (
 	"runtime"
 )
 
-func UpdateMetrics(metrics *models.Metrics) {
+func UpdateMetrics(metrics models.Metrics) {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
 
-	metrics.Alloc = models.Gauge(stats.Alloc)
-	metrics.BuckHashSys = models.Gauge(stats.BuckHashSys)
-	metrics.Frees = models.Gauge(stats.Frees)
-	metrics.GCCPUFraction = models.Gauge(stats.GCCPUFraction)
-	metrics.GCSys = models.Gauge(stats.GCSys)
-	metrics.HeapAlloc = models.Gauge(stats.HeapAlloc)
-	metrics.HeapIdle = models.Gauge(stats.HeapIdle)
-	metrics.HeapInuse = models.Gauge(stats.HeapInuse)
-	metrics.HeapObjects = models.Gauge(stats.HeapObjects)
-	metrics.HeapReleased = models.Gauge(stats.HeapReleased)
-	metrics.HeapSys = models.Gauge(stats.HeapSys)
-	metrics.LastGC = models.Gauge(stats.LastGC)
-	metrics.Lookups = models.Gauge(stats.Lookups)
-	metrics.MCacheInuse = models.Gauge(stats.MCacheInuse)
-	metrics.MCacheSys = models.Gauge(stats.MCacheSys)
-	metrics.MSpanInuse = models.Gauge(stats.MSpanInuse)
-	metrics.MSpanSys = models.Gauge(stats.MSpanSys)
-	metrics.Mallocs = models.Gauge(stats.Mallocs)
-	metrics.NextGC = models.Gauge(stats.NextGC)
-	metrics.NumForcedGC = models.Gauge(stats.NumForcedGC)
-	metrics.NumGC = models.Gauge(stats.NumGC)
-	metrics.OtherSys = models.Gauge(stats.OtherSys)
-	metrics.PauseTotalNs = models.Gauge(stats.PauseTotalNs)
-	metrics.StackInuse = models.Gauge(stats.StackInuse)
-	metrics.StackSys = models.Gauge(stats.StackSys)
-	metrics.Sys = models.Gauge(stats.Sys)
-	metrics.TotalAlloc = models.Gauge(stats.TotalAlloc)
-
-	metrics.RandomValue = models.Gauge(rand.Float64())
-	metrics.PollCount++
+	metrics.UpdateGauge("Alloc", float64(stats.Alloc))
+	metrics.UpdateGauge("BuckHashSys", float64(stats.BuckHashSys))
+	metrics.UpdateGauge("BuckHashSys", float64(stats.BuckHashSys))
+	metrics.UpdateGauge("Frees", float64(stats.Frees))
+	metrics.UpdateGauge("GCCPUFraction", stats.GCCPUFraction)
+	metrics.UpdateGauge("GCSys", float64(stats.GCSys))
+	metrics.UpdateGauge("HeapAlloc", float64(stats.HeapAlloc))
+	metrics.UpdateGauge("HeapIdle", float64(stats.HeapIdle))
+	metrics.UpdateGauge("HeapInuse", float64(stats.HeapInuse))
+	metrics.UpdateGauge("HeapObjects", float64(stats.HeapObjects))
+	metrics.UpdateGauge("HeapReleased", float64(stats.HeapReleased))
+	metrics.UpdateGauge("HeapSys", float64(stats.HeapSys))
+	metrics.UpdateGauge("LastGC", float64(stats.LastGC))
+	metrics.UpdateGauge("Lookups", float64(stats.Lookups))
+	metrics.UpdateGauge("MCacheInuse", float64(stats.MCacheInuse))
+	metrics.UpdateGauge("MCacheSys", float64(stats.MCacheSys))
+	metrics.UpdateGauge("MSpanInuse", float64(stats.MSpanInuse))
+	metrics.UpdateGauge("MSpanSys", float64(stats.MSpanSys))
+	metrics.UpdateGauge("Mallocs", float64(stats.Mallocs))
+	metrics.UpdateGauge("NextGC", float64(stats.NextGC))
+	metrics.UpdateGauge("NumForcedGC", float64(stats.NumForcedGC))
+	metrics.UpdateGauge("NumGC", float64(stats.NumGC))
+	metrics.UpdateGauge("OtherSys", float64(stats.OtherSys))
+	metrics.UpdateGauge("PauseTotalNs", float64(stats.PauseTotalNs))
+	metrics.UpdateGauge("StackInuse", float64(stats.StackInuse))
+	metrics.UpdateGauge("StackSys", float64(stats.StackSys))
+	metrics.UpdateGauge("Sys", float64(stats.Sys))
+	metrics.UpdateGauge("TotalAlloc", float64(stats.TotalAlloc))
+	metrics.UpdateGauge("RandomValue", rand.Float64())
+	metrics.UpdateCounter("PollCount")
 }
 
-func CreateMetrics() *models.Metrics {
-	metrics := new(models.Metrics)
+func CreateMetrics() models.Metrics {
+	metrics := models.NewMetrics()
 	UpdateMetrics(metrics)
 
 	return metrics
