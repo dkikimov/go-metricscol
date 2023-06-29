@@ -1,14 +1,14 @@
 package models
 
 import (
+	"errors"
 	"fmt"
+	"go-metricscol/internal/server/apiError"
 	"log"
 	"math"
 	"net/http"
 	"strconv"
 )
-
-//TODO: Точно ли тут float64?
 
 type MetricType int
 
@@ -43,54 +43,63 @@ func (m Metric) StringValue() string {
 	return ""
 }
 
+func (m Metric) ValueType() MetricType {
+	return m.valueType
+}
+
 func NewMetric(valueType MetricType) Metric {
 	return Metric{valueType: valueType}
 }
 
 type Metrics map[string]Metric
 
-func (m Metrics) SendToServer(addr string) {
+func (m Metrics) SendToServer(addr string) error {
 	for name, metric := range m {
 		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, metric.valueType.String(), name, metric.StringValue())
 		log.Println(postURL)
 		resp, err := http.Post(postURL, "text/plain", nil)
 
-		if err := resp.Body.Close(); err != nil {
-			log.Fatalf("Couldn't close response body")
+		if err != nil {
+			return errors.New(fmt.Sprintf("couldn't post url %s", postURL))
 		}
 
-		if err != nil {
-			log.Fatalf("Couldn't send metric %s to server", name)
+		if err := resp.Body.Close(); err != nil {
+			return errors.New("couldn't close response body")
 		}
+
 	}
+	return nil
 }
 
-func (m Metrics) UpdateGauge(key string, value float64) {
+func (m Metrics) UpdateGauge(key string, value float64) apiError.APIError {
 	metric, ok := m[key]
 	if !ok {
-		log.Panic("No such key in metrics map")
+		metric = NewMetric(Gauge)
 	}
 
 	if metric.valueType != Gauge {
-		log.Panic("Types are mismatched in metrics map")
+		return apiError.TypeMismatch
 	}
 
 	metric.value = math.Float64bits(value)
 	m[key] = metric
+
+	return apiError.NoError
 }
 
-func (m Metrics) UpdateCounter(key string) {
+func (m Metrics) UpdateCounter(key string, value int64) apiError.APIError {
 	metric, ok := m[key]
 	if !ok {
-		log.Panic("No such key in metrics map")
+		metric = NewMetric(Counter)
 	}
 
 	if metric.valueType != Counter {
-		log.Panic("Types are mismatched in metrics map")
+		return apiError.TypeMismatch
 	}
 
-	metric.value++
+	metric.value += uint64(value)
 	m[key] = metric
+	return apiError.NoError
 }
 
 func NewMetrics() Metrics {
@@ -115,28 +124,6 @@ func NewMetrics() Metrics {
 	metrics["MSpanInuse"] = NewMetric(Gauge)
 	metrics["Mallocs"] = NewMetric(Gauge)
 	metrics["NextGC"] = NewMetric(Gauge)
-	metrics["MSpanInuse"] = NewMetric(Gauge)
-	metrics["MSpanInuse"] = NewMetric(Gauge)
-	metrics["MSpanInuse"] = NewMetric(Gauge)
-	metrics["MSpanInuse"] = NewMetric(Gauge)
-	metrics["MSpanInuse"] = NewMetric(Gauge)
-	metrics["MSpanInuse"] = NewMetric(Gauge)
-
-	metrics["Alloc"] = NewMetric(Gauge)
-	metrics["BuckHashSys"] = NewMetric(Gauge)
-	metrics["Frees"] = NewMetric(Gauge)
-	metrics["GCCPUFraction"] = NewMetric(Gauge)
-	metrics["GCSys"] = NewMetric(Gauge)
-	metrics["HeapAlloc"] = NewMetric(Gauge)
-	metrics["HeapIdle"] = NewMetric(Gauge)
-	metrics["HeapInuse"] = NewMetric(Gauge)
-	metrics["HeapObjects"] = NewMetric(Gauge)
-	metrics["HeapReleased"] = NewMetric(Gauge)
-	metrics["HeapSys"] = NewMetric(Gauge)
-	metrics["LastGC"] = NewMetric(Gauge)
-	metrics["Lookups"] = NewMetric(Gauge)
-	metrics["MCacheInuse"] = NewMetric(Gauge)
-	metrics["MCacheSys"] = NewMetric(Gauge)
 	metrics["MSpanInuse"] = NewMetric(Gauge)
 	metrics["MSpanSys"] = NewMetric(Gauge)
 	metrics["Mallocs"] = NewMetric(Gauge)
