@@ -6,5 +6,5 @@ import (
 )
 
 type Repository interface {
-	Update(key string, value string, valueType models.MetricType) apiError.APIError
+	Update(key string, value string, valueType models.MetricType) apierror.APIError
 }

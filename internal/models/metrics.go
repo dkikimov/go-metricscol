@@ -71,35 +71,35 @@ func (m Metrics) SendToServer(addr string) error {
 	return nil
 }
 
-func (m Metrics) UpdateGauge(key string, value float64) apiError.APIError {
+func (m Metrics) UpdateGauge(key string, value float64) apierror.APIError {
 	metric, ok := m[key]
 	if !ok {
 		metric = NewMetric(Gauge)
 	}
 
 	if metric.valueType != Gauge {
-		return apiError.TypeMismatch
+		return apierror.TypeMismatch
 	}
 
 	metric.value = math.Float64bits(value)
 	m[key] = metric
 
-	return apiError.NoError
+	return apierror.NoError
 }
 
-func (m Metrics) UpdateCounter(key string, value int64) apiError.APIError {
+func (m Metrics) UpdateCounter(key string, value int64) apierror.APIError {
 	metric, ok := m[key]
 	if !ok {
 		metric = NewMetric(Counter)
 	}
 
 	if metric.valueType != Counter {
-		return apiError.TypeMismatch
+		return apierror.TypeMismatch
 	}
 
 	metric.value += uint64(value)
 	m[key] = metric
-	return apiError.NoError
+	return apierror.NoError
 }
 
 func NewMetrics() Metrics {

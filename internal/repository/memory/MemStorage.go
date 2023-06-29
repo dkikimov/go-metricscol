@@ -14,7 +14,7 @@ func NewMemStorage() *MemStorage {
 	return &MemStorage{metrics: models.Metrics{}}
 }
 
-func (memStorage *MemStorage) Update(key string, value string, valueType models.MetricType) apiError.APIError {
+func (memStorage *MemStorage) Update(key string, value string, valueType models.MetricType) apierror.APIError {
 	_, ok := memStorage.metrics[key]
 	if !ok {
 		memStorage.metrics[key] = models.NewMetric(valueType)
@@ -23,16 +23,16 @@ func (memStorage *MemStorage) Update(key string, value string, valueType models.
 	case models.Gauge:
 		floatVal, err := strconv.ParseFloat(value, 64)
 		if err != nil {
-			return apiError.NumberParse
+			return apierror.NumberParse
 		}
 		memStorage.metrics.UpdateGauge(key, floatVal)
 	case models.Counter:
 		intVal, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
-			return apiError.NumberParse
+			return apierror.NumberParse
 		}
 		memStorage.metrics.UpdateCounter(key, intVal)
 	}
 
-	return apiError.NoError
+	return apierror.NoError
 }

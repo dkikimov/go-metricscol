@@ -59,10 +59,10 @@ func TestHandlers(t *testing.T) {
 			h := http.HandlerFunc(processors.Update)
 			h.ServeHTTP(w, request)
 			res := w.Result()
-
 			if res.StatusCode != tt.want {
 				t.Errorf("Expected status code %d, got %d", tt.want, w.Code)
 			}
+			res.Body.Close()
 		})
 	}
 }

@@ -1,6 +1,6 @@
 //TODO: Как лучше назвать пакет?
 
-package apiError
+package apierror
 
 import "net/http"
 

@@ -14,12 +14,12 @@ type Processors struct {
 
 func (p *Processors) Update(w http.ResponseWriter, r *http.Request) {
 	urlData, err := models.ParseURLData(r.URL.Path)
-	if err != apiError.NoError {
+	if err != apierror.NoError {
 		w.WriteHeader(err.StatusCode())
 		return
 	}
 
-	if err := p.Storage.Update(urlData.MetricName, urlData.MetricValue, urlData.MetricType); err != apiError.NoError {
+	if err := p.Storage.Update(urlData.MetricName, urlData.MetricValue, urlData.MetricType); err != apierror.NoError {
 		w.WriteHeader(err.StatusCode())
 		return
 	}

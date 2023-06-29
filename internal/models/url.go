@@ -11,10 +11,10 @@ type URLData struct {
 	MetricType  MetricType
 }
 
-func ParseURLData(url string) (*URLData, apiError.APIError) {
+func ParseURLData(url string) (*URLData, apierror.APIError) {
 	splitURL := strings.Split(url, "/")[2:]
 	if len(splitURL) < 3 {
-		return nil, apiError.NotEnoughArguments
+		return nil, apierror.NotEnoughArguments
 	}
 
 	urlData := URLData{}
@@ -25,14 +25,14 @@ func ParseURLData(url string) (*URLData, apiError.APIError) {
 	case "counter":
 		urlData.MetricType = Counter
 	default:
-		return nil, apiError.UnknownMetricType
+		return nil, apierror.UnknownMetricType
 	}
 
 	if len(data[1]) == 0 || len(data[2]) == 0 {
-		return nil, apiError.EmptyArguments
+		return nil, apierror.EmptyArguments
 	}
 	urlData.MetricName = data[1]
 	urlData.MetricValue = data[2]
 
-	return &urlData, apiError.NoError
+	return &urlData, apierror.NoError
 }
