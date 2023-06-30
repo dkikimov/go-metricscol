@@ -53,6 +53,10 @@ func NewMetric(valueType MetricType) Metric {
 
 type Metrics map[string]Metric
 
+func (m Metrics) ResetPollCount() {
+	m["PollCount"] = NewMetric(Counter)
+}
+
 func (m Metrics) SendToServer(addr string) error {
 	for name, metric := range m {
 		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, metric.valueType.String(), name, metric.StringValue())
@@ -68,6 +72,8 @@ func (m Metrics) SendToServer(addr string) error {
 		}
 
 	}
+	m.ResetPollCount()
+
 	return nil
 }
 
