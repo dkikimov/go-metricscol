@@ -60,7 +60,7 @@ func (m Metrics) SendToServer(addr string) error {
 		resp, err := http.Post(postURL, "text/plain", nil)
 
 		if err != nil {
-			return errors.New(fmt.Sprintf("couldn't post url %s", postURL))
+			return fmt.Errorf("couldn't post url %s", postURL)
 		}
 
 		if err := resp.Body.Close(); err != nil {
