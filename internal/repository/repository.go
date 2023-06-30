@@ -2,7 +2,7 @@ package repository
 
 import (
 	"go-metricscol/internal/models"
-	"go-metricscol/internal/server/apiError"
+	"go-metricscol/internal/server/apierror"
 )
 
 type Repository interface {

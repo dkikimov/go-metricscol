@@ -6,6 +6,8 @@ import "net/http"
 
 type APIError int
 
+//TODO: Стоит ли писать тесты для подобных файлов?
+
 func (err APIError) StatusCode() int {
 	return int(err)
 }

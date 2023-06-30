@@ -1,7 +1,7 @@
 package models
 
 import (
-	"go-metricscol/internal/server/apiError"
+	"go-metricscol/internal/server/apierror"
 	"strings"
 )
 

@@ -3,7 +3,7 @@ package handlers
 import (
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository"
-	"go-metricscol/internal/server/apiError"
+	"go-metricscol/internal/server/apierror"
 	"log"
 	"net/http"
 )
