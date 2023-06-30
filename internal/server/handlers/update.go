@@ -13,7 +13,7 @@ type Processors struct {
 }
 
 func (p *Processors) Update(w http.ResponseWriter, r *http.Request) {
-	urlData, err := models.ParseURLData(r.URL.Path)
+	urlData, err := models.ParseURLData(r)
 	if err != apierror.NoError {
 		w.WriteHeader(err.StatusCode())
 		return

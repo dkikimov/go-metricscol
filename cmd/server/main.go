@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	srv := server.Get("127.0.0.1:8080")
+	srv := server.New("127.0.0.1:8080")
 	log.Fatal(srv.ListenAndServe())
 }

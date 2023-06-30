@@ -1,22 +1,15 @@
 package server
 
 import (
-	"go-metricscol/internal/repository/memory"
-	"go-metricscol/internal/server/handlers"
+	"go-metricscol/internal/server/router"
 	"net/http"
 )
 
-func Get(addr string) *http.Server {
-	processors := handlers.Processors{
-		Storage: memory.NewMemStorage(),
-	}
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/update/", processors.Update)
-	mux.HandleFunc("/", processors.NotFound)
+func New(addr string) *http.Server {
+	r := router.New()
 
 	return &http.Server{
 		Addr:    addr,
-		Handler: mux,
+		Handler: r,
 	}
 }

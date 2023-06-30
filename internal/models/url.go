@@ -1,8 +1,9 @@
 package models
 
 import (
+	"github.com/go-chi/chi"
 	"go-metricscol/internal/server/apierror"
-	"strings"
+	"net/http"
 )
 
 type URLData struct {
@@ -11,15 +12,9 @@ type URLData struct {
 	MetricType  MetricType
 }
 
-func ParseURLData(url string) (*URLData, apierror.APIError) {
-	splitURL := strings.Split(url, "/")[2:]
-	if len(splitURL) < 3 {
-		return nil, apierror.NotEnoughArguments
-	}
-
+func ParseURLData(r *http.Request) (*URLData, apierror.APIError) {
 	urlData := URLData{}
-	data := splitURL[len(splitURL)-3:]
-	switch data[0] {
+	switch chi.URLParam(r, "type") {
 	case "gauge":
 		urlData.MetricType = Gauge
 	case "counter":
@@ -28,11 +23,14 @@ func ParseURLData(url string) (*URLData, apierror.APIError) {
 		return nil, apierror.UnknownMetricType
 	}
 
-	if len(data[1]) == 0 || len(data[2]) == 0 {
+	name := chi.URLParam(r, "name")
+	value := chi.URLParam(r, "value")
+
+	if len(name) == 0 || len(value) == 0 {
 		return nil, apierror.EmptyArguments
 	}
-	urlData.MetricName = data[1]
-	urlData.MetricValue = data[2]
+	urlData.MetricName = name
+	urlData.MetricValue = value
 
 	return &urlData, apierror.NoError
 }
