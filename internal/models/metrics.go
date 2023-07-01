@@ -47,6 +47,10 @@ func (m Metric) ValueType() MetricType {
 	return m.valueType
 }
 
+func (m Metric) Value() uint64 {
+	return m.value
+}
+
 func NewMetric(valueType MetricType) Metric {
 	return Metric{valueType: valueType}
 }

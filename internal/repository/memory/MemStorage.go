@@ -10,6 +10,17 @@ type MemStorage struct {
 	metrics models.Metrics
 }
 
+func (memStorage *MemStorage) GetString(key string, valueType models.MetricType) (string, apierror.APIError) {
+	metric, ok := memStorage.metrics[key]
+
+	// TODO: Возможно стоит Добавить поддержку метрик с одинаковым названием и разными типами
+	if !ok || metric.ValueType() != valueType {
+		return "", apierror.NotFound
+	}
+
+	return metric.StringValue(), apierror.NoError
+}
+
 func NewMemStorage() *MemStorage {
 	return &MemStorage{metrics: models.Metrics{}}
 }

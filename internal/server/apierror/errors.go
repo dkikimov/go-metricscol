@@ -19,4 +19,5 @@ const (
 	NoError            = http.StatusOK
 	TypeMismatch       = http.StatusBadRequest
 	NumberParse        = http.StatusBadRequest
+	NotFound           = http.StatusNotFound
 )

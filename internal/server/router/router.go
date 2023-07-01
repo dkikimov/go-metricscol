@@ -13,7 +13,8 @@ func New() chi.Router {
 
 	r := chi.NewRouter()
 
-	r.HandleFunc("/update/{type}/{name}/{value}", processors.Update)
+	r.Post("/update/{type}/{name}/{value}", processors.Update)
+	r.Get("/value/{type}/{name}", processors.Get)
 	r.HandleFunc("/", processors.NotFound)
 	return r
 }

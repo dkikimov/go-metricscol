@@ -2,18 +2,13 @@ package handlers
 
 import (
 	"go-metricscol/internal/models"
-	"go-metricscol/internal/repository"
 	"go-metricscol/internal/server/apierror"
 	"log"
 	"net/http"
 )
 
-type Processors struct {
-	Storage repository.Repository
-}
-
 func (p *Processors) Update(w http.ResponseWriter, r *http.Request) {
-	urlData, err := models.ParseURLData(r)
+	urlData, err := models.ParsePostURLData(r)
 	if err != apierror.NoError {
 		w.WriteHeader(err.StatusCode())
 		return
