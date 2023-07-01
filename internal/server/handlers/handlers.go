@@ -2,6 +2,6 @@ package handlers
 
 import "go-metricscol/internal/repository"
 
-type Processors struct {
+type Handlers struct {
 	Storage repository.Repository
 }

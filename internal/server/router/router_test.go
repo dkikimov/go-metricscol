@@ -1,33 +1,140 @@
 package router
 
 import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go-metricscol/internal/models"
+	"go-metricscol/internal/repository"
+	"go-metricscol/internal/repository/memory"
+	"go-metricscol/internal/utils"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
-import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"io"
-	"net/http"
-	"net/http/httptest"
-)
+// TODO: Какие тесты нужно писать для роутера? Как тестить хендлеры в своей директории, избегая циклического импорта?
 
-func testRequest(t *testing.T, ts *httptest.Server, method, path string) (int, string) {
-	req, err := http.NewRequest(method, ts.URL+path, nil)
-	require.NoError(t, err)
+func TestHandlers_Get(t *testing.T) {
+	storage := memory.NewMemStorage()
+	storage.Update("Alloc", "123.4", models.Gauge)
+	storage.Update("MemoryInUse", "593", models.Gauge)
+	storage.Update("PollCount", "1", models.Counter)
 
-	resp, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
+	type fields struct {
+		Storage repository.Repository
+	}
+	type want struct {
+		StatusCode int
+		Body       string
+	}
+	type args struct {
+		url string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   want
+	}{
+		{
+			name:   "Get Alloc value",
+			fields: fields{Storage: storage},
+			args: args{
+				url: "/value/gauge/Alloc",
+			},
+			want: want{
+				StatusCode: http.StatusOK,
+				Body:       "123.4",
+			},
+		},
+		{
+			name:   "Unknown metric",
+			fields: fields{Storage: storage},
+			args: args{
+				url: "/value/gauge/NewMetric",
+			},
+			want: want{
+				StatusCode: http.StatusNotFound,
+				Body:       "",
+			},
+		},
+		{
+			name:   "Unknown metric type",
+			fields: fields{Storage: storage},
+			args: args{
+				url: "/value/h/Alloc",
+			},
+			want: want{
+				StatusCode: http.StatusNotImplemented,
+				Body:       "",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := NewWithStorage(storage)
+			ts := httptest.NewServer(r)
+			defer ts.Close()
 
-	respBody, err := io.ReadAll(resp.Body)
-	require.NoError(t, err)
+			statusCode, body := utils.TestRequest(t, ts, http.MethodGet, tt.args.url)
 
-	defer resp.Body.Close()
-
-	return resp.StatusCode, string(respBody)
+			require.Equal(t, tt.want.StatusCode, statusCode)
+			require.Equal(t, tt.want.Body, body)
+		})
+	}
 }
 
-func TestHandlers(t *testing.T) {
+func TestHandlers_GetAll(t *testing.T) {
+	storage := memory.NewMemStorage()
+	storage.Update("Alloc", "123.4", models.Gauge)
+	storage.Update("MemoryInUse", "593", models.Gauge)
+	storage.Update("PollCount", "1", models.Counter)
+
+	type fields struct {
+		Storage repository.Repository
+	}
+	type want struct {
+		StatusCode int
+		Body       string
+	}
+	type args struct {
+		url string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   want
+	}{
+		{
+			name:   "Get all values",
+			fields: fields{Storage: storage},
+			args: args{
+				url: "/",
+			},
+			want: want{
+				StatusCode: http.StatusOK,
+				Body: "Key: Alloc, value: 123.4, type: gauge \n" +
+					"Key: MemoryInUse, value: 593, type: gauge \n" +
+					"Key: PollCount, value: 1, type: counter \n",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := NewWithStorage(storage)
+			ts := httptest.NewServer(r)
+			defer ts.Close()
+
+			statusCode, body := utils.TestRequest(t, ts, http.MethodGet, tt.args.url)
+
+			require.Equal(t, tt.want.StatusCode, statusCode)
+			require.Equal(t, tt.want.Body, body)
+		})
+	}
+}
+
+func TestHandlers_Update(t *testing.T) {
 	type args struct {
 		addr string
 	}
@@ -58,7 +165,7 @@ func TestHandlers(t *testing.T) {
 		},
 		{
 			name: "Wrong value type",
-			args: args{addr: "/update/counter/PollCount/1.23"},
+			args: args{addr: "/update/counter/PollCount/hello"},
 			want: http.StatusBadRequest,
 		},
 		{
@@ -74,7 +181,7 @@ func TestHandlers(t *testing.T) {
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
-			statusCode, _ := testRequest(t, ts, http.MethodGet, tt.args.addr)
+			statusCode, _ := utils.TestRequest(t, ts, http.MethodPost, tt.args.addr)
 			assert.Equal(t, tt.want, statusCode)
 		})
 	}

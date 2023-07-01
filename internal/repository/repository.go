@@ -7,5 +7,6 @@ import (
 
 type Repository interface {
 	Update(key string, value string, valueType models.MetricType) apierror.APIError
-	GetString(key string, valueType models.MetricType) (string, apierror.APIError)
+	Get(key string, valueType models.MetricType) (models.Metric, apierror.APIError)
+	GetAll() map[string]models.Metric
 }

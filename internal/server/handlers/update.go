@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (p *Processors) Update(w http.ResponseWriter, r *http.Request) {
+func (p *Handlers) Update(w http.ResponseWriter, r *http.Request) {
 	urlData, err := models.ParsePostURLData(r)
 	if err != apierror.NoError {
 		w.WriteHeader(err.StatusCode())
@@ -21,8 +21,4 @@ func (p *Processors) Update(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Updated metric with name %s, value: %s, type: %s", urlData.MetricName, urlData.MetricValue, urlData.MetricType)
 	w.WriteHeader(http.StatusOK)
-}
-
-func (p *Processors) NotFound(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotFound)
 }
