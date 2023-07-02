@@ -16,9 +16,9 @@ import (
 
 func TestHandlers_Get(t *testing.T) {
 	storage := memory.NewMemStorage()
-	storage.Update("Alloc", "123.4", models.Gauge)
-	storage.Update("MemoryInUse", "593", models.Gauge)
-	storage.Update("PollCount", "1", models.Counter)
+	storage.Update("Alloc", models.GaugeType, "123.4")
+	storage.Update("MemoryInUse", models.GaugeType, "593")
+	storage.Update("PollCount", models.CounterType, "1")
 
 	type fields struct {
 		Storage repository.Repository
@@ -86,13 +86,10 @@ func TestHandlers_Get(t *testing.T) {
 
 func TestHandlers_GetAll(t *testing.T) {
 	storage := memory.NewMemStorage()
-	storage.Update("Alloc", "123.4", models.Gauge)
-	storage.Update("MemoryInUse", "593", models.Gauge)
-	storage.Update("PollCount", "1", models.Counter)
+	storage.Update("Alloc", models.GaugeType, "123.4")
+	storage.Update("MemoryInUse", models.GaugeType, "593")
+	storage.Update("PollCount", models.CounterType, "1")
 
-	type fields struct {
-		Storage repository.Repository
-	}
 	type want struct {
 		StatusCode int
 		Body       string
@@ -101,14 +98,12 @@ func TestHandlers_GetAll(t *testing.T) {
 		url string
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   want
+		name string
+		args args
+		want want
 	}{
 		{
-			name:   "Get all values",
-			fields: fields{Storage: storage},
+			name: "Get all values",
 			args: args{
 				url: "/",
 			},

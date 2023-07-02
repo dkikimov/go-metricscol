@@ -14,7 +14,7 @@ func (p *Handlers) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := p.Storage.Update(urlData.MetricName, urlData.MetricValue, urlData.MetricType); err != apierror.NoError {
+	if err := p.Storage.Update(urlData.MetricName, urlData.MetricType, urlData.MetricValue); err != apierror.NoError {
 		w.WriteHeader(err.StatusCode())
 		return
 	}

@@ -40,9 +40,9 @@ func ParseGetURLData(r *http.Request) (*GetURLData, apierror.APIError) {
 	urlData := GetURLData{}
 	switch chi.URLParam(r, "type") {
 	case "gauge":
-		urlData.MetricType = Gauge
+		urlData.MetricType = GaugeType
 	case "counter":
-		urlData.MetricType = Counter
+		urlData.MetricType = CounterType
 	default:
 		return nil, apierror.UnknownMetricType
 	}

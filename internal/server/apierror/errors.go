@@ -17,7 +17,7 @@ const (
 	UnknownMetricType  = http.StatusNotImplemented
 	EmptyArguments     = http.StatusNotFound
 	NoError            = http.StatusOK
-	TypeMismatch       = http.StatusBadRequest
+	InvalidValue       = http.StatusBadRequest
 	NumberParse        = http.StatusBadRequest
 	NotFound           = http.StatusNotFound
 )

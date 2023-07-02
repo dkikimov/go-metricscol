@@ -3,6 +3,7 @@ package agent
 import (
 	"github.com/stretchr/testify/assert"
 	"go-metricscol/internal/models"
+	"go-metricscol/internal/server/apierror"
 	"testing"
 )
 
@@ -17,7 +18,7 @@ func contains(s []string, str string) bool {
 }
 
 func TestUpdateMetrics(t *testing.T) {
-	metrics := models.NewMetrics()
+	metrics := models.Metrics{}
 
 	metricsMustBeUpdated := []string{"BuckHashSys", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapSys", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "OtherSys", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue", "PollCount", "Alloc"}
 	t.Run("UpdateMetrics", func(t *testing.T) {
@@ -25,19 +26,21 @@ func TestUpdateMetrics(t *testing.T) {
 
 		for key, metric := range metrics {
 			if contains(metricsMustBeUpdated, key) {
-				assert.NotEqual(t, metric.StringValue(), "0")
+				assert.NotEqual(t, metric.GetStringValue(), "0")
 			}
 		}
 	})
 }
 
 func TestUpdatePollCount(t *testing.T) {
-	metrics := models.NewMetrics()
+	metrics := models.Metrics{}
 	UpdateMetrics(metrics)
 	UpdateMetrics(metrics)
 	UpdateMetrics(metrics)
 	UpdateMetrics(metrics)
 	UpdateMetrics(metrics)
 
-	assert.Equal(t, metrics["PollCount"].StringValue(), "5")
+	pollCount, err := metrics.Get("PollCount", models.CounterType)
+	assert.EqualValues(t, apierror.NoError, err)
+	assert.Equal(t, pollCount.GetStringValue(), "5")
 }

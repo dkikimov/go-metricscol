@@ -11,7 +11,7 @@ const pollInterval time.Duration = 2 * time.Second
 const reportInterval time.Duration = 10 * time.Second
 
 func main() {
-	metrics := models.NewMetrics()
+	metrics := models.Metrics{}
 
 	pollTimer := time.NewTicker(pollInterval)
 	reportTimer := time.NewTicker(reportInterval)

@@ -5,65 +5,61 @@ import (
 	"fmt"
 	"go-metricscol/internal/server/apierror"
 	"log"
-	"math"
 	"net/http"
-	"strconv"
+	"strings"
 )
-
-type MetricType int
-
-const (
-	Gauge   MetricType = iota // float64
-	Counter                   //int64
-)
-
-func (m MetricType) String() string {
-	switch m {
-	case Gauge:
-		return "gauge"
-	case Counter:
-		return "counter"
-	}
-	return ""
-}
-
-type Metric struct {
-	valueType MetricType
-	value     uint64
-}
-
-func (m Metric) StringValue() string {
-	switch m.valueType {
-	case Gauge:
-		return fmt.Sprintf("%v", math.Float64frombits(m.value))
-	case Counter:
-		return strconv.FormatInt(int64(m.value), 10)
-	}
-
-	return ""
-}
-
-func (m Metric) ValueType() MetricType {
-	return m.valueType
-}
-
-func (m Metric) Value() uint64 {
-	return m.value
-}
-
-func NewMetric(valueType MetricType) Metric {
-	return Metric{valueType: valueType}
-}
 
 type Metrics map[string]Metric
 
+func getKey(name string, valueType MetricType) string {
+	key := strings.Builder{}
+	key.WriteString(name)
+	key.WriteByte(':')
+	key.WriteString(valueType.String())
+
+	return key.String()
+}
+
+func (m Metrics) Get(name string, valueType MetricType) (Metric, apierror.APIError) {
+	metric, ok := m[getKey(name, valueType)]
+	if !ok {
+		return nil, apierror.NotFound
+	}
+
+	return metric, apierror.NoError
+}
+
+func (m Metrics) Update(name string, valueType MetricType, value interface{}) apierror.APIError {
+	switch valueType {
+	case GaugeType:
+		if v, ok := value.(float64); ok {
+			m[getKey(name, valueType)] = Gauge{Name: name, Value: v}
+		} else {
+			return apierror.InvalidValue
+		}
+	case CounterType:
+		if v, ok := value.(int64); ok {
+			prevMetric, _ := m.Get(name, CounterType)
+			prevVal, _ := prevMetric.(Counter) // TODO: Насколько это безопасно?
+
+			m[getKey(name, valueType)] = Counter{Name: name, Value: prevVal.Value + v}
+		} else {
+			return apierror.InvalidValue
+		}
+	default:
+		return apierror.UnknownMetricType
+	}
+
+	return apierror.NoError
+}
+
 func (m Metrics) ResetPollCount() {
-	m["PollCount"] = NewMetric(Counter)
+	m[getKey("PollCount", CounterType)] = Counter{Name: "PollCount", Value: 0}
 }
 
 func (m Metrics) SendToServer(addr string) error {
 	for name, metric := range m {
-		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, metric.valueType.String(), name, metric.StringValue())
+		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, metric.GetType(), name, metric.GetStringValue())
 		log.Println(postURL)
 		resp, err := http.Post(postURL, "text/plain", nil)
 
@@ -79,75 +75,4 @@ func (m Metrics) SendToServer(addr string) error {
 	m.ResetPollCount()
 
 	return nil
-}
-
-func (m Metrics) UpdateGauge(key string, value float64) apierror.APIError {
-	metric, ok := m[key]
-	if !ok {
-		metric = NewMetric(Gauge)
-	}
-
-	if metric.valueType != Gauge {
-		return apierror.TypeMismatch
-	}
-
-	metric.value = math.Float64bits(value)
-	m[key] = metric
-
-	return apierror.NoError
-}
-
-func (m Metrics) UpdateCounter(key string, value int64) apierror.APIError {
-	metric, ok := m[key]
-	if !ok {
-		metric = NewMetric(Counter)
-	}
-
-	if metric.valueType != Counter {
-		return apierror.TypeMismatch
-	}
-
-	metric.value += uint64(value)
-	m[key] = metric
-	return apierror.NoError
-}
-
-func NewMetrics() Metrics {
-	metrics := make(Metrics, 29)
-	metrics["Alloc"] = NewMetric(Gauge)
-	metrics["BuckHashSys"] = NewMetric(Gauge)
-	metrics["Frees"] = NewMetric(Gauge)
-	metrics["GCCPUFraction"] = NewMetric(Gauge)
-	metrics["GCSys"] = NewMetric(Gauge)
-	metrics["HeapAlloc"] = NewMetric(Gauge)
-	metrics["HeapIdle"] = NewMetric(Gauge)
-	metrics["HeapInuse"] = NewMetric(Gauge)
-	metrics["HeapObjects"] = NewMetric(Gauge)
-	metrics["HeapReleased"] = NewMetric(Gauge)
-	metrics["HeapSys"] = NewMetric(Gauge)
-	metrics["LastGC"] = NewMetric(Gauge)
-	metrics["Lookups"] = NewMetric(Gauge)
-	metrics["MCacheInuse"] = NewMetric(Gauge)
-	metrics["MCacheSys"] = NewMetric(Gauge)
-	metrics["MSpanInuse"] = NewMetric(Gauge)
-	metrics["MSpanSys"] = NewMetric(Gauge)
-	metrics["MSpanInuse"] = NewMetric(Gauge)
-	metrics["Mallocs"] = NewMetric(Gauge)
-	metrics["NextGC"] = NewMetric(Gauge)
-	metrics["MSpanInuse"] = NewMetric(Gauge)
-	metrics["MSpanSys"] = NewMetric(Gauge)
-	metrics["Mallocs"] = NewMetric(Gauge)
-	metrics["NextGC"] = NewMetric(Gauge)
-	metrics["NumForcedGC"] = NewMetric(Gauge)
-	metrics["NumGC"] = NewMetric(Gauge)
-	metrics["OtherSys"] = NewMetric(Gauge)
-	metrics["PauseTotalNs"] = NewMetric(Gauge)
-	metrics["StackInuse"] = NewMetric(Gauge)
-	metrics["StackSys"] = NewMetric(Gauge)
-	metrics["Sys"] = NewMetric(Gauge)
-	metrics["TotalAlloc"] = NewMetric(Gauge)
-	metrics["RandomValue"] = NewMetric(Gauge)
-	metrics["PollCount"] = NewMetric(Counter)
-
-	return metrics
 }

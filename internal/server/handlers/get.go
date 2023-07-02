@@ -22,25 +22,24 @@ func (p *Handlers) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := w.Write([]byte(metric.StringValue())); err != nil {
+	if _, err := w.Write([]byte(metric.GetStringValue())); err != nil {
 		log.Printf("Couldn't write response")
 	}
 }
 
 func (p *Handlers) GetAll(w http.ResponseWriter, _ *http.Request) {
 	type KeyValue struct {
-		key   string
 		value models.Metric
 	}
 
 	kv := make([]KeyValue, 0, len(p.Storage.GetAll()))
-	for key, value := range p.Storage.GetAll() {
-		kv = append(kv, KeyValue{key, value})
+	for _, value := range p.Storage.GetAll() {
+		kv = append(kv, KeyValue{value})
 	}
 
-	sort.Slice(kv, func(i, j int) bool { return kv[i].key < kv[j].key })
+	sort.Slice(kv, func(i, j int) bool { return kv[i].value.GetName() < kv[j].value.GetName() })
 	for _, v := range kv {
-		_, err := w.Write([]byte(fmt.Sprintf("Key: %s, value: %s, type: %s \n", v.key, v.value.StringValue(), v.value.ValueType())))
+		_, err := w.Write([]byte(fmt.Sprintf("Key: %s, value: %s, type: %s \n", v.value.GetName(), v.value.GetStringValue(), v.value.GetType())))
 		if err != nil {
 			log.Printf("Couldn't write response to GetAll request")
 		}
