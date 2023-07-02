@@ -58,8 +58,8 @@ func (m Metrics) ResetPollCount() {
 }
 
 func (m Metrics) SendToServer(addr string) error {
-	for name, metric := range m {
-		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, metric.GetType(), name, metric.GetStringValue())
+	for _, metric := range m {
+		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, metric.GetType(), metric.GetName(), metric.GetStringValue())
 		log.Println(postURL)
 		resp, err := http.Post(postURL, "text/plain", nil)
 

@@ -3,6 +3,7 @@ package memory
 import (
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
+	"sort"
 	"strconv"
 )
 
@@ -10,8 +11,15 @@ type MemStorage struct {
 	metrics models.Metrics
 }
 
-func (memStorage *MemStorage) GetAll() map[string]models.Metric {
-	return memStorage.metrics
+func (memStorage *MemStorage) GetAll() []models.Metric {
+	kv := make([]models.Metric, 0, len(memStorage.metrics))
+	for _, value := range memStorage.metrics {
+		kv = append(kv, value)
+	}
+
+	sort.Slice(kv, func(i, j int) bool { return kv[i].GetName() < kv[j].GetName() })
+
+	return kv
 }
 
 func (memStorage *MemStorage) Get(name string, valueType models.MetricType) (models.Metric, apierror.APIError) {

@@ -139,16 +139,16 @@ func TestMemStorage_GetAll(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   map[string]models.Metric
+		want   []models.Metric
 	}{
 		{
 			name: "Get all",
 			fields: fields{
 				metrics: metrics,
 			},
-			want: map[string]models.Metric{
-				"Alloc:gauge":       models.Gauge{Name: "Alloc", Value: 101.42},
-				"PollCount:counter": models.Counter{Name: "PollCount", Value: 2},
+			want: []models.Metric{
+				models.Gauge{Name: "Alloc", Value: 101.42},
+				models.Counter{Name: "PollCount", Value: 2},
 			},
 		},
 	}
@@ -157,7 +157,7 @@ func TestMemStorage_GetAll(t *testing.T) {
 			memStorage := &MemStorage{
 				metrics: tt.fields.metrics,
 			}
-			assert.Equal(t, tt.want, memStorage.GetAll())
+			assert.EqualValues(t, tt.want, memStorage.GetAll())
 		})
 	}
 }
