@@ -39,5 +39,5 @@ func UpdateMetrics(metrics models.Metrics) {
 	metrics.Update("Sys", models.GaugeType, float64(stats.Sys))
 	metrics.Update("TotalAlloc", models.GaugeType, float64(stats.TotalAlloc))
 	metrics.Update("RandomValue", models.GaugeType, rand.Float64())
-	metrics.Update("PollCount", models.CounterType, int64(1))
+	metrics.Update("PollCount", models.CounterType, 1)
 }

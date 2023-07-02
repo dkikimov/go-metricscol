@@ -30,22 +30,53 @@ func (m Metrics) Get(name string, valueType MetricType) (Metric, apierror.APIErr
 }
 
 func (m Metrics) Update(name string, valueType MetricType, value interface{}) apierror.APIError {
+	if valueType != GaugeType && valueType != CounterType {
+		return apierror.UnknownMetricType
+	}
+
 	switch valueType {
 	case GaugeType:
-		if v, ok := value.(float64); ok {
-			m[getKey(name, valueType)] = Gauge{Name: name, Value: v}
-		} else {
+		var floatValue float64
+		switch v := value.(type) {
+		case float32:
+			floatValue = float64(v)
+		case float64:
+			floatValue = v
+		case int:
+			floatValue = float64(v)
+		case int8:
+			floatValue = float64(v)
+		case int16:
+			floatValue = float64(v)
+		case int32:
+			floatValue = float64(v)
+		case int64:
+			floatValue = float64(v)
+		default:
 			return apierror.InvalidValue
 		}
-	case CounterType:
-		if v, ok := value.(int64); ok {
-			prevMetric, _ := m.Get(name, CounterType)
-			prevVal, _ := prevMetric.(Counter) // TODO: Насколько это безопасно?
 
-			m[getKey(name, valueType)] = Counter{Name: name, Value: prevVal.Value + v}
-		} else {
+		m[getKey(name, valueType)] = Gauge{Name: name, Value: floatValue}
+	case CounterType:
+		var intValue int64
+		switch v := value.(type) {
+		case int:
+			intValue = int64(v)
+		case int8:
+			intValue = int64(v)
+		case int16:
+			intValue = int64(v)
+		case int32:
+			intValue = int64(v)
+		case int64:
+			intValue = v
+		default:
 			return apierror.InvalidValue
 		}
+		prevMetric, _ := m.Get(name, CounterType)
+		prevVal, _ := prevMetric.(Counter)
+
+		m[getKey(name, valueType)] = Counter{Name: name, Value: prevVal.Value + intValue}
 	default:
 		return apierror.UnknownMetricType
 	}
