@@ -1,11 +1,7 @@
 package models
 
 import (
-	"errors"
-	"fmt"
 	"go-metricscol/internal/server/apierror"
-	"log"
-	"net/http"
 	"strings"
 )
 
@@ -86,24 +82,4 @@ func (m Metrics) Update(name string, valueType MetricType, value interface{}) ap
 
 func (m Metrics) ResetPollCount() {
 	m[getKey("PollCount", CounterType)] = Counter{Name: "PollCount", Value: 0}
-}
-
-func (m Metrics) SendToServer(addr string) error {
-	for _, metric := range m {
-		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, metric.GetType(), metric.GetName(), metric.GetStringValue())
-		log.Println(postURL)
-		resp, err := http.Post(postURL, "text/plain", nil)
-
-		if err != nil {
-			return fmt.Errorf("couldn't post url %s", postURL)
-		}
-
-		if err := resp.Body.Close(); err != nil {
-			return errors.New("couldn't close response body")
-		}
-
-	}
-	m.ResetPollCount()
-
-	return nil
 }
