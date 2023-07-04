@@ -2,10 +2,11 @@ package models
 
 import (
 	"go-metricscol/internal/server/apierror"
+	"go-metricscol/internal/utils"
 	"strings"
 )
 
-type Metrics map[string]Metric
+type MetricsMap map[string]Metric
 
 func getKey(name string, valueType MetricType) string {
 	key := strings.Builder{}
@@ -16,16 +17,16 @@ func getKey(name string, valueType MetricType) string {
 	return key.String()
 }
 
-func (m Metrics) Get(name string, valueType MetricType) (Metric, apierror.APIError) {
+func (m MetricsMap) Get(name string, valueType MetricType) (*Metric, apierror.APIError) {
 	metric, ok := m[getKey(name, valueType)]
 	if !ok {
 		return nil, apierror.NotFound
 	}
 
-	return metric, apierror.NoError
+	return &metric, apierror.NoError
 }
 
-func (m Metrics) Update(name string, valueType MetricType, value interface{}) apierror.APIError {
+func (m MetricsMap) Update(name string, valueType MetricType, value interface{}) apierror.APIError {
 	if valueType != GaugeType && valueType != CounterType {
 		return apierror.UnknownMetricType
 	}
@@ -52,7 +53,7 @@ func (m Metrics) Update(name string, valueType MetricType, value interface{}) ap
 			return apierror.InvalidValue
 		}
 
-		m[getKey(name, valueType)] = Gauge{Name: name, Value: floatValue}
+		m[getKey(name, valueType)] = Metric{Name: name, MType: GaugeType, Value: utils.Ptr(floatValue)}
 	case CounterType:
 		var intValue int64
 		switch v := value.(type) {
@@ -70,9 +71,14 @@ func (m Metrics) Update(name string, valueType MetricType, value interface{}) ap
 			return apierror.InvalidValue
 		}
 		prevMetric, _ := m.Get(name, CounterType)
-		prevVal, _ := prevMetric.(Counter)
+		var prevVal int64
+		if prevMetric == nil {
+			prevVal = 0
+		} else {
+			prevVal = *prevMetric.Delta
+		}
 
-		m[getKey(name, valueType)] = Counter{Name: name, Value: prevVal.Value + intValue}
+		m[getKey(name, valueType)] = Metric{Name: name, MType: CounterType, Delta: utils.Ptr(prevVal + intValue)}
 	default:
 		return apierror.UnknownMetricType
 	}
@@ -80,6 +86,6 @@ func (m Metrics) Update(name string, valueType MetricType, value interface{}) ap
 	return apierror.NoError
 }
 
-func (m Metrics) ResetPollCount() {
-	m[getKey("PollCount", CounterType)] = Counter{Name: "PollCount", Value: 0}
+func (m MetricsMap) ResetPollCount() {
+	m[getKey("PollCount", CounterType)] = Metric{Name: "PollCount", MType: CounterType, Delta: utils.Ptr(int64(0))}
 }

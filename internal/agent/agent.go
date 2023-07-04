@@ -10,9 +10,9 @@ import (
 	"runtime"
 )
 
-func SendMetricsToServer(addr string, m models.Metrics) error {
+func SendMetricsToServer(addr string, m models.MetricsMap) error {
 	for _, metric := range m {
-		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, metric.GetType(), metric.GetName(), metric.GetStringValue())
+		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, metric.MType, metric.Name, metric.GetStringValue())
 		log.Println(postURL)
 		resp, err := http.Post(postURL, "text/plain", nil)
 
@@ -29,7 +29,7 @@ func SendMetricsToServer(addr string, m models.Metrics) error {
 	return nil
 }
 
-func UpdateMetrics(metrics models.Metrics) {
+func UpdateMetrics(metrics models.MetricsMap) {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
 

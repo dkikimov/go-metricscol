@@ -4,7 +4,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
+	"go-metricscol/internal/utils"
 	"net/http"
+	"reflect"
 	"testing"
 )
 
@@ -65,13 +67,13 @@ func TestMemStorage_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.storage.Update(tt.args.key, tt.args.valueType, tt.args.value), tt.want)
+			assert.True(t, reflect.DeepEqual(tt.storage.Update(tt.args.key, tt.args.valueType, tt.args.value), tt.want))
 		})
 	}
 }
 
 func TestMemStorage_Get(t *testing.T) {
-	metrics := models.Metrics{}
+	metrics := models.MetricsMap{}
 	metrics.Update("Alloc", models.GaugeType, 101.42)
 	metrics.Update("PollCount", models.CounterType, 2)
 
@@ -82,7 +84,7 @@ func TestMemStorage_Get(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want models.Metric
+		want *models.Metric
 		err  apierror.APIError
 	}{
 		{
@@ -91,10 +93,11 @@ func TestMemStorage_Get(t *testing.T) {
 				key:       "Alloc",
 				valueType: models.GaugeType,
 			},
-			want: models.Gauge{
+			want: utils.Ptr(models.Metric{
 				Name:  "Alloc",
-				Value: 101.42,
-			},
+				MType: models.GaugeType,
+				Value: utils.Ptr(101.42),
+			}),
 			err: apierror.NoError,
 		},
 		{
@@ -110,7 +113,7 @@ func TestMemStorage_Get(t *testing.T) {
 			name: "Get metric with unknown type",
 			args: args{
 				key:       "Alloc",
-				valueType: 5,
+				valueType: "unknown",
 			},
 			want: nil,
 			err:  apierror.NotFound,
@@ -129,12 +132,12 @@ func TestMemStorage_Get(t *testing.T) {
 }
 
 func TestMemStorage_GetAll(t *testing.T) {
-	metrics := models.Metrics{}
+	metrics := models.MetricsMap{}
 	metrics.Update("Alloc", models.GaugeType, 101.42)
 	metrics.Update("PollCount", models.CounterType, 2)
 
 	type fields struct {
-		metrics models.Metrics
+		metrics models.MetricsMap
 	}
 	tests := []struct {
 		name   string
@@ -147,8 +150,8 @@ func TestMemStorage_GetAll(t *testing.T) {
 				metrics: metrics,
 			},
 			want: []models.Metric{
-				models.Gauge{Name: "Alloc", Value: 101.42},
-				models.Counter{Name: "PollCount", Value: 2},
+				{Name: "Alloc", MType: models.GaugeType, Value: utils.Ptr(101.42)},
+				{Name: "PollCount", MType: models.CounterType, Delta: utils.Ptr(int64(2))},
 			},
 		},
 	}
@@ -157,7 +160,8 @@ func TestMemStorage_GetAll(t *testing.T) {
 			memStorage := &MemStorage{
 				metrics: tt.fields.metrics,
 			}
-			assert.EqualValues(t, tt.want, memStorage.GetAll())
+
+			assert.True(t, reflect.DeepEqual(tt.want, memStorage.GetAll()))
 		})
 	}
 }

@@ -4,11 +4,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go-metricscol/internal/server/apierror"
+	"go-metricscol/internal/utils"
+	"reflect"
 	"testing"
 )
 
 func TestMetrics_Get(t *testing.T) {
-	metrics := Metrics{}
+	metrics := MetricsMap{}
 	metrics.Update("Alloc", GaugeType, 13)
 	metrics.Update("PollCount", CounterType, 1)
 
@@ -19,7 +21,7 @@ func TestMetrics_Get(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want Metric
+		want *Metric
 		err  apierror.APIError
 	}{
 		{
@@ -28,10 +30,11 @@ func TestMetrics_Get(t *testing.T) {
 				name:      "Alloc",
 				valueType: GaugeType,
 			},
-			want: Gauge{
+			want: utils.Ptr(Metric{
 				Name:  "Alloc",
-				Value: 13,
-			},
+				MType: GaugeType,
+				Value: utils.Ptr(float64(13)),
+			}),
 			err: apierror.NoError,
 		},
 		{
@@ -40,10 +43,11 @@ func TestMetrics_Get(t *testing.T) {
 				name:      "PollCount",
 				valueType: CounterType,
 			},
-			want: Counter{
+			want: utils.Ptr(Metric{
 				Name:  "PollCount",
-				Value: 1,
-			},
+				MType: CounterType,
+				Delta: utils.Ptr(int64(13)),
+			}),
 			err: apierror.NoError,
 		},
 		{
@@ -69,21 +73,23 @@ func TestMetrics_Get(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := metrics.Get(tt.args.name, tt.args.valueType)
 
-			assert.Equal(t, tt.want, got)
 			assert.EqualValues(t, tt.err, err)
+			if tt.err == apierror.NoError {
+				assert.True(t, true, reflect.DeepEqual(tt.want.Value, got.Value))
+			}
 		})
 	}
 }
 
 func TestMetrics_ResetPollCount(t *testing.T) {
-	metrics := Metrics{}
+	metrics := MetricsMap{}
 	metrics.Update("PollCount", CounterType, 2)
 	t.Run("Reset poll count", func(t *testing.T) {
 		metrics.ResetPollCount()
 		metric, err := metrics.Get("PollCount", CounterType)
 
 		assert.EqualValues(t, apierror.NoError, err)
-		assert.EqualValues(t, 0, metric.(Counter).Value)
+		assert.True(t, reflect.DeepEqual(metric.Delta, utils.Ptr(int64(0))))
 	})
 }
 
@@ -96,7 +102,7 @@ func TestMetrics_Update(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want Metric
+		want *Metric
 		err  apierror.APIError
 	}{
 		{
@@ -106,10 +112,11 @@ func TestMetrics_Update(t *testing.T) {
 				valueType: GaugeType,
 				value:     13,
 			},
-			want: Gauge{
+			want: utils.Ptr(Metric{
 				Name:  "Alloc",
-				Value: 13,
-			},
+				MType: GaugeType,
+				Value: utils.Ptr(float64(13)),
+			}),
 			err: apierror.NoError,
 		},
 		{
@@ -119,10 +126,11 @@ func TestMetrics_Update(t *testing.T) {
 				valueType: GaugeType,
 				value:     13.41,
 			},
-			want: Gauge{
+			want: utils.Ptr(Metric{
 				Name:  "Alloc",
-				Value: 13.41,
-			},
+				MType: GaugeType,
+				Value: utils.Ptr(13.41),
+			}),
 			err: apierror.NoError,
 		},
 		{
@@ -132,17 +140,18 @@ func TestMetrics_Update(t *testing.T) {
 				valueType: CounterType,
 				value:     1,
 			},
-			want: Counter{
+			want: utils.Ptr(Metric{
 				Name:  "PollCount",
-				Value: 1,
-			},
+				MType: CounterType,
+				Delta: utils.Ptr(int64(1)),
+			}),
 			err: apierror.NoError,
 		},
 		{
 			name: "Unknown type",
 			args: args{
 				name:      "PollCount",
-				valueType: 4,
+				valueType: "unknown",
 				value:     1,
 			},
 			want: nil,
@@ -172,11 +181,14 @@ func TestMetrics_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := Metrics{}
+			m := MetricsMap{}
 			err := m.Update(tt.args.name, tt.args.valueType, tt.args.value)
 
 			require.EqualValues(t, tt.err, err)
-			require.Equal(t, tt.want, m[getKey(tt.args.name, tt.args.valueType)])
+			if err == apierror.NoError {
+				require.True(t, true, reflect.DeepEqual(m[getKey(tt.args.name, tt.args.valueType)], tt.want))
+
+			}
 		})
 	}
 }

@@ -28,7 +28,7 @@ func (p *Handlers) Get(w http.ResponseWriter, r *http.Request) {
 
 func (p *Handlers) GetAll(w http.ResponseWriter, _ *http.Request) {
 	for _, v := range p.Storage.GetAll() {
-		_, err := w.Write([]byte(fmt.Sprintf("Key: %s, value: %s, type: %s \n", v.GetName(), v.GetStringValue(), v.GetType())))
+		_, err := w.Write([]byte(fmt.Sprintf("Key: %s, value: %s, type: %s \n", v.Name, v.GetStringValue(), v.MType)))
 		if err != nil {
 			log.Printf("Couldn't write response to GetAll request")
 		}

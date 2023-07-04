@@ -8,7 +8,7 @@ import (
 )
 
 type MemStorage struct {
-	metrics models.Metrics
+	metrics models.MetricsMap
 }
 
 func (memStorage *MemStorage) GetAll() []models.Metric {
@@ -17,17 +17,17 @@ func (memStorage *MemStorage) GetAll() []models.Metric {
 		kv = append(kv, value)
 	}
 
-	sort.Slice(kv, func(i, j int) bool { return kv[i].GetName() < kv[j].GetName() })
+	sort.Slice(kv, func(i, j int) bool { return kv[i].Name < kv[j].Name })
 
 	return kv
 }
 
-func (memStorage *MemStorage) Get(name string, valueType models.MetricType) (models.Metric, apierror.APIError) {
+func (memStorage *MemStorage) Get(name string, valueType models.MetricType) (*models.Metric, apierror.APIError) {
 	return memStorage.metrics.Get(name, valueType)
 }
 
 func NewMemStorage() *MemStorage {
-	return &MemStorage{metrics: models.Metrics{}}
+	return &MemStorage{metrics: models.MetricsMap{}}
 }
 
 func (memStorage *MemStorage) Update(name string, valueType models.MetricType, value string) apierror.APIError {
