@@ -1,23 +1,48 @@
 package agent
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"go-metricscol/internal/models"
-	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
 )
 
+//func SendMetricsToServer(addr string, m models.MetricsMap) error {
+//	for _, metric := range m {
+//		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, metric.MType, metric.Name, metric.GetStringValue())
+//		log.Println(postURL)
+//		resp, err := http.Post(postURL, "text/plain", nil)
+//
+//		if err != nil {
+//			return fmt.Errorf("couldn't post url %s", postURL)
+//		}
+//
+//		if err := resp.Body.Close(); err != nil {
+//			return errors.New("couldn't close response body")
+//		}
+//	}
+//	m.ResetPollCount()
+//
+//	return nil
+//}
+
 func SendMetricsToServer(addr string, m models.MetricsMap) error {
 	for _, metric := range m {
-		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, metric.MType, metric.Name, metric.GetStringValue())
-		log.Println(postURL)
-		resp, err := http.Post(postURL, "text/plain", nil)
+		postURL := fmt.Sprintf("%s/update/", addr)
+
+		jsonMetric, err := json.Marshal(metric)
+		if err != nil {
+			return err
+		}
+
+		resp, err := http.Post(postURL, "application/json", bytes.NewReader(jsonMetric))
 
 		if err != nil {
-			return fmt.Errorf("couldn't post url %s", postURL)
+			return fmt.Errorf("couldn't post url %s with body %s", postURL, jsonMetric)
 		}
 
 		if err := resp.Body.Close(); err != nil {
