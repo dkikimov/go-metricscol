@@ -86,6 +86,37 @@ func (m MetricsMap) Update(name string, valueType MetricType, value interface{})
 	return apierror.NoError
 }
 
+func (m MetricsMap) UpdateWithStruct(metric *Metric) apierror.APIError {
+	if metric.MType != GaugeType && metric.MType != CounterType {
+		return apierror.UnknownMetricType
+	}
+
+	switch metric.MType {
+	case GaugeType:
+		m[getKey(metric.Name, metric.MType)] = *metric
+	case CounterType:
+		prevMetric, _ := m.Get(metric.Name, CounterType)
+		var prevVal, currentVal int64
+		if prevMetric == nil {
+			prevVal = 0
+		} else {
+			prevVal = *prevMetric.Delta
+		}
+
+		if metric.Delta == nil {
+			currentVal = 0
+		} else {
+			currentVal = *metric.Delta
+		}
+
+		m[getKey(metric.Name, metric.MType)] = Metric{Name: metric.Name, MType: CounterType, Delta: utils.Ptr(prevVal + currentVal)}
+	default:
+		return apierror.UnknownMetricType
+	}
+
+	return apierror.NoError
+}
+
 func (m MetricsMap) ResetPollCount() {
 	m[getKey("PollCount", CounterType)] = Metric{Name: "PollCount", MType: CounterType, Delta: utils.Ptr(int64(0))}
 }

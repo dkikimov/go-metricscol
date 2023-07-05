@@ -11,6 +11,10 @@ type MemStorage struct {
 	metrics models.MetricsMap
 }
 
+func (memStorage *MemStorage) UpdateWithStruct(metric *models.Metric) apierror.APIError {
+	return memStorage.metrics.UpdateWithStruct(metric)
+}
+
 func (memStorage *MemStorage) GetAll() []models.Metric {
 	kv := make([]models.Metric, 0, len(memStorage.metrics))
 	for _, value := range memStorage.metrics {

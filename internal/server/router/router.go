@@ -8,16 +8,7 @@ import (
 )
 
 func New() chi.Router {
-	h := handlers.Handlers{
-		Storage: memory.NewMemStorage(),
-	}
-
-	r := chi.NewRouter()
-
-	r.Post("/update/{type}/{name}/{value}", h.Update)
-	r.Get("/value/{type}/{name}", h.Get)
-	r.HandleFunc("/", h.GetAll)
-	return r
+	return NewWithStorage(memory.NewMemStorage())
 }
 
 func NewWithStorage(storage repository.Repository) chi.Router {
@@ -29,6 +20,10 @@ func NewWithStorage(storage repository.Repository) chi.Router {
 
 	r.Post("/update/{type}/{name}/{value}", processors.Update)
 	r.Get("/value/{type}/{name}", processors.Get)
+
+	r.Post("/update/", processors.UpdateJSON)
+	r.Post("/value/", processors.GetJSON)
+
 	r.HandleFunc("/", processors.GetAll)
 	return r
 }

@@ -1,36 +1,22 @@
 package agent
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/go-resty/resty/v2"
 	"go-metricscol/internal/models"
 	"math/rand"
-	"net/http"
 	"runtime"
+	"time"
 )
 
-//func SendMetricsToServer(addr string, m models.MetricsMap) error {
-//	for _, metric := range m {
-//		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, metric.MType, metric.Name, metric.GetStringValue())
-//		log.Println(postURL)
-//		resp, err := http.Post(postURL, "text/plain", nil)
-//
-//		if err != nil {
-//			return fmt.Errorf("couldn't post url %s", postURL)
-//		}
-//
-//		if err := resp.Body.Close(); err != nil {
-//			return errors.New("couldn't close response body")
-//		}
-//	}
-//	m.ResetPollCount()
-//
-//	return nil
-//}
-
 func SendMetricsToServer(addr string, m models.MetricsMap) error {
+	client := resty.New()
+	client.SetCloseConnection(true)
+
+	client.SetRetryCount(3)
+	client.SetRetryWaitTime(50 * time.Millisecond)
+
 	for _, metric := range m {
 		postURL := fmt.Sprintf("%s/update/", addr)
 
@@ -39,15 +25,12 @@ func SendMetricsToServer(addr string, m models.MetricsMap) error {
 			return err
 		}
 
-		resp, err := http.Post(postURL, "application/json", bytes.NewReader(jsonMetric))
-
+		_, err = client.R().SetBody(metric).ForceContentType("application/json").Post(postURL)
 		if err != nil {
-			return fmt.Errorf("couldn't post url %s with body %s", postURL, jsonMetric)
+			return fmt.Errorf("couldn't post url %s with body %s. Error: %s", postURL, jsonMetric, err.Error())
 		}
+		fmt.Printf("Sent metric %s to server\n", metric.Name)
 
-		if err := resp.Body.Close(); err != nil {
-			return errors.New("couldn't close response body")
-		}
 	}
 	m.ResetPollCount()
 
