@@ -30,7 +30,7 @@ func TestMemStorage_Update(t *testing.T) {
 			args: args{
 				key:       "Alloc",
 				value:     "120.123",
-				valueType: models.GaugeType,
+				valueType: models.Gauge,
 			},
 			want: http.StatusOK,
 		},
@@ -40,7 +40,7 @@ func TestMemStorage_Update(t *testing.T) {
 			args: args{
 				key:       "PollCount",
 				value:     "2",
-				valueType: models.CounterType,
+				valueType: models.Counter,
 			},
 			want: http.StatusOK,
 		},
@@ -50,7 +50,7 @@ func TestMemStorage_Update(t *testing.T) {
 			args: args{
 				key:       "PollCount",
 				value:     "hello",
-				valueType: models.CounterType,
+				valueType: models.Counter,
 			},
 			want: http.StatusBadRequest,
 		},
@@ -60,7 +60,7 @@ func TestMemStorage_Update(t *testing.T) {
 			args: args{
 				key:       "Alloc",
 				value:     "123.245",
-				valueType: models.CounterType,
+				valueType: models.Counter,
 			},
 			want: http.StatusBadRequest,
 		},
@@ -74,8 +74,8 @@ func TestMemStorage_Update(t *testing.T) {
 
 func TestMemStorage_Get(t *testing.T) {
 	metrics := models.MetricsMap{}
-	metrics.Update("Alloc", models.GaugeType, 101.42)
-	metrics.Update("PollCount", models.CounterType, 2)
+	metrics.Update("Alloc", models.Gauge, 101.42)
+	metrics.Update("PollCount", models.Counter, 2)
 
 	type args struct {
 		key       string
@@ -91,11 +91,11 @@ func TestMemStorage_Get(t *testing.T) {
 			name: "Get metric",
 			args: args{
 				key:       "Alloc",
-				valueType: models.GaugeType,
+				valueType: models.Gauge,
 			},
 			want: utils.Ptr(models.Metric{
 				Name:  "Alloc",
-				MType: models.GaugeType,
+				MType: models.Gauge,
 				Value: utils.Ptr(101.42),
 			}),
 			err: apierror.NoError,
@@ -104,7 +104,7 @@ func TestMemStorage_Get(t *testing.T) {
 			name: "Get metric with another type",
 			args: args{
 				key:       "Alloc",
-				valueType: models.CounterType,
+				valueType: models.Counter,
 			},
 			want: nil,
 			err:  apierror.NotFound,
@@ -133,8 +133,8 @@ func TestMemStorage_Get(t *testing.T) {
 
 func TestMemStorage_GetAll(t *testing.T) {
 	metrics := models.MetricsMap{}
-	metrics.Update("Alloc", models.GaugeType, 101.42)
-	metrics.Update("PollCount", models.CounterType, 2)
+	metrics.Update("Alloc", models.Gauge, 101.42)
+	metrics.Update("PollCount", models.Counter, 2)
 
 	type fields struct {
 		metrics models.MetricsMap
@@ -150,8 +150,8 @@ func TestMemStorage_GetAll(t *testing.T) {
 				metrics: metrics,
 			},
 			want: []models.Metric{
-				{Name: "Alloc", MType: models.GaugeType, Value: utils.Ptr(101.42)},
-				{Name: "PollCount", MType: models.CounterType, Delta: utils.Ptr(int64(2))},
+				{Name: "Alloc", MType: models.Gauge, Value: utils.Ptr(101.42)},
+				{Name: "PollCount", MType: models.Counter, Delta: utils.Ptr(int64(2))},
 			},
 		},
 	}

@@ -5,15 +5,15 @@ import "strconv"
 type MetricType string
 
 const (
-	GaugeType   MetricType = "gauge"
-	CounterType            = "counter"
+	Gauge   MetricType = "gauge"
+	Counter MetricType = "counter"
 )
 
 func (m MetricType) String() string {
 	switch m {
-	case GaugeType:
+	case Gauge:
 		return "gauge"
-	case CounterType:
+	case Counter:
 		return "counter"
 	}
 	return ""
@@ -28,52 +28,12 @@ type Metric struct {
 
 func (m Metric) GetStringValue() string {
 	switch m.MType {
-	case GaugeType:
+	case Gauge:
 		return strconv.FormatFloat(*m.Value, 'g', -1, 64)
-	case CounterType:
+	case Counter:
 		return strconv.FormatInt(*m.Delta, 10)
 	}
 
 	// TODO: Добавить более строгое ограничение
 	return ""
 }
-
-//type Metric interface {
-//	GetName() string
-//	GetType() MetricType
-//	GetStringValue() string
-//}
-//
-//type Gauge struct {
-//	Name  string
-//	Value float64
-//}
-//
-//func (g Gauge) GetName() string {
-//	return g.Name
-//}
-//
-//func (g Gauge) GetType() MetricType {
-//	return GaugeType
-//}
-//
-//func (g Gauge) GetStringValue() string {
-//	return strconv.FormatFloat(g.Value, 'g', -1, 64)
-//}
-//
-//type Counter struct {
-//	Name  string
-//	Value int64
-//}
-//
-//func (c Counter) GetName() string {
-//	return c.Name
-//}
-//
-//func (c Counter) GetType() MetricType {
-//	return CounterType
-//}
-//
-//func (c Counter) GetStringValue() string {
-//	return strconv.FormatInt(c.Value, 10)
-//}

@@ -11,8 +11,8 @@ import (
 
 func TestMetrics_Get(t *testing.T) {
 	metrics := MetricsMap{}
-	metrics.Update("Alloc", GaugeType, 13)
-	metrics.Update("PollCount", CounterType, 1)
+	metrics.Update("Alloc", Gauge, 13)
+	metrics.Update("PollCount", Counter, 1)
 
 	type args struct {
 		name      string
@@ -28,11 +28,11 @@ func TestMetrics_Get(t *testing.T) {
 			name: "Get metric gauge",
 			args: args{
 				name:      "Alloc",
-				valueType: GaugeType,
+				valueType: Gauge,
 			},
 			want: utils.Ptr(Metric{
 				Name:  "Alloc",
-				MType: GaugeType,
+				MType: Gauge,
 				Value: utils.Ptr(float64(13)),
 			}),
 			err: apierror.NoError,
@@ -41,11 +41,11 @@ func TestMetrics_Get(t *testing.T) {
 			name: "Get metric counter",
 			args: args{
 				name:      "PollCount",
-				valueType: CounterType,
+				valueType: Counter,
 			},
 			want: utils.Ptr(Metric{
 				Name:  "PollCount",
-				MType: CounterType,
+				MType: Counter,
 				Delta: utils.Ptr(int64(13)),
 			}),
 			err: apierror.NoError,
@@ -54,7 +54,7 @@ func TestMetrics_Get(t *testing.T) {
 			name: "Metric not found",
 			args: args{
 				name:      "La",
-				valueType: GaugeType,
+				valueType: Gauge,
 			},
 			want: nil,
 			err:  apierror.NotFound,
@@ -63,7 +63,7 @@ func TestMetrics_Get(t *testing.T) {
 			name: "Metric with another type",
 			args: args{
 				name:      "Alloc",
-				valueType: CounterType,
+				valueType: Counter,
 			},
 			want: nil,
 			err:  apierror.NotFound,
@@ -83,10 +83,10 @@ func TestMetrics_Get(t *testing.T) {
 
 func TestMetrics_ResetPollCount(t *testing.T) {
 	metrics := MetricsMap{}
-	metrics.Update("PollCount", CounterType, 2)
+	metrics.Update("PollCount", Counter, 2)
 	t.Run("Reset poll count", func(t *testing.T) {
 		metrics.ResetPollCount()
-		metric, err := metrics.Get("PollCount", CounterType)
+		metric, err := metrics.Get("PollCount", Counter)
 
 		assert.EqualValues(t, apierror.NoError, err)
 		assert.True(t, reflect.DeepEqual(metric.Delta, utils.Ptr(int64(0))))
@@ -109,12 +109,12 @@ func TestMetrics_Update(t *testing.T) {
 			name: "Update gauge int",
 			args: args{
 				name:      "Alloc",
-				valueType: GaugeType,
+				valueType: Gauge,
 				value:     13,
 			},
 			want: utils.Ptr(Metric{
 				Name:  "Alloc",
-				MType: GaugeType,
+				MType: Gauge,
 				Value: utils.Ptr(float64(13)),
 			}),
 			err: apierror.NoError,
@@ -123,12 +123,12 @@ func TestMetrics_Update(t *testing.T) {
 			name: "Update gauge float",
 			args: args{
 				name:      "Alloc",
-				valueType: GaugeType,
+				valueType: Gauge,
 				value:     13.41,
 			},
 			want: utils.Ptr(Metric{
 				Name:  "Alloc",
-				MType: GaugeType,
+				MType: Gauge,
 				Value: utils.Ptr(13.41),
 			}),
 			err: apierror.NoError,
@@ -137,12 +137,12 @@ func TestMetrics_Update(t *testing.T) {
 			name: "Update counter int",
 			args: args{
 				name:      "PollCount",
-				valueType: CounterType,
+				valueType: Counter,
 				value:     1,
 			},
 			want: utils.Ptr(Metric{
 				Name:  "PollCount",
-				MType: CounterType,
+				MType: Counter,
 				Delta: utils.Ptr(int64(1)),
 			}),
 			err: apierror.NoError,
@@ -162,7 +162,7 @@ func TestMetrics_Update(t *testing.T) {
 			name: "Invalid value counter",
 			args: args{
 				name:      "PollCount",
-				valueType: CounterType,
+				valueType: Counter,
 				value:     1.34,
 			},
 			want: nil,
@@ -172,7 +172,7 @@ func TestMetrics_Update(t *testing.T) {
 			name: "Invalid value gauge",
 			args: args{
 				name:      "Alloc",
-				valueType: GaugeType,
+				valueType: Gauge,
 				value:     "",
 			},
 			want: nil,
@@ -207,7 +207,7 @@ func Test_getKey(t *testing.T) {
 			name: "Get key gauge",
 			args: args{
 				name:      "Alloc",
-				valueType: GaugeType,
+				valueType: Gauge,
 			},
 			want: "Alloc:gauge",
 		},
@@ -215,7 +215,7 @@ func Test_getKey(t *testing.T) {
 			name: "Get key counter",
 			args: args{
 				name:      "PollCount",
-				valueType: CounterType,
+				valueType: Counter,
 			},
 			want: "PollCount:counter",
 		},

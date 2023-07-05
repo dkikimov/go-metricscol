@@ -40,7 +40,7 @@ func TestUpdatePollCount(t *testing.T) {
 	UpdateMetrics(metrics)
 	UpdateMetrics(metrics)
 
-	pollCount, err := metrics.Get("PollCount", models.CounterType)
+	pollCount, err := metrics.Get("PollCount", models.Counter)
 	assert.EqualValues(t, apierror.NoError, err)
 	assert.Equal(t, pollCount.GetStringValue(), "5")
 }

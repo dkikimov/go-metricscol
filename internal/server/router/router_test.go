@@ -16,9 +16,9 @@ import (
 
 func TestHandlers_Get(t *testing.T) {
 	storage := memory.NewMemStorage()
-	storage.Update("Alloc", models.GaugeType, "123.4")
-	storage.Update("MemoryInUse", models.GaugeType, "593")
-	storage.Update("PollCount", models.CounterType, "1")
+	storage.Update("Alloc", models.Gauge, "123.4")
+	storage.Update("MemoryInUse", models.Gauge, "593")
+	storage.Update("PollCount", models.Counter, "1")
 
 	type fields struct {
 		Storage repository.Repository
@@ -86,9 +86,9 @@ func TestHandlers_Get(t *testing.T) {
 
 func TestHandlers_GetAll(t *testing.T) {
 	storage := memory.NewMemStorage()
-	storage.Update("Alloc", models.GaugeType, "123.4")
-	storage.Update("MemoryInUse", models.GaugeType, "593")
-	storage.Update("PollCount", models.CounterType, "1")
+	storage.Update("Alloc", models.Gauge, "123.4")
+	storage.Update("MemoryInUse", models.Gauge, "593")
+	storage.Update("PollCount", models.Counter, "1")
 
 	type want struct {
 		StatusCode int

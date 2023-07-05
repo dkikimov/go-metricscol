@@ -27,12 +27,12 @@ func (m MetricsMap) Get(name string, valueType MetricType) (*Metric, apierror.AP
 }
 
 func (m MetricsMap) Update(name string, valueType MetricType, value interface{}) apierror.APIError {
-	if valueType != GaugeType && valueType != CounterType {
+	if valueType != Gauge && valueType != Counter {
 		return apierror.UnknownMetricType
 	}
 
 	switch valueType {
-	case GaugeType:
+	case Gauge:
 		var floatValue float64
 		switch v := value.(type) {
 		case float32:
@@ -53,8 +53,8 @@ func (m MetricsMap) Update(name string, valueType MetricType, value interface{})
 			return apierror.InvalidValue
 		}
 
-		m[getKey(name, valueType)] = Metric{Name: name, MType: GaugeType, Value: utils.Ptr(floatValue)}
-	case CounterType:
+		m[getKey(name, valueType)] = Metric{Name: name, MType: Gauge, Value: utils.Ptr(floatValue)}
+	case Counter:
 		var intValue int64
 		switch v := value.(type) {
 		case int:
@@ -70,7 +70,7 @@ func (m MetricsMap) Update(name string, valueType MetricType, value interface{})
 		default:
 			return apierror.InvalidValue
 		}
-		prevMetric, _ := m.Get(name, CounterType)
+		prevMetric, _ := m.Get(name, Counter)
 		var prevVal int64
 		if prevMetric == nil {
 			prevVal = 0
@@ -78,7 +78,7 @@ func (m MetricsMap) Update(name string, valueType MetricType, value interface{})
 			prevVal = *prevMetric.Delta
 		}
 
-		m[getKey(name, valueType)] = Metric{Name: name, MType: CounterType, Delta: utils.Ptr(prevVal + intValue)}
+		m[getKey(name, valueType)] = Metric{Name: name, MType: Counter, Delta: utils.Ptr(prevVal + intValue)}
 	default:
 		return apierror.UnknownMetricType
 	}
@@ -87,15 +87,15 @@ func (m MetricsMap) Update(name string, valueType MetricType, value interface{})
 }
 
 func (m MetricsMap) UpdateWithStruct(metric *Metric) apierror.APIError {
-	if metric.MType != GaugeType && metric.MType != CounterType {
+	if metric.MType != Gauge && metric.MType != Counter {
 		return apierror.UnknownMetricType
 	}
 
 	switch metric.MType {
-	case GaugeType:
+	case Gauge:
 		m[getKey(metric.Name, metric.MType)] = *metric
-	case CounterType:
-		prevMetric, _ := m.Get(metric.Name, CounterType)
+	case Counter:
+		prevMetric, _ := m.Get(metric.Name, Counter)
 		var prevVal, currentVal int64
 		if prevMetric == nil {
 			prevVal = 0
@@ -109,7 +109,7 @@ func (m MetricsMap) UpdateWithStruct(metric *Metric) apierror.APIError {
 			currentVal = *metric.Delta
 		}
 
-		m[getKey(metric.Name, metric.MType)] = Metric{Name: metric.Name, MType: CounterType, Delta: utils.Ptr(prevVal + currentVal)}
+		m[getKey(metric.Name, metric.MType)] = Metric{Name: metric.Name, MType: Counter, Delta: utils.Ptr(prevVal + currentVal)}
 	default:
 		return apierror.UnknownMetricType
 	}
@@ -118,5 +118,5 @@ func (m MetricsMap) UpdateWithStruct(metric *Metric) apierror.APIError {
 }
 
 func (m MetricsMap) ResetPollCount() {
-	m[getKey("PollCount", CounterType)] = Metric{Name: "PollCount", MType: CounterType, Delta: utils.Ptr(int64(0))}
+	m[getKey("PollCount", Counter)] = Metric{Name: "PollCount", MType: Counter, Delta: utils.Ptr(int64(0))}
 }

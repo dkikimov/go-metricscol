@@ -36,18 +36,18 @@ func NewMemStorage() *MemStorage {
 
 func (memStorage *MemStorage) Update(name string, valueType models.MetricType, value string) apierror.APIError {
 	switch valueType {
-	case models.GaugeType:
+	case models.Gauge:
 		floatVal, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return apierror.NumberParse
 		}
-		memStorage.metrics.Update(name, models.GaugeType, floatVal)
-	case models.CounterType:
+		memStorage.metrics.Update(name, models.Gauge, floatVal)
+	case models.Counter:
 		intVal, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			return apierror.NumberParse
 		}
-		memStorage.metrics.Update(name, models.CounterType, intVal)
+		memStorage.metrics.Update(name, models.Counter, intVal)
 	default:
 		return apierror.UnknownMetricType
 	}
