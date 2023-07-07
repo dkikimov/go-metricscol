@@ -16,9 +16,9 @@ type PostURLData struct {
 	MetricValue string
 }
 
-func ParsePostURLData(r *http.Request) (*PostURLData, apierror.APIError) {
+func ParsePostURLData(r *http.Request) (*PostURLData, error) {
 	getData, apiError := ParseGetURLData(r)
-	if apiError != apierror.NoError {
+	if apiError != nil {
 		return nil, apiError
 	}
 
@@ -33,10 +33,10 @@ func ParsePostURLData(r *http.Request) (*PostURLData, apierror.APIError) {
 	}
 	postData.MetricValue = value
 
-	return &postData, apierror.NoError
+	return &postData, nil
 }
 
-func ParseGetURLData(r *http.Request) (*GetURLData, apierror.APIError) {
+func ParseGetURLData(r *http.Request) (*GetURLData, error) {
 	urlData := GetURLData{}
 	switch chi.URLParam(r, "type") {
 	case "gauge":
@@ -54,5 +54,5 @@ func ParseGetURLData(r *http.Request) (*GetURLData, apierror.APIError) {
 	}
 	urlData.MetricName = name
 
-	return &urlData, apierror.NoError
+	return &urlData, nil
 }

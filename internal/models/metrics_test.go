@@ -20,7 +20,7 @@ func TestMetrics_Get(t *testing.T) {
 		name string
 		args args
 		want Metric
-		err  apierror.APIError
+		err  error
 	}{
 		{
 			name: "Get metric gauge",
@@ -32,7 +32,7 @@ func TestMetrics_Get(t *testing.T) {
 				Name:  "Alloc",
 				Value: 13,
 			},
-			err: apierror.NoError,
+			err: nil,
 		},
 		{
 			name: "Get metric counter",
@@ -44,7 +44,7 @@ func TestMetrics_Get(t *testing.T) {
 				Name:  "PollCount",
 				Value: 1,
 			},
-			err: apierror.NoError,
+			err: nil,
 		},
 		{
 			name: "Metric not found",
@@ -76,13 +76,15 @@ func TestMetrics_Get(t *testing.T) {
 }
 
 func TestMetrics_ResetPollCount(t *testing.T) {
-	metrics := Metrics{}
-	metrics.Update("PollCount", CounterType, 2)
 	t.Run("Reset poll count", func(t *testing.T) {
+		metrics := Metrics{}
+
+		require.NoError(t, metrics.Update("PollCount", CounterType, 2))
+
 		metrics.ResetPollCount()
 		metric, err := metrics.Get("PollCount", CounterType)
 
-		assert.EqualValues(t, apierror.NoError, err)
+		assert.EqualValues(t, nil, err)
 		assert.EqualValues(t, 0, metric.(Counter).Value)
 	})
 }
@@ -97,7 +99,7 @@ func TestMetrics_Update(t *testing.T) {
 		name string
 		args args
 		want Metric
-		err  apierror.APIError
+		err  error
 	}{
 		{
 			name: "Update gauge int",
@@ -110,7 +112,7 @@ func TestMetrics_Update(t *testing.T) {
 				Name:  "Alloc",
 				Value: 13,
 			},
-			err: apierror.NoError,
+			err: nil,
 		},
 		{
 			name: "Update gauge float",
@@ -123,7 +125,7 @@ func TestMetrics_Update(t *testing.T) {
 				Name:  "Alloc",
 				Value: 13.41,
 			},
-			err: apierror.NoError,
+			err: nil,
 		},
 		{
 			name: "Update counter int",
@@ -136,7 +138,7 @@ func TestMetrics_Update(t *testing.T) {
 				Name:  "PollCount",
 				Value: 1,
 			},
-			err: apierror.NoError,
+			err: nil,
 		},
 		{
 			name: "Unknown type",

@@ -9,13 +9,13 @@ import (
 
 func (p *Handlers) Update(w http.ResponseWriter, r *http.Request) {
 	urlData, err := models.ParsePostURLData(r)
-	if err != apierror.NoError {
-		w.WriteHeader(err.StatusCode())
+	if err != nil {
+		apierror.WriteHeader(w, err)
 		return
 	}
 
-	if err := p.Storage.Update(urlData.MetricName, urlData.MetricType, urlData.MetricValue); err != apierror.NoError {
-		w.WriteHeader(err.StatusCode())
+	if err = p.Storage.Update(urlData.MetricName, urlData.MetricType, urlData.MetricValue); err != nil {
+		apierror.WriteHeader(w, err)
 		return
 	}
 

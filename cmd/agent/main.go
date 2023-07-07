@@ -24,7 +24,7 @@ func main() {
 		case <-reportTimer.C:
 			log.Println("Send to server")
 			if err := agent.SendMetricsToServer("http://127.0.0.1:8080", metrics); err != nil {
-				log.Fatalf(err.Error())
+				log.Printf("Error while sending metrics to server: %s", err)
 			}
 		}
 	}

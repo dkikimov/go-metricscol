@@ -3,7 +3,6 @@ package agent
 import (
 	"github.com/stretchr/testify/assert"
 	"go-metricscol/internal/models"
-	"go-metricscol/internal/server/apierror"
 	"testing"
 )
 
@@ -41,6 +40,6 @@ func TestUpdatePollCount(t *testing.T) {
 	UpdateMetrics(metrics)
 
 	pollCount, err := metrics.Get("PollCount", models.CounterType)
-	assert.EqualValues(t, apierror.NoError, err)
+	assert.EqualValues(t, nil, err)
 	assert.Equal(t, pollCount.GetStringValue(), "5")
 }

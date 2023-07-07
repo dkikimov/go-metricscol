@@ -4,7 +4,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
-	"net/http"
 	"testing"
 )
 
@@ -20,7 +19,7 @@ func TestMemStorage_Update(t *testing.T) {
 		name    string
 		storage *MemStorage
 		args    args
-		want    apierror.APIError
+		err     error
 	}{
 		{
 			name:    "Gauge float",
@@ -30,7 +29,7 @@ func TestMemStorage_Update(t *testing.T) {
 				value:     "120.123",
 				valueType: models.GaugeType,
 			},
-			want: http.StatusOK,
+			err: nil,
 		},
 		{
 			name:    "Counter int",
@@ -40,7 +39,7 @@ func TestMemStorage_Update(t *testing.T) {
 				value:     "2",
 				valueType: models.CounterType,
 			},
-			want: http.StatusOK,
+			err: nil,
 		},
 		{
 			name:    "Value is not number",
@@ -50,7 +49,7 @@ func TestMemStorage_Update(t *testing.T) {
 				value:     "hello",
 				valueType: models.CounterType,
 			},
-			want: http.StatusBadRequest,
+			err: apierror.NumberParse,
 		},
 		{
 			name:    "Type and value mismatch",
@@ -60,12 +59,13 @@ func TestMemStorage_Update(t *testing.T) {
 				value:     "123.245",
 				valueType: models.CounterType,
 			},
-			want: http.StatusBadRequest,
+			err: apierror.NumberParse,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.storage.Update(tt.args.key, tt.args.valueType, tt.args.value), tt.want)
+
+			assert.Equal(t, tt.err, tt.storage.Update(tt.args.key, tt.args.valueType, tt.args.value))
 		})
 	}
 }
@@ -83,7 +83,7 @@ func TestMemStorage_Get(t *testing.T) {
 		name string
 		args args
 		want models.Metric
-		err  apierror.APIError
+		err  error
 	}{
 		{
 			name: "Get metric",
@@ -95,7 +95,7 @@ func TestMemStorage_Get(t *testing.T) {
 				Name:  "Alloc",
 				Value: 101.42,
 			},
-			err: apierror.NoError,
+			err: nil,
 		},
 		{
 			name: "Get metric with another type",

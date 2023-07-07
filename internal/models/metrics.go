@@ -16,16 +16,16 @@ func getKey(name string, valueType MetricType) string {
 	return key.String()
 }
 
-func (m Metrics) Get(name string, valueType MetricType) (Metric, apierror.APIError) {
+func (m Metrics) Get(name string, valueType MetricType) (Metric, error) {
 	metric, ok := m[getKey(name, valueType)]
 	if !ok {
 		return nil, apierror.NotFound
 	}
 
-	return metric, apierror.NoError
+	return metric, nil
 }
 
-func (m Metrics) Update(name string, valueType MetricType, value interface{}) apierror.APIError {
+func (m Metrics) Update(name string, valueType MetricType, value interface{}) error {
 	if valueType != GaugeType && valueType != CounterType {
 		return apierror.UnknownMetricType
 	}
@@ -77,7 +77,7 @@ func (m Metrics) Update(name string, valueType MetricType, value interface{}) ap
 		return apierror.UnknownMetricType
 	}
 
-	return apierror.NoError
+	return nil
 }
 
 func (m Metrics) ResetPollCount() {
