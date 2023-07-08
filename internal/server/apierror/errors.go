@@ -11,7 +11,6 @@ type APIError struct {
 	Message    string
 }
 
-// Write custom api error
 func (apiError APIError) Error() string {
 	return apiError.Message
 }
@@ -24,13 +23,7 @@ func WriteHeader(w http.ResponseWriter, err error) {
 	}
 }
 
-//TODO: Стоит ли писать тесты для подобных файлов?
-
 var (
-	NotEnoughArguments = APIError{
-		StatusCode: http.StatusNotImplemented,
-		Message:    "not enough arguments",
-	}
 	UnknownMetricType = APIError{
 		StatusCode: http.StatusNotImplemented,
 		Message:    "unknown metric type",

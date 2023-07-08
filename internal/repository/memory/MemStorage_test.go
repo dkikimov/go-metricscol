@@ -72,8 +72,8 @@ func TestMemStorage_Update(t *testing.T) {
 
 func TestMemStorage_Get(t *testing.T) {
 	metrics := models.Metrics{}
-	metrics.Update("Alloc", models.GaugeType, 101.42)
-	metrics.Update("PollCount", models.CounterType, 2)
+	assert.NoError(t, metrics.Update("Alloc", models.GaugeType, 101.42))
+	assert.NoError(t, metrics.Update("PollCount", models.CounterType, 2))
 
 	type args struct {
 		key       string
@@ -130,8 +130,8 @@ func TestMemStorage_Get(t *testing.T) {
 
 func TestMemStorage_GetAll(t *testing.T) {
 	metrics := models.Metrics{}
-	metrics.Update("Alloc", models.GaugeType, 101.42)
-	metrics.Update("PollCount", models.CounterType, 2)
+	assert.NoError(t, metrics.Update("Alloc", models.GaugeType, 101.42))
+	assert.NoError(t, metrics.Update("PollCount", models.CounterType, 2))
 
 	type fields struct {
 		metrics models.Metrics
