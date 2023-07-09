@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/require"
 	"go-metricscol/internal/models"
@@ -20,7 +21,7 @@ func TestHandlers_Update(t *testing.T) {
 	tests := []struct {
 		name           string
 		args           args
-		wantStatusCode int // status code
+		wantStatusCode int
 	}{
 		{
 			name: "Without name and value counter",
@@ -78,7 +79,7 @@ func TestHandlers_Update(t *testing.T) {
 				Storage: memory.NewMemStorage(),
 			}
 
-			req, err := http.NewRequest(http.MethodPost, "/value/{type}/{name}", nil)
+			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/value/%s/%s/%s", tt.args.metricType, tt.args.metricName, tt.args.metricValue), nil)
 			if err != nil {
 				t.Fatal(err)
 			}

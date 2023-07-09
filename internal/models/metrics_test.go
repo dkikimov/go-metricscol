@@ -9,8 +9,9 @@ import (
 
 func TestMetrics_Get(t *testing.T) {
 	metrics := Metrics{}
-	metrics.Update("Alloc", GaugeType, 13)
-	metrics.Update("PollCount", CounterType, 1)
+
+	require.NoError(t, metrics.Update("Alloc", GaugeType, 13))
+	require.NoError(t, metrics.Update("PollCount", CounterType, 1))
 
 	type args struct {
 		name      string

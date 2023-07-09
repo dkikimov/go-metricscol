@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -70,7 +71,7 @@ func TestHandlers_Get(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, err := http.NewRequest("GET", "/value/{type}/{name}", nil)
+			req, err := http.NewRequest("GET", fmt.Sprintf("/value/%s/%s", tt.args.metricType, tt.args.metricName), nil)
 			if err != nil {
 				t.Fatal(err)
 			}
