@@ -17,7 +17,7 @@ func contains(s []string, str string) bool {
 }
 
 func TestUpdateMetrics(t *testing.T) {
-	metrics := models.Metrics{}
+	metrics := models.MetricsMap{}
 
 	metricsMustBeUpdated := []string{"BuckHashSys", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapSys", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "OtherSys", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue", "PollCount", "Alloc"}
 	t.Run("UpdateMetrics", func(t *testing.T) {
@@ -32,14 +32,14 @@ func TestUpdateMetrics(t *testing.T) {
 }
 
 func TestUpdatePollCount(t *testing.T) {
-	metrics := models.Metrics{}
+	metrics := models.MetricsMap{}
 	UpdateMetrics(metrics)
 	UpdateMetrics(metrics)
 	UpdateMetrics(metrics)
 	UpdateMetrics(metrics)
 	UpdateMetrics(metrics)
 
-	pollCount, err := metrics.Get("PollCount", models.CounterType)
+	pollCount, err := metrics.Get("PollCount", models.Counter)
 	assert.EqualValues(t, nil, err)
 	assert.Equal(t, pollCount.GetStringValue(), "5")
 }

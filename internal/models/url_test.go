@@ -44,29 +44,29 @@ func TestParseGetURLData(t *testing.T) {
 			name: "Get metric gauge",
 			args: urlParams{
 				metricName: "Alloc",
-				metricType: GaugeType,
+				metricType: Gauge,
 			},
 			want: &GetURLData{
 				MetricName: "Alloc",
-				MetricType: GaugeType,
+				MetricType: Gauge,
 			},
 		},
 		{
 			name: "Get metric counter",
 			args: urlParams{
 				metricName: "PollCount",
-				metricType: CounterType,
+				metricType: Counter,
 			},
 			want: &GetURLData{
 				MetricName: "PollCount",
-				MetricType: CounterType,
+				MetricType: Counter,
 			},
 		},
 		{
 			name: "Empty name",
 			args: urlParams{
 				metricName: "",
-				metricType: GaugeType,
+				metricType: Gauge,
 			},
 			want:    nil,
 			wantErr: apierror.EmptyArguments,
@@ -93,13 +93,13 @@ func TestParsePostURLData(t *testing.T) {
 			name: "Post metric gauge",
 			args: urlParams{
 				metricName:  "Alloc",
-				metricType:  GaugeType,
+				metricType:  Gauge,
 				metricValue: "13",
 			},
 			want: &PostURLData{
 				GetURLData: GetURLData{
 					MetricName: "Alloc",
-					MetricType: GaugeType,
+					MetricType: Gauge,
 				},
 				MetricValue: "13",
 			},
@@ -108,13 +108,13 @@ func TestParsePostURLData(t *testing.T) {
 			name: "Post metric counter",
 			args: urlParams{
 				metricName:  "PollCount",
-				metricType:  CounterType,
+				metricType:  Counter,
 				metricValue: "1",
 			},
 			want: &PostURLData{
 				GetURLData: GetURLData{
 					MetricName: "PollCount",
-					MetricType: CounterType,
+					MetricType: Counter,
 				},
 				MetricValue: "1",
 			},
@@ -123,7 +123,7 @@ func TestParsePostURLData(t *testing.T) {
 			name: "Empty name",
 			args: urlParams{
 				metricName:  "",
-				metricType:  GaugeType,
+				metricType:  Gauge,
 				metricValue: "1",
 			},
 			want:    nil,
@@ -133,7 +133,7 @@ func TestParsePostURLData(t *testing.T) {
 			name: "Empty value",
 			args: urlParams{
 				metricName:  "Alloc",
-				metricType:  GaugeType,
+				metricType:  Gauge,
 				metricValue: "",
 			},
 			want:    nil,

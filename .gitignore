@@ -25,3 +25,4 @@ vendor/
 .vscode
 
 /devopstest-darwin-arm64
+/requests.http

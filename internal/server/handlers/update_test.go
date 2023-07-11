@@ -1,14 +1,18 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository/memory"
+	"go-metricscol/internal/utils"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 )
 
@@ -26,14 +30,14 @@ func TestHandlers_Update(t *testing.T) {
 		{
 			name: "Without name and value counter",
 			args: args{
-				metricType: models.CounterType.String(),
+				metricType: models.Counter.String(),
 			},
 			wantStatusCode: http.StatusNotFound,
 		},
 		{
 			name: "Without value counter",
 			args: args{
-				metricType: models.CounterType.String(),
+				metricType: models.Counter.String(),
 				metricName: "Alloc",
 			},
 			wantStatusCode: http.StatusNotFound,
@@ -41,14 +45,14 @@ func TestHandlers_Update(t *testing.T) {
 		{
 			name: "Without name and value gauge",
 			args: args{
-				metricType: models.GaugeType.String(),
+				metricType: models.Gauge.String(),
 			},
 			wantStatusCode: http.StatusNotFound,
 		},
 		{
 			name: "Without value gauge",
 			args: args{
-				metricType: models.GaugeType.String(),
+				metricType: models.Gauge.String(),
 				metricName: "Alloc",
 			},
 			wantStatusCode: http.StatusNotFound,
@@ -56,7 +60,7 @@ func TestHandlers_Update(t *testing.T) {
 		{
 			name: "Wrong value type",
 			args: args{
-				metricType:  models.GaugeType.String(),
+				metricType:  models.Gauge.String(),
 				metricName:  "PollCount",
 				metricValue: "hello",
 			},
@@ -65,7 +69,7 @@ func TestHandlers_Update(t *testing.T) {
 		{
 			name: "Metric name and type mismatch counter",
 			args: args{
-				metricType:  models.CounterType.String(),
+				metricType:  models.Counter.String(),
 				metricName:  "Alloc",
 				metricValue: "1.23",
 			},
@@ -97,6 +101,75 @@ func TestHandlers_Update(t *testing.T) {
 			handler.ServeHTTP(rr, req)
 
 			require.Equal(t, tt.wantStatusCode, rr.Code)
+		})
+	}
+}
+
+func TestHandlers_UpdateJSON(t *testing.T) {
+	type want struct {
+		Body       models.Metric
+		StatusCode int
+	}
+
+	tests := []struct {
+		name string
+		body string
+		want want
+	}{
+		{
+			name: "Update gauge",
+			body: `{"id": "Alloc", "type": "gauge", "value": 13.1}`,
+			want: want{
+				Body: models.Metric{
+					Name:  "Alloc",
+					MType: models.Gauge,
+					Value: utils.Ptr(13.1),
+				},
+				StatusCode: http.StatusOK,
+			},
+		},
+		{
+			name: "Update counter",
+			body: `{"id": "PollCount", "type": "counter", "delta": 13}`,
+			want: want{
+				Body: models.Metric{
+					Name:  "PollCount",
+					MType: models.Counter,
+					Delta: utils.Ptr(int64(13)),
+				},
+				StatusCode: http.StatusOK,
+			},
+		},
+		{
+			name: "Update unknown type",
+			body: `{"id": "Alloc", "type": "unknown", "value": 13.1}`,
+			want: want{
+				StatusCode: http.StatusNotImplemented,
+			},
+		},
+	}
+	for _, tt := range tests {
+		storage := memory.NewMemStorage()
+		h := Handlers{Storage: storage}
+
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodPost, "/update/", bytes.NewReader([]byte(tt.body)))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(h.UpdateJSON)
+
+			handler.ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.want.StatusCode, rr.Code)
+			if rr.Code == http.StatusOK {
+				got := storage.GetAll()
+				require.Equal(t, 1, len(got))
+
+				assert.True(t, reflect.DeepEqual(tt.want.Body, got[0]))
+			}
 		})
 	}
 }
