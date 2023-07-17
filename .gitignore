@@ -26,3 +26,4 @@ vendor/
 
 /devopstest-darwin-arm64
 /requests.http
+/statictest-darwin-arm64

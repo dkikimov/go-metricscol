@@ -1,20 +1,23 @@
 package main
 
 import (
+	"github.com/caarlos0/env/v9"
 	"go-metricscol/internal/agent"
 	"go-metricscol/internal/models"
 	"log"
 	"time"
 )
 
-const pollInterval time.Duration = 2 * time.Second
-const reportInterval time.Duration = 10 * time.Second
-
 func main() {
+	cfg := agent.Config{}
+	if err := env.Parse(&cfg); err != nil {
+		log.Fatalf("Couldn't parse config with error: %s", err)
+	}
+
 	metrics := models.MetricsMap{}
 
-	pollTimer := time.NewTicker(pollInterval)
-	reportTimer := time.NewTicker(reportInterval)
+	pollTimer := time.NewTicker(cfg.PollInterval)
+	reportTimer := time.NewTicker(cfg.ReportInterval)
 
 	for {
 		select {
@@ -22,8 +25,8 @@ func main() {
 			log.Println("Update metrics")
 			agent.UpdateMetrics(metrics)
 		case <-reportTimer.C:
-			log.Println("Send to server")
-			if err := agent.SendMetricsToServer("http://127.0.0.1:8080", metrics); err != nil {
+			log.Printf("Send metrics to %s\n", cfg.Address)
+			if err := agent.SendMetricsToServer(cfg.Address, metrics); err != nil {
 				log.Printf("Error while sending metrics to server: %s", err)
 			}
 		}
