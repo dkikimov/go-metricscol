@@ -7,14 +7,20 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"runtime"
 )
 
 func SendMetricsToServer(addr string, m models.MetricsMap) error {
 	for _, metric := range m {
-		postURL := fmt.Sprintf("%s/update/%s/%s/%s", addr, metric.MType, metric.Name, metric.GetStringValue())
-		log.Println(postURL)
-		resp, err := http.Post(postURL, "text/plain", nil)
+		postURL := url.URL{
+			Scheme: "http",
+			Host:   addr,
+			Path:   fmt.Sprintf("/update/%s/%s/%s", metric.MType, metric.Name, metric.GetStringValue()),
+		}
+
+		log.Println(postURL.String())
+		resp, err := http.Post(postURL.String(), "text/plain", nil)
 
 		if err != nil {
 			return fmt.Errorf("couldn't post url %s", postURL)
