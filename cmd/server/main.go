@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/caarlos0/env/v9"
+	"go-metricscol/internal/repository/memory"
 	"go-metricscol/internal/server"
 	"log"
 )
@@ -13,6 +14,8 @@ func main() {
 	}
 
 	log.Printf("Starting server on %s", cfg.Address)
-	srv := server.New(cfg.Address)
-	log.Fatal(srv.ListenAndServe())
+
+	s := server.NewServer(cfg, memory.NewMemStorage())
+
+	log.Fatal(s.ListenAndServe())
 }

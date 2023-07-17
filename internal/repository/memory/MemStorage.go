@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"encoding/json"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
 	"sort"
@@ -11,6 +12,14 @@ import (
 type MemStorage struct {
 	metrics models.MetricsMap
 	mu      sync.Mutex
+}
+
+func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
+	return json.Unmarshal(bytes, &memStorage.metrics)
+}
+
+func (memStorage *MemStorage) MarshalJSON() ([]byte, error) {
+	return json.Marshal(memStorage.metrics)
 }
 
 func (memStorage *MemStorage) UpdateWithStruct(metric *models.Metric) error {

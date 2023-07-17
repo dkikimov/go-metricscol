@@ -1,15 +1,41 @@
 package server
 
 import (
+	"go-metricscol/internal/repository"
 	"go-metricscol/internal/server/router"
+	"log"
 	"net/http"
+	"os"
 )
 
-func New(addr string) *http.Server {
-	r := router.New()
+type Server struct {
+	Config     Config
+	Repository repository.Repository
+}
 
-	return &http.Server{
-		Addr:    addr,
+func NewServer(config Config, repository repository.Repository) *Server {
+	return &Server{Config: config, Repository: repository}
+}
+
+func (s Server) ListenAndServe() error {
+	r := router.NewWithStorage(s.Repository)
+
+	serv := http.Server{
+		Addr:    s.Config.Address,
 		Handler: r,
 	}
+
+	if s.Config.Restore {
+		if err := s.RestoreFromDisk(); err != nil {
+			if !os.IsNotExist(err) {
+				log.Printf("error while restoring from disk: %s", err)
+			}
+		}
+	}
+
+	if len(s.Config.StoreFile) != 0 {
+		go s.enableSavingToDisk()
+	}
+
+	return serv.ListenAndServe()
 }
