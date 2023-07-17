@@ -23,7 +23,7 @@ func SendMetricsToServer(addr string, m models.MetricsMap) error {
 		resp, err := http.Post(postURL.String(), "text/plain", nil)
 
 		if err != nil {
-			return fmt.Errorf("couldn't post url %s", postURL)
+			return fmt.Errorf("couldn't post url %s", postURL.String())
 		}
 
 		if err := resp.Body.Close(); err != nil {
@@ -39,6 +39,7 @@ func UpdateMetrics(metrics models.MetricsMap) {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
 
+	// TODO: Стоит ли хенлдить ошибки?
 	metrics.Update("Alloc", models.Gauge, float64(stats.Alloc))
 	metrics.Update("BuckHashSys", models.Gauge, float64(stats.BuckHashSys))
 	metrics.Update("BuckHashSys", models.Gauge, float64(stats.BuckHashSys))
