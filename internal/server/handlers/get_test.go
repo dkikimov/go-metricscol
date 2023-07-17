@@ -240,10 +240,10 @@ func TestHandlers_GetJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			metricJson, err := json.Marshal(tt.body)
+			metricJSON, err := json.Marshal(tt.body)
 			require.NoError(t, err)
 
-			req, err := http.NewRequest(http.MethodPost, "/value/", bytes.NewReader(metricJson))
+			req, err := http.NewRequest(http.MethodPost, "/value/", bytes.NewReader(metricJSON))
 			if err != nil {
 				t.Fatal(err)
 			}
