@@ -1,10 +1,16 @@
 package server
 
-import "time"
+import (
+	"time"
+)
 
 type Config struct {
-	Address       string        `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
-	StoreInterval time.Duration `env:"STORE_INTERVAL" envDefault:"300s"`
-	StoreFile     string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
-	Restore       bool          `env:"RESTORE" envDefault:"true"`
+	Address       string        `env:"ADDRESS"`
+	StoreInterval time.Duration `env:"STORE_INTERVAL"`
+	StoreFile     string        `env:"STORE_FILE"`
+	Restore       bool          `env:"RESTORE"`
+}
+
+func NewConfig(address string, storeInterval time.Duration, storeFile string, restore bool) *Config {
+	return &Config{Address: address, StoreInterval: storeInterval, StoreFile: storeFile, Restore: restore}
 }

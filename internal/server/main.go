@@ -8,11 +8,11 @@ import (
 )
 
 type Server struct {
-	Config     Config
+	Config     *Config
 	Repository repository.Repository
 }
 
-func NewServer(config Config, repository repository.Repository) *Server {
+func NewServer(config *Config, repository repository.Repository) *Server {
 	return &Server{Config: config, Repository: repository}
 }
 

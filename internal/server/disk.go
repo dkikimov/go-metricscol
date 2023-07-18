@@ -25,6 +25,7 @@ func (s Server) saveToDisk() error {
 		return err
 	}
 
+	// TODO: Нужно ли ловить ошибку?
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)

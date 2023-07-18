@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/caarlos0/env/v9"
 	"go-metricscol/internal/agent"
 	"go-metricscol/internal/models"
@@ -8,11 +9,14 @@ import (
 	"time"
 )
 
+var (
+	address        string
+	reportInterval time.Duration
+	pollInterval   time.Duration
+)
+
 func main() {
-	cfg := agent.Config{}
-	if err := env.Parse(&cfg); err != nil {
-		log.Fatalf("Couldn't parse config with error: %s", err)
-	}
+	cfg := parseConfig()
 
 	metrics := models.MetricsMap{}
 
@@ -31,4 +35,20 @@ func main() {
 			}
 		}
 	}
+}
+
+func init() {
+	flag.StringVar(&address, "a", "127.0.0.1:8080", "Address to listen")
+	flag.DurationVar(&reportInterval, "r", 10*time.Second, "Interval to report metrics")
+	flag.DurationVar(&pollInterval, "p", 2*time.Second, "Interval to poll metrics")
+}
+
+func parseConfig() *agent.Config {
+	flag.Parse()
+	config := agent.NewConfig(address, reportInterval, pollInterval)
+
+	if err := env.Parse(config); err != nil {
+		log.Fatalf("Couldn't parse config with error: %s", err)
+	}
+	return config
 }
