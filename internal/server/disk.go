@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"os"
 	"time"
 )
@@ -11,14 +11,15 @@ func (s Server) enableSavingToDisk() {
 	ticker := time.NewTicker(s.Config.StoreInterval)
 
 	for range ticker.C {
-		fmt.Println("Saving to disk")
 		if err := s.saveToDisk(); err != nil {
-			fmt.Printf("Couldn't save metrics to disk with error: %s", err)
+			log.Printf("Couldn't save metrics to disk with error: %s", err)
 		}
 	}
 }
 
 func (s Server) saveToDisk() error {
+	log.Printf("saving to disk")
+
 	file, err := os.OpenFile(s.Config.StoreFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
 	if err != nil {
 		return err
@@ -34,7 +35,7 @@ func (s Server) saveToDisk() error {
 	return nil
 }
 
-func (s Server) RestoreFromDisk() error {
+func (s Server) restoreFromDisk() error {
 	file, err := os.OpenFile(s.Config.StoreFile, os.O_RDONLY|os.O_SYNC, 0777)
 	if err != nil {
 		return err

@@ -11,7 +11,7 @@ import (
 
 type MemStorage struct {
 	metrics models.MetricsMap
-	mu      sync.Mutex
+	mu      sync.RWMutex
 }
 
 func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
