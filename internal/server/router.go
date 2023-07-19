@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"go-metricscol/internal/repository"
 	"go-metricscol/internal/server/handlers"
 	"log"
@@ -25,6 +26,8 @@ func (s Server) newRouter(storage repository.Repository) chi.Router {
 	}
 
 	r := chi.NewRouter()
+	r.Use(middleware.Compress(5, "text/html", "text/css", "application/javascript", "application/json", "text/plain", "text/xml"))
+
 	saveToDisk := s.Config.StoreInterval == 0 && len(s.Config.StoreFile) != 0
 
 	r.Post("/update/{type}/{name}/{value}", s.diskSaverHandler(processors.Update, saveToDisk))

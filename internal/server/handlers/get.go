@@ -23,6 +23,7 @@ func (p *Handlers) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "text/plain")
 	if _, err := w.Write([]byte(metric.GetStringValue())); err != nil {
 		log.Printf("Couldn't write response")
 	}
@@ -65,6 +66,7 @@ func (p *Handlers) GetJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *Handlers) GetAll(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
 	for _, v := range p.Storage.GetAll() {
 		_, err := w.Write([]byte(fmt.Sprintf("Key: %s, value: %s, type: %s \n", v.Name, v.GetStringValue(), v.MType)))
 		if err != nil {
