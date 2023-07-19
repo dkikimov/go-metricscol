@@ -31,6 +31,7 @@ func (p *Handlers) Get(w http.ResponseWriter, r *http.Request) {
 
 func (p *Handlers) GetJSON(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
+
 	if err != nil {
 		http.Error(w, "couldn't read body", http.StatusInternalServerError)
 		return
