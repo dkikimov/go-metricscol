@@ -67,7 +67,7 @@ func (p *Handlers) GetJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *Handlers) GetAll(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Type", "text/html")
 	for _, v := range p.Storage.GetAll() {
 		_, err := w.Write([]byte(fmt.Sprintf("Key: %s, value: %s, type: %s \n", v.Name, v.GetStringValue(), v.MType)))
 		if err != nil {
