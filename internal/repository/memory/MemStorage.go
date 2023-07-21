@@ -10,7 +10,7 @@ import (
 )
 
 type MemStorage struct {
-	metrics models.MetricsMap
+	metrics models.Metrics
 	mu      sync.RWMutex
 }
 
@@ -23,6 +23,9 @@ func (memStorage *MemStorage) MarshalJSON() ([]byte, error) {
 }
 
 func (memStorage *MemStorage) UpdateWithStruct(metric *models.Metric) error {
+	memStorage.mu.Lock()
+	defer memStorage.mu.Unlock()
+
 	return memStorage.metrics.UpdateWithStruct(metric)
 }
 
@@ -30,8 +33,8 @@ func (memStorage *MemStorage) GetAll() []models.Metric {
 	memStorage.mu.Lock()
 	defer memStorage.mu.Unlock()
 
-	kv := make([]models.Metric, 0, len(memStorage.metrics))
-	for _, value := range memStorage.metrics {
+	kv := make([]models.Metric, 0, len(memStorage.metrics.Collection))
+	for _, value := range memStorage.metrics.Collection {
 		kv = append(kv, value)
 	}
 
@@ -49,7 +52,7 @@ func (memStorage *MemStorage) Get(key string, valueType models.MetricType) (*mod
 }
 
 func NewMemStorage() *MemStorage {
-	return &MemStorage{metrics: models.MetricsMap{}}
+	return &MemStorage{metrics: models.NewMetrics()}
 }
 
 func (memStorage *MemStorage) Update(name string, valueType models.MetricType, value string) error {

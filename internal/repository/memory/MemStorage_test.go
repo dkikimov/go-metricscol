@@ -2,9 +2,11 @@ package memory
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
 	"go-metricscol/internal/utils"
+	"os"
 	"reflect"
 	"testing"
 )
@@ -73,9 +75,9 @@ func TestMemStorage_Update(t *testing.T) {
 }
 
 func TestMemStorage_Get(t *testing.T) {
-	metrics := models.MetricsMap{}
-	assert.NoError(t, metrics.Update("Alloc", models.Gauge, 101.42))
-	assert.NoError(t, metrics.Update("PollCount", models.Counter, 2))
+	metrics := models.NewMetrics()
+	require.NoError(t, metrics.Update("Alloc", models.Gauge, 101.42))
+	require.NoError(t, metrics.Update("PollCount", models.Counter, 2))
 
 	type args struct {
 		key       string
@@ -132,12 +134,14 @@ func TestMemStorage_Get(t *testing.T) {
 }
 
 func TestMemStorage_GetAll(t *testing.T) {
-	metrics := models.MetricsMap{}
-	assert.NoError(t, metrics.Update("Alloc", models.Gauge, 101.42))
-	assert.NoError(t, metrics.Update("PollCount", models.Counter, 2))
+	metrics := models.NewMetrics()
+	require.NoError(t, metrics.Update("Alloc", models.Gauge, 101.42))
+	require.NoError(t, metrics.Update("PollCount", models.Counter, 2))
+
+	require.NoError(t, os.Setenv("KEY", ""))
 
 	type fields struct {
-		metrics models.MetricsMap
+		metrics models.Metrics
 	}
 	tests := []struct {
 		name   string

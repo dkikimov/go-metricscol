@@ -11,12 +11,12 @@ import (
 	"runtime"
 )
 
-func SendMetricsToServer(addr string, m models.MetricsMap) error {
-	for _, metric := range m {
+func SendMetricsToServer(addr string, m *models.Metrics) error {
+	for _, metric := range m.Collection {
 		postURL := url.URL{
 			Scheme: "http",
 			Host:   addr,
-			Path:   fmt.Sprintf("/update/%s/%s/%s", metric.MType, metric.Name, metric.GetStringValue()),
+			Path:   fmt.Sprintf("/update/%s/%s/%s", metric.MType, metric.Name, metric.StringValue()),
 		}
 
 		log.Println(postURL.String())
@@ -35,7 +35,7 @@ func SendMetricsToServer(addr string, m models.MetricsMap) error {
 	return nil
 }
 
-func UpdateMetrics(metrics models.MetricsMap) {
+func UpdateMetrics(metrics *models.Metrics) {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
 

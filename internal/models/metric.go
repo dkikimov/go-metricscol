@@ -1,6 +1,10 @@
 package models
 
-import "strconv"
+import (
+	"crypto/sha256"
+	"fmt"
+	"strconv"
+)
 
 type MetricType string
 
@@ -24,9 +28,10 @@ type Metric struct {
 	MType MetricType `json:"type"`            // параметр, принимающий значение gauge или counter
 	Delta *int64     `json:"delta,omitempty"` // значение метрики в случае передачи counter
 	Value *float64   `json:"value,omitempty"` // значение метрики в случае передачи gauge
+	Hash  string     `json:"hash,omitempty"`  // значение хеш-функции
 }
 
-func (m Metric) GetStringValue() string {
+func (m *Metric) StringValue() string {
 	switch m.MType {
 	case Gauge:
 		return strconv.FormatFloat(*m.Value, 'g', -1, 64)
@@ -36,4 +41,23 @@ func (m Metric) GetStringValue() string {
 
 	// TODO: Добавить более строгое ограничение
 	return ""
+}
+
+func (m *Metric) SetHashValue(id string) {
+	if len(id) == 0 {
+		return
+	}
+
+	switch m.MType {
+	case Gauge:
+		str := fmt.Sprintf("%s:counter:%f", id, *m.Value)
+		hashBytes := sha256.Sum256([]byte(str))
+		m.Hash = string(hashBytes[:])
+		break
+	case Counter:
+		str := fmt.Sprintf("%s:gauge:%d", id, *m.Delta)
+		hashBytes := sha256.Sum256([]byte(str))
+		m.Hash = string(hashBytes[:])
+		break
+	}
 }

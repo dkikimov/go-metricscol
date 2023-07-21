@@ -24,7 +24,7 @@ func (p *Handlers) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
-	if _, err := w.Write([]byte(metric.GetStringValue())); err != nil {
+	if _, err := w.Write([]byte(metric.StringValue())); err != nil {
 		log.Printf("Couldn't write response")
 	}
 }
@@ -63,13 +63,13 @@ func (p *Handlers) GetJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Got metric with name %s, value: %s, type: %s", foundMetric.Name, foundMetric.GetStringValue(), foundMetric.MType)
+	log.Printf("Got metric with name %s, value: %s, type: %s", foundMetric.Name, foundMetric.StringValue(), foundMetric.MType)
 }
 
 func (p *Handlers) GetAll(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	for _, v := range p.Storage.GetAll() {
-		_, err := w.Write([]byte(fmt.Sprintf("Key: %s, value: %s, type: %s \n", v.Name, v.GetStringValue(), v.MType)))
+		_, err := w.Write([]byte(fmt.Sprintf("Key: %s, value: %s, type: %s \n", v.Name, v.StringValue(), v.MType)))
 		if err != nil {
 			log.Printf("Couldn't write response to GetAll request with error: %s", err)
 		}

@@ -18,7 +18,7 @@ var (
 func main() {
 	cfg := parseConfig()
 
-	metrics := models.MetricsMap{}
+	metrics := models.NewMetrics()
 
 	pollTimer := time.NewTicker(cfg.PollInterval)
 	reportTimer := time.NewTicker(cfg.ReportInterval)
@@ -27,10 +27,10 @@ func main() {
 		select {
 		case <-pollTimer.C:
 			log.Println("Update metrics")
-			agent.UpdateMetrics(metrics)
+			agent.UpdateMetrics(&metrics)
 		case <-reportTimer.C:
 			log.Printf("Send metrics to %s\n", cfg.Address)
-			if err := agent.SendMetricsToServer(cfg.Address, metrics); err != nil {
+			if err := agent.SendMetricsToServer(cfg.Address, &metrics); err != nil {
 				log.Printf("Error while sending metrics to server: %s", err)
 			}
 		}
