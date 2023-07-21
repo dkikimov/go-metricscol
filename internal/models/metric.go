@@ -2,6 +2,7 @@ package models
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 )
@@ -52,12 +53,12 @@ func (m *Metric) SetHashValue(id string) {
 	case Gauge:
 		str := fmt.Sprintf("%s:counter:%f", id, *m.Value)
 		hashBytes := sha256.Sum256([]byte(str))
-		m.Hash = string(hashBytes[:])
+		m.Hash = hex.EncodeToString(hashBytes[:])
 		break
 	case Counter:
 		str := fmt.Sprintf("%s:gauge:%d", id, *m.Delta)
 		hashBytes := sha256.Sum256([]byte(str))
-		m.Hash = string(hashBytes[:])
+		m.Hash = hex.EncodeToString(hashBytes[:])
 		break
 	}
 }

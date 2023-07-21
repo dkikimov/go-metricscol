@@ -2,6 +2,7 @@ package models
 
 import (
 	"flag"
+	"fmt"
 	"github.com/caarlos0/env/v9"
 	"go-metricscol/internal/server/apierror"
 	"go-metricscol/internal/utils"
@@ -27,6 +28,7 @@ func parseConfig() *Config {
 	if err := env.Parse(config); err != nil {
 		log.Fatalf("Couldn't parse config with error: %s", err)
 	}
+	fmt.Printf("Config: %+v\n", config)
 	return config
 }
 
@@ -48,8 +50,19 @@ func (m Metrics) Get(name string, valueType MetricType) (*Metric, error) {
 	if !ok {
 		return nil, apierror.NotFound
 	}
+	metric.SetHashValue(m.config.CryptoKey)
 
 	return &metric, nil
+}
+
+func (m Metrics) GetAll() []Metric {
+	all := make([]Metric, 0, len(m.Collection))
+	for _, value := range m.Collection {
+		value.SetHashValue(m.config.CryptoKey)
+		all = append(all, value)
+	}
+
+	return all
 }
 
 func (m Metrics) Update(name string, valueType MetricType, value interface{}) error {
@@ -113,7 +126,6 @@ func (m Metrics) Update(name string, valueType MetricType, value interface{}) er
 		return apierror.UnknownMetricType
 	}
 
-	metric.SetHashValue(m.config.CryptoKey)
 	m.Collection[metricKey] = metric
 	return nil
 }
@@ -122,8 +134,6 @@ func (m Metrics) UpdateWithStruct(metric *Metric) error {
 	if metric.MType != Gauge && metric.MType != Counter {
 		return apierror.UnknownMetricType
 	}
-
-	metric.SetHashValue(m.config.CryptoKey)
 
 	switch metric.MType {
 	case Gauge:

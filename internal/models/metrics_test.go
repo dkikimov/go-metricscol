@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go-metricscol/internal/server/apierror"
 	"go-metricscol/internal/utils"
-	"os"
 	"reflect"
 	"testing"
 )
@@ -106,9 +105,6 @@ func TestMetrics_Update(t *testing.T) {
 		value     interface{}
 	}
 
-	key := "test"
-	require.NoError(t, os.Setenv("KEY", key))
-
 	tests := []struct {
 		name string
 		args args
@@ -196,8 +192,6 @@ func TestMetrics_Update(t *testing.T) {
 
 			assert.EqualValues(t, tt.err, err)
 			if err == nil {
-				tt.want.SetHashValue(key)
-
 				assert.True(t, true, reflect.DeepEqual(m.Collection[getKey(tt.args.name, tt.args.valueType)], tt.want))
 			}
 		})

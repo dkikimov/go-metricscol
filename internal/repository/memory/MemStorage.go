@@ -33,14 +33,11 @@ func (memStorage *MemStorage) GetAll() []models.Metric {
 	memStorage.mu.Lock()
 	defer memStorage.mu.Unlock()
 
-	kv := make([]models.Metric, 0, len(memStorage.metrics.Collection))
-	for _, value := range memStorage.metrics.Collection {
-		kv = append(kv, value)
-	}
+	all := memStorage.metrics.GetAll()
 
-	sort.Slice(kv, func(i, j int) bool { return kv[i].Name < kv[j].Name })
+	sort.Slice(all, func(i, j int) bool { return all[i].Name < all[j].Name })
 
-	return kv
+	return all
 }
 
 func (memStorage *MemStorage) Get(key string, valueType models.MetricType) (*models.Metric, error) {
