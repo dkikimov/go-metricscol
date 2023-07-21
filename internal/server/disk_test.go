@@ -62,7 +62,7 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 func TestServer_restoreFromDisk(t *testing.T) {
 	file, err := os.CreateTemp("", "test_restoreFromDisk")
 
-	defer require.NoError(t, os.Remove(file.Name()))
+	require.NoError(t, os.Remove(file.Name()))
 
 	require.NoError(t, file.Close())
 	require.NoError(t, err)
@@ -91,7 +91,7 @@ func TestServer_saveToDisk(t *testing.T) {
 
 	file, err := os.CreateTemp("", "test_saveToDisk")
 
-	defer require.NoError(t, os.Remove(file.Name()))
+	require.NoError(t, os.Remove(file.Name()))
 
 	require.NoError(t, file.Close())
 	require.NoError(t, err)
