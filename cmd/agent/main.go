@@ -16,7 +16,10 @@ var (
 )
 
 func main() {
-	cfg := parseConfig()
+	cfg, err := parseConfig()
+	if err != nil {
+		log.Fatalf("couldn't parse config with error: %s", err)
+	}
 
 	metrics := models.MetricsMap{}
 
@@ -43,12 +46,12 @@ func init() {
 	flag.DurationVar(&pollInterval, "p", 2*time.Second, "Interval to poll metrics")
 }
 
-func parseConfig() *agent.Config {
+func parseConfig() (*agent.Config, error) {
 	flag.Parse()
 	config := agent.NewConfig(address, reportInterval, pollInterval)
 
 	if err := env.Parse(config); err != nil {
-		log.Fatalf("Couldn't parse config with error: %s", err)
+		return nil, err
 	}
-	return config
+	return config, nil
 }
