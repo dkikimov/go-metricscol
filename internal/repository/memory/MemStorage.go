@@ -15,14 +15,23 @@ type MemStorage struct {
 }
 
 func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
+	memStorage.mu.Lock()
+	defer memStorage.mu.Unlock()
+
 	return json.Unmarshal(bytes, &memStorage.metrics)
 }
 
 func (memStorage *MemStorage) MarshalJSON() ([]byte, error) {
+	memStorage.mu.Lock()
+	defer memStorage.mu.Unlock()
+
 	return json.Marshal(memStorage.metrics)
 }
 
 func (memStorage *MemStorage) UpdateWithStruct(metric *models.Metric) error {
+	memStorage.mu.Lock()
+	defer memStorage.mu.Unlock()
+
 	return memStorage.metrics.UpdateWithStruct(metric)
 }
 
