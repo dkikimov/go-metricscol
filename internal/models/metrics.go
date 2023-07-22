@@ -91,11 +91,22 @@ func (m MetricsMap) UpdateWithStruct(metric *Metric) error {
 	if metric.MType != Gauge && metric.MType != Counter {
 		return apierror.UnknownMetricType
 	}
+	if len(metric.Name) == 0 {
+		return apierror.InvalidValue
+	}
 
 	switch metric.MType {
 	case Gauge:
+		if metric.Value == nil {
+			return apierror.InvalidValue
+		}
+
 		m[getKey(metric.Name, metric.MType)] = *metric
 	case Counter:
+		if metric.Delta == nil {
+			return apierror.InvalidValue
+		}
+
 		prevMetric, _ := m.Get(metric.Name, Counter)
 		var prevVal, currentVal int64
 		if prevMetric == nil {

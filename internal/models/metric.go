@@ -1,8 +1,6 @@
 package models
 
 import (
-	"encoding/json"
-	"fmt"
 	"strconv"
 )
 
@@ -28,27 +26,6 @@ type Metric struct {
 	MType MetricType `json:"type"`            // параметр, принимающий значение gauge или counter
 	Delta *int64     `json:"delta,omitempty"` // значение метрики в случае передачи counter
 	Value *float64   `json:"value,omitempty"` // значение метрики в случае передачи gauge
-}
-
-func (m *Metric) UnmarshalJSON(bytes []byte) error {
-	type MetricAlias Metric
-
-	var tempMetric MetricAlias
-	err := json.Unmarshal(bytes, &tempMetric)
-	if err != nil {
-		return err
-	}
-
-	if len(tempMetric.Name) == 0 || len(tempMetric.MType) == 0 {
-		return fmt.Errorf("empty name or type")
-	}
-
-	if (tempMetric.MType == Gauge && tempMetric.Value == nil) || (tempMetric.MType == Counter && tempMetric.Delta == nil) {
-		return fmt.Errorf("empty value")
-	}
-
-	*m = (Metric)(tempMetric)
-	return nil
 }
 
 func (m *Metric) GetStringValue() string {
