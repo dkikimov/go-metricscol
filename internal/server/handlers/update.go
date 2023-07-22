@@ -45,5 +45,12 @@ func (p *Handlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 
 	newMetric, _ := p.Storage.Get(metric.Name, metric.MType)
 	log.Printf("Updated metric with name %s, value: %s, type: %s", newMetric.Name, newMetric.GetStringValue(), newMetric.MType)
-	w.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(w).Encode(newMetric)
+	if err != nil {
+		http.Error(w, "couldn't encode json", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 }
