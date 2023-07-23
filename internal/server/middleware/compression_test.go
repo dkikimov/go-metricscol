@@ -1,4 +1,4 @@
-package server
+package middleware
 
 import (
 	"bytes"
@@ -70,7 +70,7 @@ func Test_decompressHandler(t *testing.T) {
 			}
 
 			rr := httptest.NewRecorder()
-			handler := decompressHandler(http.HandlerFunc(testHandler))
+			handler := DecompressHandler(http.HandlerFunc(testHandler))
 
 			handler.ServeHTTP(rr, req)
 

@@ -6,8 +6,9 @@ type Config struct {
 	Address        string        `env:"ADDRESS"`
 	ReportInterval time.Duration `env:"REPORT_INTERVAL"`
 	PollInterval   time.Duration `env:"POLL_INTERVAL"`
+	HashKey        string        `env:"KEY"`
 }
 
-func NewConfig(address string, reportInterval time.Duration, pollInterval time.Duration) *Config {
-	return &Config{Address: address, ReportInterval: reportInterval, PollInterval: pollInterval}
+func NewConfig(address string, reportInterval time.Duration, pollInterval time.Duration, hashKey string) *Config {
+	return &Config{Address: address, ReportInterval: reportInterval, PollInterval: pollInterval, HashKey: hashKey}
 }

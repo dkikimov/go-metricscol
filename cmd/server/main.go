@@ -14,6 +14,7 @@ var (
 	storeInterval time.Duration
 	storeFile     string
 	restore       bool
+	hashKey       string
 )
 
 func main() {
@@ -21,7 +22,7 @@ func main() {
 
 	log.Printf("Starting server on %s", cfg.Address)
 
-	s := server.NewServer(cfg, memory.NewMemStorage())
+	s := server.NewServer(cfg, memory.NewMemStorage(cfg.HashKey))
 	log.Fatal(s.ListenAndServe())
 }
 
@@ -30,11 +31,12 @@ func init() {
 	flag.DurationVar(&storeInterval, "i", 300*time.Second, "Interval to store metrics")
 	flag.StringVar(&storeFile, "f", "/tmp/devops-metrics-db.json", "File to store metrics")
 	flag.BoolVar(&restore, "r", true, "Restore metrics from file")
+	flag.StringVar(&hashKey, "k", "", "Key to encrypt metrics")
 }
 
 func parseConfig() *server.Config {
 	flag.Parse()
-	config := server.NewConfig(address, storeInterval, storeFile, restore)
+	config := server.NewConfig(address, storeInterval, storeFile, restore, hashKey)
 
 	if err := env.Parse(config); err != nil {
 		log.Fatalf("Couldn't parse config with error: %s", err)

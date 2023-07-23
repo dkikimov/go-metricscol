@@ -32,7 +32,7 @@ type Metric struct {
 	Hash  string     `json:"hash,omitempty"`  // значение хеш-функции
 }
 
-func (m *Metric) StringValue() string {
+func (m Metric) StringValue() string {
 	switch m.MType {
 	case Gauge:
 		return strconv.FormatFloat(*m.Value, 'g', -1, 64)
@@ -44,21 +44,21 @@ func (m *Metric) StringValue() string {
 	return ""
 }
 
-func (m *Metric) SetHashValue(id string) {
+func (m Metric) HashValue(id string) string {
 	if len(id) == 0 {
-		return
+		return ""
 	}
 
 	switch m.MType {
 	case Gauge:
 		str := fmt.Sprintf("%s:counter:%f", id, *m.Value)
 		hashBytes := sha256.Sum256([]byte(str))
-		m.Hash = hex.EncodeToString(hashBytes[:])
-		break
+		return hex.EncodeToString(hashBytes[:])
 	case Counter:
 		str := fmt.Sprintf("%s:gauge:%d", id, *m.Delta)
 		hashBytes := sha256.Sum256([]byte(str))
-		m.Hash = hex.EncodeToString(hashBytes[:])
-		break
+		return hex.EncodeToString(hashBytes[:])
+	default:
+		return ""
 	}
 }

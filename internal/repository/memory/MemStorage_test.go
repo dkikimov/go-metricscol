@@ -12,7 +12,7 @@ import (
 )
 
 func TestMemStorage_Update(t *testing.T) {
-	memStorage := NewMemStorage()
+	memStorage := NewMemStorage("")
 
 	type args struct {
 		key       string
@@ -75,9 +75,9 @@ func TestMemStorage_Update(t *testing.T) {
 }
 
 func TestMemStorage_Get(t *testing.T) {
-	metrics := models.NewMetrics()
-	require.NoError(t, metrics.Update("Alloc", models.Gauge, 101.42))
-	require.NoError(t, metrics.Update("PollCount", models.Counter, 2))
+	storage := NewMemStorage("")
+	require.NoError(t, storage.Update("Alloc", models.Gauge, "101.42"))
+	require.NoError(t, storage.Update("PollCount", models.Counter, "2"))
 
 	type args struct {
 		key       string
@@ -123,10 +123,7 @@ func TestMemStorage_Get(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			memStorage := &MemStorage{
-				metrics: metrics,
-			}
-			got, err := memStorage.Get(tt.args.key, tt.args.valueType)
+			got, err := storage.Get(tt.args.key, tt.args.valueType)
 			assert.Equal(t, tt.want, got)
 			assert.Equal(t, tt.err, err)
 		})
@@ -134,25 +131,18 @@ func TestMemStorage_Get(t *testing.T) {
 }
 
 func TestMemStorage_GetAll(t *testing.T) {
-	metrics := models.NewMetrics()
-	require.NoError(t, metrics.Update("Alloc", models.Gauge, 101.42))
-	require.NoError(t, metrics.Update("PollCount", models.Counter, 2))
+	storage := NewMemStorage("")
 
+	require.NoError(t, storage.Update("Alloc", models.Gauge, "101.42"))
+	require.NoError(t, storage.Update("PollCount", models.Counter, "2"))
 	require.NoError(t, os.Setenv("KEY", ""))
 
-	type fields struct {
-		metrics models.Metrics
-	}
 	tests := []struct {
-		name   string
-		fields fields
-		want   []models.Metric
+		name string
+		want []models.Metric
 	}{
 		{
 			name: "Get all",
-			fields: fields{
-				metrics: metrics,
-			},
 			want: []models.Metric{
 				{Name: "Alloc", MType: models.Gauge, Value: utils.Ptr(101.42)},
 				{Name: "PollCount", MType: models.Counter, Delta: utils.Ptr(int64(2))},
@@ -161,10 +151,7 @@ func TestMemStorage_GetAll(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			memStorage := &MemStorage{
-				metrics: tt.fields.metrics,
-			}
-			assert.True(t, reflect.DeepEqual(tt.want, memStorage.GetAll()))
+			assert.True(t, reflect.DeepEqual(tt.want, storage.GetAll()))
 		})
 	}
 }

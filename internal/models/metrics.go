@@ -1,39 +1,17 @@
 package models
 
 import (
-	"flag"
-	"fmt"
-	"github.com/caarlos0/env/v9"
 	"go-metricscol/internal/server/apierror"
 	"go-metricscol/internal/utils"
-	"log"
 	"strings"
 )
 
-var key string
-
 type Metrics struct {
 	Collection map[string]Metric
-	config     *Config
-}
-
-func init() {
-	flag.StringVar(&key, "k", "", "Key to encrypt metrics")
-}
-
-func parseConfig() *Config {
-	flag.Parse()
-	config := NewConfig(key)
-
-	if err := env.Parse(config); err != nil {
-		log.Fatalf("Couldn't parse config with error: %s", err)
-	}
-	fmt.Printf("Config: %+v\n", config)
-	return config
 }
 
 func NewMetrics() Metrics {
-	return Metrics{Collection: map[string]Metric{}, config: parseConfig()}
+	return Metrics{Collection: map[string]Metric{}}
 }
 
 func getKey(name string, valueType MetricType) string {
@@ -50,7 +28,6 @@ func (m Metrics) Get(name string, valueType MetricType) (*Metric, error) {
 	if !ok {
 		return nil, apierror.NotFound
 	}
-	metric.SetHashValue(m.config.CryptoKey)
 
 	return &metric, nil
 }
@@ -58,7 +35,7 @@ func (m Metrics) Get(name string, valueType MetricType) (*Metric, error) {
 func (m Metrics) GetAll() []Metric {
 	all := make([]Metric, 0, len(m.Collection))
 	for _, value := range m.Collection {
-		value.SetHashValue(m.config.CryptoKey)
+		// TODO: Возможно стоит вынести функцию в другой пакет, подумать
 		all = append(all, value)
 	}
 

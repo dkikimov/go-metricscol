@@ -1,7 +1,7 @@
 package models
 
 type Config struct {
-	CryptoKey string `env:"KEY"`
+	CryptoKey string
 }
 
 func NewConfig(cryptoKey string) *Config {

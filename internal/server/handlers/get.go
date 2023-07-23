@@ -56,7 +56,6 @@ func (p *Handlers) GetJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(jsonFoundMetric)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -68,8 +67,16 @@ func (p *Handlers) GetJSON(w http.ResponseWriter, r *http.Request) {
 
 func (p *Handlers) GetAll(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
+	getHashSubstring := func(metric models.Metric) string {
+		if len(metric.Hash) == 0 {
+			return ""
+		}
+
+		return fmt.Sprintf(", hash: %s", metric.Hash)
+	}
+
 	for _, v := range p.Storage.GetAll() {
-		_, err := w.Write([]byte(fmt.Sprintf("Key: %s, value: %s, type: %s \n", v.Name, v.StringValue(), v.MType)))
+		_, err := w.Write([]byte(fmt.Sprintf("Key: %s, value: %s, type: %s%s \n", v.Name, v.StringValue(), v.MType, getHashSubstring(v))))
 		if err != nil {
 			log.Printf("Couldn't write response to GetAll request with error: %s", err)
 		}

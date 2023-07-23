@@ -1,6 +1,8 @@
 package agent
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"go-metricscol/internal/models"
@@ -11,16 +13,23 @@ import (
 	"runtime"
 )
 
-func SendMetricsToServer(addr string, m *models.Metrics) error {
+func SendMetricsToServer(addr string, m *models.Metrics, hashKey string) error {
 	for _, metric := range m.Collection {
 		postURL := url.URL{
 			Scheme: "http",
 			Host:   addr,
-			Path:   fmt.Sprintf("/update/%s/%s/%s", metric.MType, metric.Name, metric.StringValue()),
+			Path:   "/update/",
 		}
 
 		log.Println(postURL.String())
-		resp, err := http.Post(postURL.String(), "text/plain", nil)
+
+		metric.Hash = metric.HashValue(hashKey)
+		marshal, err := json.Marshal(metric)
+		if err != nil {
+			return errors.New("couldn't marshal metric")
+		}
+
+		resp, err := http.Post(postURL.String(), "application/json", bytes.NewReader(marshal))
 
 		if err != nil {
 			return fmt.Errorf("couldn't post url %s", postURL.String())

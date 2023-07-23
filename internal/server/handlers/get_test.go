@@ -19,7 +19,7 @@ import (
 
 func TestHandlers_Get(t *testing.T) {
 	h := Handlers{
-		Storage: memory.NewMemStorage(),
+		Storage: memory.NewMemStorage(""),
 	}
 
 	require.NoError(t, h.Storage.Update("Alloc", models.Gauge, "123.4"))
@@ -99,7 +99,7 @@ func TestHandlers_Get(t *testing.T) {
 
 func TestHandlers_GetAll(t *testing.T) {
 	h := Handlers{
-		Storage: memory.NewMemStorage(),
+		Storage: memory.NewMemStorage(""),
 	}
 
 	require.NoError(t, h.Storage.Update("Alloc", models.Gauge, "123.4"))
@@ -149,8 +149,80 @@ func TestHandlers_GetAll(t *testing.T) {
 	}
 }
 
+func TestHandlers_GetAllWithHash(t *testing.T) {
+	hashKey := "test"
+
+	h := Handlers{
+		Storage: memory.NewMemStorage(hashKey),
+	}
+
+	alloc := models.Metric{
+		Name:  "Alloc",
+		MType: models.Gauge,
+		Value: utils.Ptr(123.4),
+	}
+
+	memoryInUse := models.Metric{
+		Name:  "MemoryInUse",
+		MType: models.Gauge,
+		Value: utils.Ptr(float64(593)),
+	}
+
+	pollCount := models.Metric{
+		Name:  "PollCount",
+		MType: models.Counter,
+		Delta: utils.Ptr(int64(1)),
+	}
+
+	require.NoError(t, h.Storage.UpdateWithStruct(&alloc))
+	require.NoError(t, h.Storage.UpdateWithStruct(&memoryInUse))
+	require.NoError(t, h.Storage.UpdateWithStruct(&pollCount))
+
+	type want struct {
+		StatusCode int
+		Body       string
+	}
+	type args struct {
+		url string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "Get all values",
+			args: args{
+				url: "/",
+			},
+			want: want{
+				StatusCode: http.StatusOK,
+				Body: fmt.Sprintf("Key: Alloc, value: 123.4, type: gauge, hash: %s \n"+
+					"Key: MemoryInUse, value: 593, type: gauge, hash: %s \n"+
+					"Key: PollCount, value: 1, type: counter, hash: %s \n", alloc.HashValue(hashKey), memoryInUse.HashValue(hashKey), pollCount.HashValue(hashKey)),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, tt.args.url, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(h.GetAll)
+
+			handler.ServeHTTP(rr, req)
+
+			require.Equal(t, tt.want.StatusCode, rr.Code)
+			require.Equal(t, tt.want.Body, rr.Body.String())
+		})
+	}
+}
+
 func TestHandlers_GetJSON(t *testing.T) {
-	storage := memory.NewMemStorage()
+	storage := memory.NewMemStorage("")
 	require.NoError(t, storage.Update("Alloc", "gauge", "12.1"))
 	require.NoError(t, storage.Update("PollCount", "counter", "13"))
 

@@ -80,7 +80,7 @@ func TestHandlers_Update(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := Handlers{
-				Storage: memory.NewMemStorage(),
+				Storage: memory.NewMemStorage(""),
 			}
 
 			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/value/%s/%s/%s", tt.args.metricType, tt.args.metricName, tt.args.metricValue), nil)
@@ -149,7 +149,7 @@ func TestHandlers_UpdateJSON(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		storage := memory.NewMemStorage()
+		storage := memory.NewMemStorage("")
 		h := Handlers{Storage: storage}
 
 		t.Run(tt.name, func(t *testing.T) {

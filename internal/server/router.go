@@ -2,9 +2,10 @@ package server
 
 import (
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	chiMiddleware "github.com/go-chi/chi/middleware"
 	"go-metricscol/internal/repository"
 	"go-metricscol/internal/server/handlers"
+	"go-metricscol/internal/server/middleware"
 	"log"
 	"net/http"
 )
@@ -26,17 +27,17 @@ func (s Server) newRouter(storage repository.Repository) chi.Router {
 	}
 
 	r := chi.NewRouter()
-	r.Use(middleware.Compress(5, "text/html", "text/css", "application/javascript", "application/json", "text/plain", "text/xml"))
-	r.Use(middleware.Logger)
-	r.Use(decompressHandler)
-	r.Use(middleware.AllowContentEncoding("gzip"))
+	r.Use(chiMiddleware.Compress(5, "text/html", "text/css", "application/javascript", "application/json", "text/plain", "text/xml"))
+	r.Use(chiMiddleware.Logger)
+	r.Use(middleware.DecompressHandler)
+	r.Use(chiMiddleware.AllowContentEncoding("gzip"))
 
 	saveToDisk := s.Config.StoreInterval == 0 && len(s.Config.StoreFile) != 0
 
 	r.Post("/update/{type}/{name}/{value}", s.diskSaverHandler(processors.Update, saveToDisk))
 	r.Get("/value/{type}/{name}", processors.Get)
 
-	r.Post("/update/", s.diskSaverHandler(processors.UpdateJSON, saveToDisk))
+	r.Post("/update/", middleware.ValidateHashHandler(s.diskSaverHandler(processors.UpdateJSON, saveToDisk), s.Config.HashKey))
 	r.Post("/value/", processors.GetJSON)
 
 	r.HandleFunc("/", processors.GetAll)

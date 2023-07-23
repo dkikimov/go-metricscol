@@ -11,7 +11,8 @@ import (
 
 type MemStorage struct {
 	metrics models.Metrics
-	mu      sync.RWMutex
+	mu      sync.Mutex
+	config  *Config
 }
 
 func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
@@ -34,6 +35,9 @@ func (memStorage *MemStorage) GetAll() []models.Metric {
 	defer memStorage.mu.Unlock()
 
 	all := memStorage.metrics.GetAll()
+	for idx, value := range all {
+		all[idx].Hash = value.HashValue(memStorage.config.HashKey)
+	}
 
 	sort.Slice(all, func(i, j int) bool { return all[i].Name < all[j].Name })
 
@@ -45,11 +49,11 @@ func (memStorage *MemStorage) Get(key string, valueType models.MetricType) (*mod
 	defer memStorage.mu.Unlock()
 
 	result, err := memStorage.metrics.Get(key, valueType)
-	return result, err
-}
+	if err == nil {
+		result.Hash = result.HashValue(memStorage.config.HashKey)
+	}
 
-func NewMemStorage() *MemStorage {
-	return &MemStorage{metrics: models.NewMetrics()}
+	return result, err
 }
 
 func (memStorage *MemStorage) Update(name string, valueType models.MetricType, value string) error {
@@ -72,4 +76,8 @@ func (memStorage *MemStorage) Update(name string, valueType models.MetricType, v
 	default:
 		return apierror.UnknownMetricType
 	}
+}
+
+func NewMemStorage(hashKey string) *MemStorage {
+	return &MemStorage{metrics: models.NewMetrics(), config: NewConfig(hashKey)}
 }
