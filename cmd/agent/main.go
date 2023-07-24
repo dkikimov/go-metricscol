@@ -17,7 +17,10 @@ var (
 )
 
 func main() {
-	cfg := parseConfig()
+	cfg, err := parseConfig()
+	if err != nil {
+		log.Fatalf("couldn't parse config with error: %s", err)
+	}
 
 	metrics := models.NewMetrics()
 
@@ -45,12 +48,12 @@ func init() {
 	flag.StringVar(&hashKey, "k", "", "Key to encrypt metrics")
 }
 
-func parseConfig() *agent.Config {
+func parseConfig() (*agent.Config, error) {
 	flag.Parse()
 	config := agent.NewConfig(address, reportInterval, pollInterval, hashKey)
 
 	if err := env.Parse(config); err != nil {
-		log.Fatalf("Couldn't parse config with error: %s", err)
+		return nil, err
 	}
-	return config
+	return config, nil
 }

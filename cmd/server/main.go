@@ -18,7 +18,10 @@ var (
 )
 
 func main() {
-	cfg := parseConfig()
+	cfg, err := parseConfig()
+	if err != nil {
+		log.Fatalf("couldn't parse config with error: %s", err)
+	}
 
 	log.Printf("Starting server on %s", cfg.Address)
 
@@ -34,12 +37,13 @@ func init() {
 	flag.StringVar(&hashKey, "k", "", "Key to encrypt metrics")
 }
 
-func parseConfig() *server.Config {
+func parseConfig() (*server.Config, error) {
 	flag.Parse()
 	config := server.NewConfig(address, storeInterval, storeFile, restore, hashKey)
 
 	if err := env.Parse(config); err != nil {
-		log.Fatalf("Couldn't parse config with error: %s", err)
+		return nil, err
 	}
-	return config
+
+	return config, nil
 }

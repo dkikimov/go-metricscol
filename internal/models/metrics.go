@@ -111,6 +111,9 @@ func (m Metrics) UpdateWithStruct(metric *Metric) error {
 	if metric.MType != Gauge && metric.MType != Counter {
 		return apierror.UnknownMetricType
 	}
+	if len(metric.Name) == 0 {
+		return apierror.InvalidValue
+	}
 
 	switch metric.MType {
 	case Gauge:
