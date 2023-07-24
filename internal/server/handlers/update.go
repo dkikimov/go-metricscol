@@ -21,7 +21,7 @@ func (p *Handlers) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Updated metric with name %s, value: %s, type: %s", urlData.MetricName, urlData.MetricValue, urlData.MetricType)
+	log.Printf("Update metric with name %s, value: %s, type: %s", urlData.MetricName, urlData.MetricValue, urlData.MetricType)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -43,8 +43,9 @@ func (p *Handlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Update metric with name %s, value: %s, type: %s", metric.Name, metric.StringValue(), metric.MType)
+
 	newMetric, _ := p.Storage.Get(metric.Name, metric.MType)
-	log.Printf("Updated metric with name %s, value: %s, type: %s", newMetric.Name, newMetric.GetStringValue(), newMetric.MType)
 
 	err = json.NewEncoder(w).Encode(newMetric)
 	if err != nil {
