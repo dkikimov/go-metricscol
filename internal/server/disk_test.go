@@ -30,12 +30,13 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 	require.NoError(t, err)
 
 	storeInterval := 2 * time.Second
-	config := NewConfig("127.0.0.1:8080", storeInterval, file.Name(), false, "")
+	config := NewConfig("127.0.0.1:8080", storeInterval, file.Name(), false, "", "")
 	storage := memory.NewMemStorage("")
 
 	require.NoError(t, storage.UpdateWithStruct(&testMetric))
 
-	server := NewServer(config, storage)
+	server, err := NewServer(config, storage)
+	require.NoError(t, err)
 
 	t.Run("Enable saving to disk", func(t *testing.T) {
 		go server.enableSavingToDisk()
@@ -67,16 +68,19 @@ func TestServer_restoreFromDisk(t *testing.T) {
 	require.NoError(t, file.Close())
 	require.NoError(t, err)
 
-	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "")
+	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "")
 	storage := memory.NewMemStorage("")
 
 	require.NoError(t, storage.UpdateWithStruct(&testMetric))
 
-	server := NewServer(config, storage)
+	server, err := NewServer(config, storage)
+	require.NoError(t, err)
+
 	require.NoError(t, server.saveToDisk())
 
 	t.Run("Restore from disk", func(t *testing.T) {
-		newServer := NewServer(config, storage)
+		newServer, err := NewServer(config, storage)
+		require.NoError(t, err)
 		require.NoError(t, newServer.restoreFromDisk())
 
 		assert.Equal(t, server, newServer)
@@ -96,7 +100,7 @@ func TestServer_saveToDisk(t *testing.T) {
 	require.NoError(t, file.Close())
 	require.NoError(t, err)
 
-	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "")
+	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "")
 	storage := memory.NewMemStorage("")
 
 	require.NoError(t, storage.UpdateWithStruct(&testMetric))

@@ -23,7 +23,8 @@ func (s Server) diskSaverHandler(next http.HandlerFunc, saveToDisk bool) http.Ha
 
 func (s Server) newRouter(storage repository.Repository) chi.Router {
 	processors := handlers.Handlers{
-		Storage: storage,
+		Storage:  storage,
+		Postgres: s.Postgres,
 	}
 
 	r := chi.NewRouter()
@@ -39,6 +40,8 @@ func (s Server) newRouter(storage repository.Repository) chi.Router {
 
 	r.Post("/update/", middleware.ValidateHashHandler(s.diskSaverHandler(processors.UpdateJSON, saveToDisk), s.Config.HashKey))
 	r.Post("/value/", processors.GetJSON)
+
+	r.Get("/ping", processors.Ping)
 
 	r.HandleFunc("/", processors.GetAll)
 	return r

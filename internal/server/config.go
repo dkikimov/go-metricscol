@@ -10,8 +10,16 @@ type Config struct {
 	StoreFile     string        `env:"STORE_FILE"`
 	Restore       bool          `env:"RESTORE"`
 	HashKey       string        `env:"KEY"`
+	DatabaseDSN   string        `env:"DATABASE_DSN"`
 }
 
-func NewConfig(address string, storeInterval time.Duration, storeFile string, restore bool, hashKey string) *Config {
-	return &Config{Address: address, StoreInterval: storeInterval, StoreFile: storeFile, Restore: restore, HashKey: hashKey}
+func NewConfig(address string, storeInterval time.Duration, storeFile string, restore bool, hashKey string, databaseDSN string) *Config {
+	return &Config{
+		Address:       address,
+		StoreInterval: storeInterval,
+		StoreFile:     storeFile,
+		Restore:       restore,
+		HashKey:       hashKey,
+		DatabaseDSN:   databaseDSN,
+	}
 }

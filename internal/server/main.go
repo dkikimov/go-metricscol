@@ -1,7 +1,9 @@
 package server
 
 import (
+	"github.com/jackc/pgx/v5"
 	"go-metricscol/internal/repository"
+	"go-metricscol/internal/repository/postgres"
 	"log"
 	"net/http"
 	"os"
@@ -10,10 +12,16 @@ import (
 type Server struct {
 	Config     *Config
 	Repository repository.Repository
+	Postgres   *pgx.Conn
 }
 
-func NewServer(config *Config, repository repository.Repository) *Server {
-	return &Server{Config: config, Repository: repository}
+func NewServer(config *Config, repository repository.Repository) (*Server, error) {
+	db, err := postgres.New(config.DatabaseDSN)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Server{Config: config, Repository: repository, Postgres: db}, nil
 }
 
 func (s Server) ListenAndServe() error {
