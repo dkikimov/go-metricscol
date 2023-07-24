@@ -55,10 +55,8 @@ func (m Metric) HashValue(id string) string {
 	switch m.MType {
 	case Counter:
 		str = fmt.Sprintf("%s:counter:%d", m.Name, *m.Delta)
-		break
 	case Gauge:
 		str = fmt.Sprintf("%s:gauge:%f", m.Name, *m.Value)
-		break
 	default:
 		return ""
 	}
