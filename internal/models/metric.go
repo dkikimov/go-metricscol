@@ -1,6 +1,7 @@
 package models
 
 import (
+	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -49,16 +50,19 @@ func (m Metric) HashValue(id string) string {
 		return ""
 	}
 
+	h := hmac.New(sha256.New, []byte(id))
+	var str string
 	switch m.MType {
-	case Gauge:
-		str := fmt.Sprintf("%s:counter:%f", id, *m.Value)
-		hashBytes := sha256.Sum256([]byte(str))
-		return hex.EncodeToString(hashBytes[:])
 	case Counter:
-		str := fmt.Sprintf("%s:gauge:%d", id, *m.Delta)
-		hashBytes := sha256.Sum256([]byte(str))
-		return hex.EncodeToString(hashBytes[:])
+		str = fmt.Sprintf("%s:counter:%d", m.Name, *m.Delta)
+		break
+	case Gauge:
+		str = fmt.Sprintf("%s:gauge:%f", m.Name, *m.Value)
+		break
 	default:
 		return ""
 	}
+
+	h.Write([]byte(str))
+	return hex.EncodeToString(h.Sum(nil))
 }
