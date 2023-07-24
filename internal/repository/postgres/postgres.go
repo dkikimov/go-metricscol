@@ -9,7 +9,7 @@ import (
 func New(url string) (*pgx.Conn, error) {
 	conn, err := pgx.Connect(context.Background(), url)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to connect to database: %v\n", err)
+		return nil, fmt.Errorf("unable to connect to database: %v", err)
 	}
 
 	return conn, nil
