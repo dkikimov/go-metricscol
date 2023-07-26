@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"go-metricscol/internal/models"
+	"go-metricscol/internal/repository/memory"
 	"log"
 	"math/rand"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 	"runtime"
 )
 
-func SendMetricsToServer(addr string, m *models.Metrics, hashKey string) error {
+func SendMetricsToServer(addr string, m *memory.Metrics, hashKey string) error {
 	for _, metric := range m.Collection {
 		postURL := url.URL{
 			Scheme: "http",
@@ -44,7 +45,7 @@ func SendMetricsToServer(addr string, m *models.Metrics, hashKey string) error {
 	return nil
 }
 
-func UpdateMetrics(metrics *models.Metrics) {
+func UpdateMetrics(metrics *memory.Metrics) {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
 

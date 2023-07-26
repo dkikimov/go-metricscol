@@ -4,7 +4,7 @@ import (
 	"flag"
 	"github.com/caarlos0/env/v9"
 	"go-metricscol/internal/agent"
-	"go-metricscol/internal/models"
+	"go-metricscol/internal/repository/memory"
 	"log"
 	"time"
 )
@@ -22,7 +22,7 @@ func main() {
 		log.Fatalf("couldn't parse config with error: %s", err)
 	}
 
-	metrics := models.NewMetrics()
+	metrics := memory.NewMetrics()
 
 	pollTimer := time.NewTicker(cfg.PollInterval)
 	reportTimer := time.NewTicker(cfg.ReportInterval)

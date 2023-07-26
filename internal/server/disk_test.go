@@ -35,7 +35,7 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 
 	require.NoError(t, storage.UpdateWithStruct(&testMetric))
 
-	server, err := NewServer(config, storage)
+	server, err := NewServer(config)
 	require.NoError(t, err)
 
 	t.Run("Enable saving to disk", func(t *testing.T) {
@@ -73,13 +73,13 @@ func TestServer_restoreFromDisk(t *testing.T) {
 
 	require.NoError(t, storage.UpdateWithStruct(&testMetric))
 
-	server, err := NewServer(config, storage)
+	server, err := NewServer(config)
 	require.NoError(t, err)
 
 	require.NoError(t, server.saveToDisk())
 
 	t.Run("Restore from disk", func(t *testing.T) {
-		newServer, err := NewServer(config, storage)
+		newServer, err := NewServer(config)
 		require.NoError(t, err)
 		require.NoError(t, newServer.restoreFromDisk())
 

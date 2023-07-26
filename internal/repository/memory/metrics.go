@@ -1,20 +1,21 @@
-package models
+package memory
 
 import (
+	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
 	"go-metricscol/internal/utils"
 	"strings"
 )
 
 type Metrics struct {
-	Collection map[string]Metric
+	Collection map[string]models.Metric
 }
 
 func NewMetrics() Metrics {
-	return Metrics{Collection: map[string]Metric{}}
+	return Metrics{Collection: map[string]models.Metric{}}
 }
 
-func getKey(name string, valueType MetricType) string {
+func getKey(name string, valueType models.MetricType) string {
 	key := strings.Builder{}
 	key.WriteString(name)
 	key.WriteByte(':')
@@ -23,7 +24,7 @@ func getKey(name string, valueType MetricType) string {
 	return key.String()
 }
 
-func (m Metrics) Get(name string, valueType MetricType) (*Metric, error) {
+func (m Metrics) Get(name string, valueType models.MetricType) (*models.Metric, error) {
 	metric, ok := m.Collection[getKey(name, valueType)]
 	if !ok {
 		return nil, apierror.NotFound
@@ -32,8 +33,8 @@ func (m Metrics) Get(name string, valueType MetricType) (*Metric, error) {
 	return &metric, nil
 }
 
-func (m Metrics) GetAll() []Metric {
-	all := make([]Metric, 0, len(m.Collection))
+func (m Metrics) GetAll() []models.Metric {
+	all := make([]models.Metric, 0, len(m.Collection))
 	for _, value := range m.Collection {
 		// TODO: Возможно стоит вынести функцию в другой пакет, подумать
 		all = append(all, value)
@@ -42,16 +43,16 @@ func (m Metrics) GetAll() []Metric {
 	return all
 }
 
-func (m Metrics) Update(name string, valueType MetricType, value interface{}) error {
-	if valueType != Gauge && valueType != Counter {
+func (m Metrics) Update(name string, valueType models.MetricType, value interface{}) error {
+	if valueType != models.Gauge && valueType != models.Counter {
 		return apierror.UnknownMetricType
 	}
 
 	metricKey := getKey(name, valueType)
-	var metric Metric
+	var metric models.Metric
 
 	switch valueType {
-	case Gauge:
+	case models.Gauge:
 		var floatValue float64
 		switch v := value.(type) {
 		case float32:
@@ -72,8 +73,8 @@ func (m Metrics) Update(name string, valueType MetricType, value interface{}) er
 			return apierror.InvalidValue
 		}
 
-		metric = Metric{Name: name, MType: Gauge, Value: utils.Ptr(floatValue)}
-	case Counter:
+		metric = models.Metric{Name: name, MType: models.Gauge, Value: utils.Ptr(floatValue)}
+	case models.Counter:
 		var intValue int64
 		switch v := value.(type) {
 		case int:
@@ -90,7 +91,7 @@ func (m Metrics) Update(name string, valueType MetricType, value interface{}) er
 			return apierror.InvalidValue
 		}
 
-		prevMetric, _ := m.Get(name, Counter)
+		prevMetric, _ := m.Get(name, models.Counter)
 		var prevVal int64
 		if prevMetric == nil {
 			prevVal = 0
@@ -98,7 +99,7 @@ func (m Metrics) Update(name string, valueType MetricType, value interface{}) er
 			prevVal = *prevMetric.Delta
 		}
 
-		metric = Metric{Name: name, MType: Counter, Delta: utils.Ptr(prevVal + intValue)}
+		metric = models.Metric{Name: name, MType: models.Counter, Delta: utils.Ptr(prevVal + intValue)}
 	default:
 		return apierror.UnknownMetricType
 	}
@@ -107,8 +108,8 @@ func (m Metrics) Update(name string, valueType MetricType, value interface{}) er
 	return nil
 }
 
-func (m Metrics) UpdateWithStruct(metric *Metric) error {
-	if metric.MType != Gauge && metric.MType != Counter {
+func (m Metrics) UpdateWithStruct(metric *models.Metric) error {
+	if metric.MType != models.Gauge && metric.MType != models.Counter {
 		return apierror.UnknownMetricType
 	}
 	if len(metric.Name) == 0 {
@@ -116,18 +117,18 @@ func (m Metrics) UpdateWithStruct(metric *Metric) error {
 	}
 
 	switch metric.MType {
-	case Gauge:
+	case models.Gauge:
 		if metric.Value == nil || metric.Delta != nil {
 			return apierror.InvalidValue
 		}
 
 		m.Collection[getKey(metric.Name, metric.MType)] = *metric
-	case Counter:
+	case models.Counter:
 		if metric.Delta == nil || metric.Value != nil {
 			return apierror.InvalidValue
 		}
 
-		prevMetric, _ := m.Get(metric.Name, Counter)
+		prevMetric, _ := m.Get(metric.Name, models.Counter)
 		var prevVal, currentVal int64
 		if prevMetric == nil {
 			prevVal = 0
@@ -141,7 +142,7 @@ func (m Metrics) UpdateWithStruct(metric *Metric) error {
 			currentVal = *metric.Delta
 		}
 
-		m.Collection[getKey(metric.Name, metric.MType)] = Metric{Name: metric.Name, MType: Counter, Delta: utils.Ptr(prevVal + currentVal), Hash: metric.Hash}
+		m.Collection[getKey(metric.Name, metric.MType)] = models.Metric{Name: metric.Name, MType: models.Counter, Delta: utils.Ptr(prevVal + currentVal), Hash: metric.Hash}
 	default:
 		return apierror.UnknownMetricType
 	}
@@ -150,5 +151,5 @@ func (m Metrics) UpdateWithStruct(metric *Metric) error {
 }
 
 func (m Metrics) ResetPollCount() {
-	m.Collection[getKey("PollCount", Counter)] = Metric{Name: "PollCount", MType: Counter, Delta: utils.Ptr(int64(0))}
+	m.Collection[getKey("PollCount", models.Counter)] = models.Metric{Name: "PollCount", MType: models.Counter, Delta: utils.Ptr(int64(0))}
 }

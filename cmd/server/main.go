@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"github.com/caarlos0/env/v9"
-	"go-metricscol/internal/repository/memory"
 	"go-metricscol/internal/server"
 	"log"
 	"time"
@@ -26,7 +25,7 @@ func main() {
 
 	log.Printf("Starting server on %s", cfg.Address)
 
-	s, err := server.NewServer(cfg, memory.NewMemStorage(cfg.HashKey))
+	s, err := server.NewServer(cfg)
 	if err != nil {
 		log.Fatalf("couldn't create server with error: %s", err)
 	}

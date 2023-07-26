@@ -3,6 +3,7 @@ package models
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"database/sql/driver"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -14,6 +15,27 @@ const (
 	Gauge   MetricType = "gauge"
 	Counter MetricType = "counter"
 )
+
+func (m *MetricType) Scan(src any) error {
+	str, ok := src.(string)
+	if !ok {
+		return fmt.Errorf("can't convert %T to string", src)
+	}
+
+	switch str {
+	case Gauge.String():
+		*m = Gauge
+	case Counter.String():
+		*m = Counter
+	default:
+		return fmt.Errorf("unknown metric type %s", src)
+	}
+	return nil
+}
+
+func (m *MetricType) Value() (driver.Value, error) {
+	return m.String(), nil
+}
 
 func (m MetricType) String() string {
 	switch m {

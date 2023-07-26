@@ -165,7 +165,7 @@ func TestHandlers_UpdateJSON(t *testing.T) {
 
 			assert.Equal(t, tt.want.StatusCode, rr.Code)
 			if rr.Code == http.StatusOK {
-				got := storage.GetAll()
+				got, _ := storage.GetAll()
 				require.Equal(t, 1, len(got))
 
 				assert.True(t, reflect.DeepEqual(tt.want.Body, got[0]))

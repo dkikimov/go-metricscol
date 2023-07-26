@@ -75,7 +75,13 @@ func (p *Handlers) GetAll(w http.ResponseWriter, _ *http.Request) {
 		return fmt.Sprintf(", hash: %s", metric.Hash)
 	}
 
-	for _, v := range p.Storage.GetAll() {
+	all, err := p.Storage.GetAll()
+	if err != nil {
+		apierror.WriteHTTP(w, err)
+		return
+	}
+
+	for _, v := range all {
 		_, err := w.Write([]byte(fmt.Sprintf("Key: %s, value: %s, type: %s%s \n", v.Name, v.StringValue(), v.MType, getHashSubstring(v))))
 		if err != nil {
 			log.Printf("Couldn't write response to GetAll request with error: %s", err)

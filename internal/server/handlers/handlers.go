@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"github.com/jackc/pgx/v5"
 	"go-metricscol/internal/repository"
+	"go-metricscol/internal/repository/postgres"
 )
 
 type Handlers struct {
 	Storage  repository.Repository
-	Postgres *pgx.Conn
+	Postgres *postgres.DB
 }

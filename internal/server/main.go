@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/jackc/pgx/v5"
 	"go-metricscol/internal/repository"
+	"go-metricscol/internal/repository/memory"
 	"go-metricscol/internal/repository/postgres"
 	"log"
 	"net/http"
@@ -12,16 +12,24 @@ import (
 type Server struct {
 	Config     *Config
 	Repository repository.Repository
-	Postgres   *pgx.Conn
+	Postgres   *postgres.DB
 }
 
-func NewServer(config *Config, repository repository.Repository) (*Server, error) {
+func NewServer(config *Config) (*Server, error) {
 	db, err := postgres.New(config.DatabaseDSN)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Server{Config: config, Repository: repository, Postgres: db}, nil
+	return &Server{Config: config, Repository: getRepository(config, db), Postgres: db}, nil
+}
+
+func getRepository(config *Config, db *postgres.DB) repository.Repository {
+	if len(config.DatabaseDSN) == 0 {
+		return memory.NewMemStorage(config.HashKey)
+	} else {
+		return db
+	}
 }
 
 func (s Server) ListenAndServe() error {
@@ -40,7 +48,7 @@ func (s Server) ListenAndServe() error {
 		}
 	}
 
-	if len(s.Config.StoreFile) != 0 && s.Config.StoreInterval != 0 {
+	if len(s.Config.StoreFile) != 0 && s.Config.StoreInterval != 0 && len(s.Config.DatabaseDSN) == 0 {
 		go s.enableSavingToDisk()
 	}
 

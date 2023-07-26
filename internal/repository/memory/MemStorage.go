@@ -10,7 +10,7 @@ import (
 )
 
 type MemStorage struct {
-	metrics models.Metrics
+	metrics Metrics
 	mu      sync.Mutex
 	config  *Config
 }
@@ -36,7 +36,7 @@ func (memStorage *MemStorage) UpdateWithStruct(metric *models.Metric) error {
 	return memStorage.metrics.UpdateWithStruct(metric)
 }
 
-func (memStorage *MemStorage) GetAll() []models.Metric {
+func (memStorage *MemStorage) GetAll() ([]models.Metric, error) {
 	memStorage.mu.Lock()
 	defer memStorage.mu.Unlock()
 
@@ -47,7 +47,7 @@ func (memStorage *MemStorage) GetAll() []models.Metric {
 
 	sort.Slice(all, func(i, j int) bool { return all[i].Name < all[j].Name })
 
-	return all
+	return all, nil
 }
 
 func (memStorage *MemStorage) Get(key string, valueType models.MetricType) (*models.Metric, error) {
@@ -85,5 +85,5 @@ func (memStorage *MemStorage) Update(name string, valueType models.MetricType, v
 }
 
 func NewMemStorage(hashKey string) *MemStorage {
-	return &MemStorage{metrics: models.NewMetrics(), config: NewConfig(hashKey)}
+	return &MemStorage{metrics: NewMetrics(), config: NewConfig(hashKey)}
 }

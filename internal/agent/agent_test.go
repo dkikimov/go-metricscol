@@ -3,6 +3,7 @@ package agent
 import (
 	"github.com/stretchr/testify/assert"
 	"go-metricscol/internal/models"
+	"go-metricscol/internal/repository/memory"
 	"testing"
 )
 
@@ -17,7 +18,7 @@ func contains(s []string, str string) bool {
 }
 
 func TestUpdateMetrics(t *testing.T) {
-	metrics := models.NewMetrics()
+	metrics := memory.NewMetrics()
 
 	metricsMustBeUpdated := []string{"BuckHashSys", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapSys", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "OtherSys", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue", "PollCount", "Alloc"}
 	t.Run("UpdateMetrics", func(t *testing.T) {
@@ -32,7 +33,7 @@ func TestUpdateMetrics(t *testing.T) {
 }
 
 func TestUpdatePollCount(t *testing.T) {
-	metrics := models.NewMetrics()
+	metrics := memory.NewMetrics()
 	UpdateMetrics(&metrics)
 	UpdateMetrics(&metrics)
 	UpdateMetrics(&metrics)
