@@ -3,6 +3,7 @@ module go-metricscol
 go 1.20
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/caarlos0/env/v9 v9.0.0
 	github.com/go-chi/chi v1.5.4
 	github.com/jackc/pgx/v5 v5.4.2

@@ -82,7 +82,7 @@ func TestGet(t *testing.T, storage Repository) {
 		err  error
 	}{
 		{
-			name: "Get metric",
+			name: "Get metric gauge",
 			args: args{
 				key:       "Alloc",
 				valueType: models.Gauge,
@@ -91,6 +91,19 @@ func TestGet(t *testing.T, storage Repository) {
 				Name:  "Alloc",
 				MType: models.Gauge,
 				Value: utils.Ptr(101.42),
+			}),
+			err: nil,
+		},
+		{
+			name: "Get metric counter",
+			args: args{
+				key:       "PollCount",
+				valueType: models.Counter,
+			},
+			want: utils.Ptr(models.Metric{
+				Name:  "PollCount",
+				MType: models.Counter,
+				Delta: utils.Ptr(int64(1)),
 			}),
 			err: nil,
 		},
@@ -116,6 +129,7 @@ func TestGet(t *testing.T, storage Repository) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := storage.Get(tt.args.key, tt.args.valueType)
+			//assert.True(t, reflect.DeepEqual(tt.want, got))
 			assert.Equal(t, tt.want, got)
 			assert.Equal(t, tt.err, err)
 		})
@@ -131,7 +145,7 @@ func TestGetAll(t *testing.T, storage Repository) {
 			name: "Get all",
 			want: []models.Metric{
 				{Name: "Alloc", MType: models.Gauge, Value: utils.Ptr(101.42)},
-				{Name: "PollCount", MType: models.Counter, Delta: utils.Ptr(int64(2))},
+				{Name: "PollCount", MType: models.Counter, Delta: utils.Ptr(int64(1))},
 			},
 		},
 	}
@@ -140,6 +154,51 @@ func TestGetAll(t *testing.T, storage Repository) {
 			all, err := storage.GetAll()
 			require.NoError(t, err)
 			assert.True(t, reflect.DeepEqual(tt.want, all))
+		})
+	}
+}
+
+func TestUpdateWithStruct(t *testing.T, storage Repository) {
+	tests := []struct {
+		name    string
+		storage Repository
+		args    models.Metric
+		err     error
+	}{
+		{
+			name:    "Gauge float",
+			storage: storage,
+			args: models.Metric{
+				Name:  "Alloc",
+				Value: utils.Ptr(120.123),
+				MType: models.Gauge,
+			},
+			err: nil,
+		},
+		{
+			name:    "Counter int",
+			storage: storage,
+			args: models.Metric{
+				Name:  "PollCount",
+				Delta: utils.Ptr(int64(2)),
+				MType: models.Counter,
+			},
+			err: nil,
+		},
+		{
+			name:    "Type and value mismatch",
+			storage: storage,
+			args: models.Metric{
+				Name:  "Alloc",
+				Value: utils.Ptr(123.245),
+				MType: models.Counter,
+			},
+			err: apierror.InvalidValue,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.err, tt.storage.UpdateWithStruct(&tt.args))
 		})
 	}
 }

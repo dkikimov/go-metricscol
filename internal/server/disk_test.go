@@ -31,11 +31,9 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 
 	storeInterval := 2 * time.Second
 	config := NewConfig("127.0.0.1:8080", storeInterval, file.Name(), false, "", "")
-	storage := memory.NewMemStorage("")
-
-	require.NoError(t, storage.UpdateWithStruct(&testMetric))
 
 	server, err := NewServer(config)
+	require.NoError(t, server.Repository.UpdateWithStruct(&testMetric))
 	require.NoError(t, err)
 
 	t.Run("Enable saving to disk", func(t *testing.T) {
@@ -56,7 +54,7 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 		err = json.Unmarshal(bytes, savedStorage)
 		require.NoError(t, err)
 
-		assert.Equal(t, storage, savedStorage)
+		assert.Equal(t, server.Repository, savedStorage)
 	})
 }
 

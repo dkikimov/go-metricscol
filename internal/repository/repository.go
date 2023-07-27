@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"encoding/json"
 	"go-metricscol/internal/models"
 )
 
@@ -10,7 +11,8 @@ type Repository interface {
 	UpdateWithStruct(metric *models.Metric) error
 	GetAll() ([]models.Metric, error)
 
-	//TODO: Убрал маршалинг, тк не нужен постгресу. Нужно подумать как требовать маршалинг от MemStorage
-	//json.Marshaler
-	//json.Unmarshaler
+	//TODO: Нужно убрать маршалинг, тк не нужен постгресу. Но нужно сделать обязательным для остальных реализаций
+
+	json.Marshaler
+	json.Unmarshaler
 }

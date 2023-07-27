@@ -109,9 +109,10 @@ func (m Metrics) Update(name string, valueType models.MetricType, value interfac
 }
 
 func (m Metrics) UpdateWithStruct(metric *models.Metric) error {
-	if metric.MType != models.Gauge && metric.MType != models.Counter {
-		return apierror.UnknownMetricType
+	if metric == nil {
+		return apierror.InvalidValue
 	}
+
 	if len(metric.Name) == 0 {
 		return apierror.InvalidValue
 	}
