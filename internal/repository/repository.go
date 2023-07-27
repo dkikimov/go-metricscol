@@ -11,8 +11,6 @@ type Repository interface {
 	UpdateWithStruct(metric *models.Metric) error
 	GetAll() ([]models.Metric, error)
 
-	//TODO: Нужно убрать маршалинг, тк не нужен постгресу. Но нужно сделать обязательным для остальных реализаций
-
 	json.Marshaler
 	json.Unmarshaler
 }

@@ -33,7 +33,7 @@ func (s Server) newRouter(storage repository.Repository) chi.Router {
 	r.Use(middleware.DecompressHandler)
 	r.Use(chiMiddleware.AllowContentEncoding("gzip"))
 
-	saveToDisk := s.Config.StoreInterval == 0 && len(s.Config.StoreFile) != 0
+	saveToDisk := s.Config.StoreInterval == 0 && len(s.Config.StoreFile) != 0 && len(s.Config.DatabaseDSN) == 0
 
 	r.Post("/update/{type}/{name}/{value}", s.diskSaverHandler(processors.Update, saveToDisk))
 	r.Get("/value/{type}/{name}", processors.Get)

@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"database/sql"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
 	"go-metricscol/internal/models"
@@ -52,8 +53,8 @@ func TestDB_GetAll(t *testing.T) {
 	mock.ExpectQuery(`SELECT name, type, value, delta FROM metrics`).
 		WillReturnRows(
 			sqlmock.NewRows([]string{"name", "type", "value", "delta"}).
-				AddRow("Alloc", models.Gauge, 101.42, 0).
-				AddRow("PollCount", models.Counter, 0, 1),
+				AddRow("Alloc", models.Gauge, 101.42, sql.NullInt64{}).
+				AddRow("PollCount", models.Counter, sql.NullFloat64{}, 1),
 		)
 
 	postgres, err := NewFromDB(db)

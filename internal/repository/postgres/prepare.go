@@ -7,4 +7,4 @@ const CreateTable = `CREATE TABLE IF NOT EXISTS metrics(
 	delta bigint
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS metrics_type ON metrics(type);`
+CREATE INDEX IF NOT EXISTS metrics_type ON metrics(type);`

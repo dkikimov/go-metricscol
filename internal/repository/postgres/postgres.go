@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go-metricscol/internal/models"
@@ -17,13 +18,11 @@ type DB struct {
 }
 
 func (p DB) MarshalJSON() ([]byte, error) {
-	//TODO implement me
-	panic("implement me")
+	return nil, nil
 }
 
 func (p DB) UnmarshalJSON(_ []byte) error {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (p DB) Ping(ctx context.Context) error {
@@ -114,6 +113,9 @@ func (p DB) Get(key string, valueType models.MetricType) (*models.Metric, error)
 	}
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apierror.NotFound
+		}
 		return nil, err
 	}
 
@@ -134,8 +136,8 @@ func (p DB) GetAll() ([]models.Metric, error) {
 	result := make([]models.Metric, 0)
 	for rows.Next() {
 		var metric models.Metric
-		var value float64
-		var delta int64
+		var value sql.NullFloat64
+		var delta sql.NullInt64
 
 		err := rows.Scan(&metric.Name, &metric.MType, &value, &delta)
 		if err != nil {
@@ -144,9 +146,17 @@ func (p DB) GetAll() ([]models.Metric, error) {
 
 		switch metric.MType {
 		case models.Gauge:
-			metric.Value = &value
+			if !value.Valid {
+				return nil, fmt.Errorf("invalid float64 value, got error: %s", err)
+			}
+
+			metric.Value = &value.Float64
 		case models.Counter:
-			metric.Delta = &delta
+			if !delta.Valid {
+				return nil, fmt.Errorf("invalid int64 value, got error: %s", err)
+			}
+
+			metric.Delta = &delta.Int64
 		default:
 			return nil, apierror.UnknownMetricType
 		}

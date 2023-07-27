@@ -2,12 +2,20 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
+	"go-metricscol/internal/repository/postgres"
 	"log"
 	"os"
 	"time"
 )
 
 func (s Server) enableSavingToDisk() {
+	_, ok := s.Repository.(*postgres.DB)
+	if ok {
+		log.Printf("Postgres doesn't support saving to disk")
+		return
+	}
+
 	ticker := time.NewTicker(s.Config.StoreInterval)
 
 	for range ticker.C {
@@ -18,6 +26,12 @@ func (s Server) enableSavingToDisk() {
 }
 
 func (s Server) saveToDisk() error {
+	_, ok := s.Repository.(*postgres.DB)
+	if ok {
+		log.Printf("Postgres doesn't support saving to disk")
+		return errors.New("unsupported storage")
+	}
+
 	log.Printf("saving to disk")
 
 	file, err := os.OpenFile(s.Config.StoreFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)

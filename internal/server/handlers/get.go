@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
@@ -14,12 +15,16 @@ func (p *Handlers) Get(w http.ResponseWriter, r *http.Request) {
 	urlData, err := models.ParseGetURLData(r)
 	if err != nil {
 		apierror.WriteHTTP(w, err)
+		log.Printf("Couldn't parse url with error: %s", err)
 		return
 	}
 
 	metric, err := p.Storage.Get(urlData.MetricName, urlData.MetricType)
 	if err != nil {
 		apierror.WriteHTTP(w, err)
+		if !errors.Is(err, apierror.NotFound) {
+			log.Printf("Couldn't get metric with error: %s", err)
+		}
 		return
 	}
 
@@ -34,24 +39,30 @@ func (p *Handlers) GetJSON(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, "couldn't read body", http.StatusInternalServerError)
+		log.Printf("Couldn't read body with error: %s", err)
 		return
 	}
 
 	var metric models.Metric
 	if err := json.Unmarshal(body, &metric); err != nil {
 		http.Error(w, "couldn't parse json", http.StatusBadRequest)
+		log.Printf("Couldn't parse json with error: %s", err)
 		return
 	}
 
 	foundMetric, err := p.Storage.Get(metric.Name, metric.MType)
 	if err != nil {
 		apierror.WriteHTTP(w, err)
+		if !errors.Is(err, apierror.NotFound) {
+			log.Printf("Couldn't get metric with error: %s", err)
+		}
 		return
 	}
 
 	jsonFoundMetric, err := json.Marshal(foundMetric)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("Couldn't marshal metric with error: %s", err)
 		return
 	}
 
@@ -59,6 +70,7 @@ func (p *Handlers) GetJSON(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(jsonFoundMetric)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("Couldn't write response to GetJSON request with error: %s", err)
 		return
 	}
 
@@ -78,6 +90,7 @@ func (p *Handlers) GetAll(w http.ResponseWriter, _ *http.Request) {
 	all, err := p.Storage.GetAll()
 	if err != nil {
 		apierror.WriteHTTP(w, err)
+		log.Printf("Couldn't get all metrics with error: %s", err)
 		return
 	}
 
