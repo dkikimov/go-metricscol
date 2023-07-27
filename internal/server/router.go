@@ -22,10 +22,7 @@ func (s Server) diskSaverHandler(next http.HandlerFunc, saveToDisk bool) http.Ha
 }
 
 func (s Server) newRouter(storage repository.Repository) chi.Router {
-	processors := handlers.Handlers{
-		Storage:  storage,
-		Postgres: s.Postgres,
-	}
+	processors := handlers.NewHandlers(storage, s.Postgres, handlers.NewConfig(s.Config.HashKey))
 
 	r := chi.NewRouter()
 	r.Use(chiMiddleware.Compress(5, "text/html", "text/css", "application/javascript", "application/json", "text/plain", "text/xml"))

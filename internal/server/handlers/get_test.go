@@ -18,9 +18,11 @@ import (
 )
 
 func TestHandlers_Get(t *testing.T) {
-	h := Handlers{
-		Storage: memory.NewMemStorage(""),
-	}
+	h := NewHandlers(
+		memory.NewMemStorage(),
+		nil,
+		NewConfig(""),
+	)
 
 	require.NoError(t, h.Storage.Update("Alloc", models.Gauge, "123.4"))
 	require.NoError(t, h.Storage.Update("MemoryInUse", models.Gauge, "593"))
@@ -98,9 +100,11 @@ func TestHandlers_Get(t *testing.T) {
 }
 
 func TestHandlers_GetAll(t *testing.T) {
-	h := Handlers{
-		Storage: memory.NewMemStorage(""),
-	}
+	h := NewHandlers(
+		memory.NewMemStorage(),
+		nil,
+		NewConfig(""),
+	)
 
 	require.NoError(t, h.Storage.Update("Alloc", models.Gauge, "123.4"))
 	require.NoError(t, h.Storage.Update("MemoryInUse", models.Gauge, "593"))
@@ -149,12 +153,16 @@ func TestHandlers_GetAll(t *testing.T) {
 	}
 }
 
+// TODO: Добавить тесты для постгреса
+
 func TestHandlers_GetAllWithHash(t *testing.T) {
 	hashKey := "test"
 
-	h := Handlers{
-		Storage: memory.NewMemStorage(hashKey),
-	}
+	h := NewHandlers(
+		memory.NewMemStorage(),
+		nil,
+		NewConfig(hashKey),
+	)
 
 	alloc := models.Metric{
 		Name:  "Alloc",
@@ -222,11 +230,15 @@ func TestHandlers_GetAllWithHash(t *testing.T) {
 }
 
 func TestHandlers_GetJSON(t *testing.T) {
-	storage := memory.NewMemStorage("")
+	storage := memory.NewMemStorage()
 	require.NoError(t, storage.Update("Alloc", "gauge", "12.1"))
 	require.NoError(t, storage.Update("PollCount", "counter", "13"))
 
-	h := Handlers{Storage: storage}
+	h := NewHandlers(
+		storage,
+		nil,
+		NewConfig(""),
+	)
 	type want struct {
 		Body       models.Metric
 		StatusCode int

@@ -59,6 +59,8 @@ func (p *Handlers) GetJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	p.addHash(foundMetric)
+
 	jsonFoundMetric, err := json.Marshal(foundMetric)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -93,6 +95,9 @@ func (p *Handlers) GetAll(w http.ResponseWriter, _ *http.Request) {
 		log.Printf("Couldn't get all metrics with error: %s", err)
 		return
 	}
+
+	// TODO: Где лучше вызывать этот метод? Хэндлеры или репозитории? Можно легко забыть. Подумать.
+	p.addHashToSlice(all)
 
 	for _, v := range all {
 		_, err := w.Write([]byte(fmt.Sprintf("Key: %s, value: %s, type: %s%s \n", v.Name, v.StringValue(), v.MType, getHashSubstring(v))))

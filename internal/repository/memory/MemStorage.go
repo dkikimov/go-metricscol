@@ -12,7 +12,6 @@ import (
 type MemStorage struct {
 	metrics Metrics
 	mu      sync.Mutex
-	config  *Config
 }
 
 func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
@@ -41,9 +40,6 @@ func (memStorage *MemStorage) GetAll() ([]models.Metric, error) {
 	defer memStorage.mu.Unlock()
 
 	all := memStorage.metrics.GetAll()
-	for idx, value := range all {
-		all[idx].Hash = value.HashValue(memStorage.config.HashKey)
-	}
 
 	sort.Slice(all, func(i, j int) bool { return all[i].Name < all[j].Name })
 
@@ -55,10 +51,6 @@ func (memStorage *MemStorage) Get(key string, valueType models.MetricType) (*mod
 	defer memStorage.mu.Unlock()
 
 	result, err := memStorage.metrics.Get(key, valueType)
-	if err == nil {
-		result.Hash = result.HashValue(memStorage.config.HashKey)
-	}
-
 	return result, err
 }
 
@@ -84,6 +76,6 @@ func (memStorage *MemStorage) Update(name string, valueType models.MetricType, v
 	}
 }
 
-func NewMemStorage(hashKey string) *MemStorage {
-	return &MemStorage{metrics: NewMetrics(), config: NewConfig(hashKey)}
+func NewMemStorage() *MemStorage {
+	return &MemStorage{metrics: NewMetrics()}
 }

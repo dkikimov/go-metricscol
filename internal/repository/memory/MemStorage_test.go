@@ -8,13 +8,13 @@ import (
 )
 
 func TestMemStorage_Update(t *testing.T) {
-	memStorage := NewMemStorage("")
+	memStorage := NewMemStorage()
 
 	repository.TestUpdate(t, memStorage)
 }
 
 func TestMemStorage_Get(t *testing.T) {
-	storage := NewMemStorage("")
+	storage := NewMemStorage()
 	require.NoError(t, storage.Update("Alloc", models.Gauge, "101.42"))
 	require.NoError(t, storage.Update("PollCount", models.Counter, "1"))
 
@@ -22,7 +22,7 @@ func TestMemStorage_Get(t *testing.T) {
 }
 
 func TestMemStorage_GetAll(t *testing.T) {
-	storage := NewMemStorage("")
+	storage := NewMemStorage()
 
 	require.NoError(t, storage.Update("Alloc", models.Gauge, "101.42"))
 	require.NoError(t, storage.Update("PollCount", models.Counter, "1"))
@@ -31,7 +31,7 @@ func TestMemStorage_GetAll(t *testing.T) {
 }
 
 func TestMemStorage_UpdateWithStruct(t *testing.T) {
-	storage := NewMemStorage("")
+	storage := NewMemStorage()
 
 	repository.TestUpdateWithStruct(t, storage)
 }

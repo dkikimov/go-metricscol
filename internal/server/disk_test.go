@@ -50,7 +50,7 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 		bytes, err = os.ReadFile(file.Name())
 		require.NoError(t, err)
 
-		savedStorage := memory.NewMemStorage("")
+		savedStorage := memory.NewMemStorage()
 		err = json.Unmarshal(bytes, savedStorage)
 		require.NoError(t, err)
 
@@ -67,7 +67,7 @@ func TestServer_restoreFromDisk(t *testing.T) {
 	require.NoError(t, err)
 
 	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "")
-	storage := memory.NewMemStorage("")
+	storage := memory.NewMemStorage()
 
 	require.NoError(t, storage.UpdateWithStruct(&testMetric))
 
@@ -99,7 +99,7 @@ func TestServer_saveToDisk(t *testing.T) {
 	require.NoError(t, err)
 
 	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "")
-	storage := memory.NewMemStorage("")
+	storage := memory.NewMemStorage()
 
 	require.NoError(t, storage.UpdateWithStruct(&testMetric))
 
@@ -134,7 +134,7 @@ func TestServer_saveToDisk(t *testing.T) {
 			bytes, err := os.ReadFile(file.Name())
 			require.NoError(t, err)
 
-			savedStorage := memory.NewMemStorage("")
+			savedStorage := memory.NewMemStorage()
 			err = json.Unmarshal(bytes, savedStorage)
 			require.NoError(t, err)
 

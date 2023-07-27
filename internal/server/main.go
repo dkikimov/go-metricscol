@@ -26,7 +26,7 @@ func NewServer(config *Config) (*Server, error) {
 
 func getRepository(config *Config, db *postgres.DB) repository.Repository {
 	if len(config.DatabaseDSN) == 0 {
-		return memory.NewMemStorage(config.HashKey)
+		return memory.NewMemStorage()
 	} else {
 		return db
 	}
