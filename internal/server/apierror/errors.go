@@ -15,7 +15,7 @@ func (apiError APIError) Error() string {
 	return apiError.Message
 }
 
-func WriteHeader(w http.ResponseWriter, err error) {
+func WriteHTTP(w http.ResponseWriter, err error) {
 	if apiError, ok := err.(APIError); ok {
 		w.WriteHeader(apiError.StatusCode)
 	} else {

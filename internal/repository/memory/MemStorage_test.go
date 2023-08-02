@@ -4,6 +4,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
+	"go-metricscol/internal/utils"
+	"reflect"
 	"testing"
 )
 
@@ -27,7 +29,7 @@ func TestMemStorage_Update(t *testing.T) {
 			args: args{
 				key:       "Alloc",
 				value:     "120.123",
-				valueType: models.GaugeType,
+				valueType: models.Gauge,
 			},
 			err: nil,
 		},
@@ -37,7 +39,7 @@ func TestMemStorage_Update(t *testing.T) {
 			args: args{
 				key:       "PollCount",
 				value:     "2",
-				valueType: models.CounterType,
+				valueType: models.Counter,
 			},
 			err: nil,
 		},
@@ -47,7 +49,7 @@ func TestMemStorage_Update(t *testing.T) {
 			args: args{
 				key:       "PollCount",
 				value:     "hello",
-				valueType: models.CounterType,
+				valueType: models.Counter,
 			},
 			err: apierror.NumberParse,
 		},
@@ -57,7 +59,7 @@ func TestMemStorage_Update(t *testing.T) {
 			args: args{
 				key:       "Alloc",
 				value:     "123.245",
-				valueType: models.CounterType,
+				valueType: models.Counter,
 			},
 			err: apierror.NumberParse,
 		},
@@ -71,9 +73,9 @@ func TestMemStorage_Update(t *testing.T) {
 }
 
 func TestMemStorage_Get(t *testing.T) {
-	metrics := models.Metrics{}
-	assert.NoError(t, metrics.Update("Alloc", models.GaugeType, 101.42))
-	assert.NoError(t, metrics.Update("PollCount", models.CounterType, 2))
+	metrics := models.MetricsMap{}
+	assert.NoError(t, metrics.Update("Alloc", models.Gauge, 101.42))
+	assert.NoError(t, metrics.Update("PollCount", models.Counter, 2))
 
 	type args struct {
 		key       string
@@ -82,26 +84,27 @@ func TestMemStorage_Get(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want models.Metric
+		want *models.Metric
 		err  error
 	}{
 		{
 			name: "Get metric",
 			args: args{
 				key:       "Alloc",
-				valueType: models.GaugeType,
+				valueType: models.Gauge,
 			},
-			want: models.Gauge{
+			want: utils.Ptr(models.Metric{
 				Name:  "Alloc",
-				Value: 101.42,
-			},
+				MType: models.Gauge,
+				Value: utils.Ptr(101.42),
+			}),
 			err: nil,
 		},
 		{
 			name: "Get metric with another type",
 			args: args{
 				key:       "Alloc",
-				valueType: models.CounterType,
+				valueType: models.Counter,
 			},
 			want: nil,
 			err:  apierror.NotFound,
@@ -110,7 +113,7 @@ func TestMemStorage_Get(t *testing.T) {
 			name: "Get metric with unknown type",
 			args: args{
 				key:       "Alloc",
-				valueType: 5,
+				valueType: "unknown",
 			},
 			want: nil,
 			err:  apierror.NotFound,
@@ -121,20 +124,20 @@ func TestMemStorage_Get(t *testing.T) {
 			memStorage := &MemStorage{
 				metrics: metrics,
 			}
-			got, got1 := memStorage.Get(tt.args.key, tt.args.valueType)
+			got, err := memStorage.Get(tt.args.key, tt.args.valueType)
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.err, got1)
+			assert.Equal(t, tt.err, err)
 		})
 	}
 }
 
 func TestMemStorage_GetAll(t *testing.T) {
-	metrics := models.Metrics{}
-	assert.NoError(t, metrics.Update("Alloc", models.GaugeType, 101.42))
-	assert.NoError(t, metrics.Update("PollCount", models.CounterType, 2))
+	metrics := models.MetricsMap{}
+	assert.NoError(t, metrics.Update("Alloc", models.Gauge, 101.42))
+	assert.NoError(t, metrics.Update("PollCount", models.Counter, 2))
 
 	type fields struct {
-		metrics models.Metrics
+		metrics models.MetricsMap
 	}
 	tests := []struct {
 		name   string
@@ -147,8 +150,8 @@ func TestMemStorage_GetAll(t *testing.T) {
 				metrics: metrics,
 			},
 			want: []models.Metric{
-				models.Gauge{Name: "Alloc", Value: 101.42},
-				models.Counter{Name: "PollCount", Value: 2},
+				{Name: "Alloc", MType: models.Gauge, Value: utils.Ptr(101.42)},
+				{Name: "PollCount", MType: models.Counter, Delta: utils.Ptr(int64(2))},
 			},
 		},
 	}
@@ -157,7 +160,7 @@ func TestMemStorage_GetAll(t *testing.T) {
 			memStorage := &MemStorage{
 				metrics: tt.fields.metrics,
 			}
-			assert.EqualValues(t, tt.want, memStorage.GetAll())
+			assert.True(t, reflect.DeepEqual(tt.want, memStorage.GetAll()))
 		})
 	}
 }
