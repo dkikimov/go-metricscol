@@ -17,6 +17,55 @@ type DB struct {
 	conn *sql.DB
 }
 
+func (p DB) Updates(metrics []models.Metric) error {
+	tx, err := p.conn.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFunc()
+
+	updateGaugeStmt, err := tx.PrepareContext(ctx, "INSERT INTO metrics (name, type, value) VALUES ($1, $2, $3) ON CONFLICT (name) DO UPDATE SET type = $2, value = $3")
+	if err != nil {
+		return err
+	}
+	defer updateGaugeStmt.Close()
+
+	updateCounterStmt, err := tx.PrepareContext(ctx, "INSERT INTO metrics (name, type, delta) VALUES ($1, $2, $3) ON CONFLICT (name) DO UPDATE SET type = $2, delta = metrics.delta + $3")
+	if err != nil {
+		return err
+	}
+	defer updateCounterStmt.Close()
+
+	for _, metric := range metrics {
+		switch metric.MType {
+		case models.Gauge:
+			if metric.Value == nil {
+				return errors.New("value is nil for metric")
+			}
+			_, err := updateGaugeStmt.Exec(metric.Name, metric.MType, *metric.Value)
+			if err != nil {
+				return err
+			}
+		case models.Counter:
+			if metric.Delta == nil {
+				return errors.New("delta is nil for metric")
+			}
+			_, err := updateCounterStmt.Exec(metric.Name, metric.MType, *metric.Delta)
+			if err != nil {
+				return err
+			}
+		default:
+			return apierror.UnknownMetricType
+		}
+	}
+
+	return tx.Commit()
+}
+
 func (p DB) MarshalJSON() ([]byte, error) {
 	return nil, nil
 }

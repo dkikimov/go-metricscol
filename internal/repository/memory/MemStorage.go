@@ -14,6 +14,14 @@ type MemStorage struct {
 	mu      sync.Mutex
 }
 
+func (memStorage *MemStorage) Updates(metrics []models.Metric) error {
+	for _, metric := range metrics {
+		memStorage.metrics.Collection[metric.Name] = metric
+	}
+
+	return nil
+}
+
 func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
 	memStorage.mu.Lock()
 	defer memStorage.mu.Unlock()

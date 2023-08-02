@@ -63,3 +63,44 @@ func (p *Handlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func (p *Handlers) Updates(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "couldn't read body", http.StatusInternalServerError)
+		log.Printf("Couldn't read body with error: %s", err)
+		return
+	}
+
+	var metrics []models.Metric
+	if err := json.Unmarshal(body, &metrics); err != nil {
+		http.Error(w, "couldn't parse json", http.StatusBadRequest)
+		log.Printf("Couldn't parse json with error: %s", err)
+		return
+	}
+
+	if err := p.Storage.Updates(metrics); err != nil {
+		apierror.WriteHTTP(w, err)
+		log.Printf("Couldn't update metric with error: %s", err)
+		return
+	}
+
+	log.Printf("Updates %d metrics", len(metrics))
+
+	updatedMetrics := make([]models.Metric, 0, len(metrics))
+
+	for _, metric := range metrics {
+		newMetric, _ := p.Storage.Get(metric.Name, metric.MType)
+
+		p.addHash(newMetric)
+		updatedMetrics = append(updatedMetrics, *newMetric)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(updatedMetrics)
+	if err != nil {
+		http.Error(w, "couldn't encode json", http.StatusInternalServerError)
+		log.Printf("Couldn't encode json with error: %s", err)
+		return
+	}
+}
