@@ -15,8 +15,14 @@ type MemStorage struct {
 }
 
 func (memStorage *MemStorage) Updates(metrics []models.Metric) error {
+	memStorage.mu.Lock()
+	defer memStorage.mu.Unlock()
+
 	for _, metric := range metrics {
-		memStorage.metrics.Collection[metric.Name] = metric
+		err := memStorage.metrics.UpdateWithStruct(&metric)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
