@@ -17,6 +17,10 @@ type DB struct {
 	conn *sql.DB
 }
 
+func (p DB) SupportsTx() bool {
+	return true
+}
+
 func (p DB) Updates(metrics []models.Metric) error {
 	tx, err := p.conn.Begin()
 	if err != nil {
@@ -44,7 +48,7 @@ func (p DB) Updates(metrics []models.Metric) error {
 		switch metric.MType {
 		case models.Gauge:
 			if metric.Value == nil {
-				return errors.New("value is nil for metric")
+				return apierror.InvalidValue
 			}
 			_, err := updateGaugeStmt.Exec(metric.Name, metric.MType, *metric.Value)
 			if err != nil {
@@ -52,7 +56,7 @@ func (p DB) Updates(metrics []models.Metric) error {
 			}
 		case models.Counter:
 			if metric.Delta == nil {
-				return errors.New("delta is nil for metric")
+				return apierror.InvalidValue
 			}
 			_, err := updateCounterStmt.Exec(metric.Name, metric.MType, *metric.Delta)
 			if err != nil {

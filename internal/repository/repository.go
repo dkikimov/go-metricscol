@@ -11,6 +11,7 @@ type Repository interface {
 	UpdateWithStruct(metric *models.Metric) error
 	Get(key string, valueType models.MetricType) (*models.Metric, error)
 	GetAll() ([]models.Metric, error)
+	SupportsTx() bool
 
 	json.Marshaler
 	json.Unmarshaler

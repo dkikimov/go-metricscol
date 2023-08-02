@@ -91,7 +91,6 @@ func TestDB_Update(t *testing.T) {
 
 func TestDB_UpdateWithStruct(t *testing.T) {
 	db, mock, err := sqlmock.New()
-
 	require.NoError(t, err)
 
 	defer db.Close()
@@ -101,9 +100,23 @@ func TestDB_UpdateWithStruct(t *testing.T) {
 		WithArgs("Alloc", models.Gauge, 120.123).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
+	mock.ExpectQuery("SELECT name, type, value FROM metrics").
+		WithArgs("Alloc", models.Gauge).
+		WillReturnRows(
+			sqlmock.NewRows([]string{"name", "type", "value"}).
+				AddRow("Alloc", models.Gauge, 120.123),
+		)
+
 	mock.ExpectExec("INSERT INTO metrics").
 		WithArgs("PollCount", models.Counter, 2).
 		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectQuery("SELECT name, type, delta FROM metrics").
+		WithArgs("PollCount", models.Counter).
+		WillReturnRows(
+			sqlmock.NewRows([]string{"name", "type", "delta"}).
+				AddRow("PollCount", models.Counter, 2),
+		)
 
 	postgres, err := NewFromDB(db)
 	require.NoError(t, err)
@@ -111,4 +124,60 @@ func TestDB_UpdateWithStruct(t *testing.T) {
 	repository.TestUpdateWithStruct(t, postgres)
 
 	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestDB_Updates(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+
+	defer db.Close()
+
+	// #1
+	mock.ExpectBegin()
+	mock.ExpectPrepare("INSERT INTO metrics")
+	mock.ExpectPrepare("INSERT INTO metrics")
+
+	mock.ExpectExec("INSERT INTO metrics").
+		WithArgs("Alloc", models.Gauge, 120.123).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectExec("INSERT INTO metrics").
+		WithArgs("PollCount", models.Counter, 2).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	mock.ExpectQuery("SELECT name, type, value, delta FROM metrics").
+		WillReturnRows(
+			sqlmock.NewRows([]string{"name", "type", "value", "delta"}).
+				AddRow("Alloc", models.Gauge, 120.123, sql.NullInt64{}).
+				AddRow("PollCount", models.Counter, sql.NullFloat64{}, 2),
+		)
+	// #2
+
+	mock.ExpectBegin()
+	mock.ExpectPrepare("INSERT INTO metrics")
+	mock.ExpectPrepare("INSERT INTO metrics")
+
+	mock.ExpectExec("INSERT INTO metrics").
+		WithArgs("Alloc", models.Gauge, 120.123).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectQuery("SELECT name, type, value, delta FROM metrics").
+		WillReturnRows(
+			sqlmock.NewRows([]string{"name", "type", "value", "delta"}),
+		)
+	//	#3
+
+	mock.ExpectBegin()
+	mock.ExpectPrepare("INSERT INTO metrics")
+	mock.ExpectPrepare("INSERT INTO metrics")
+
+	mock.ExpectExec("INSERT INTO metrics").
+		WithArgs("Alloc", models.Gauge, 120.123).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectQuery("SELECT name, type, value, delta FROM metrics").
+		WillReturnRows(
+			sqlmock.NewRows([]string{"name", "type", "value", "delta"}),
+		)
 }

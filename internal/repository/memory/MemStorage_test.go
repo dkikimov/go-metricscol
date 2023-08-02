@@ -35,3 +35,9 @@ func TestMemStorage_UpdateWithStruct(t *testing.T) {
 
 	repository.TestUpdateWithStruct(t, storage)
 }
+
+func TestMemStorage_Updates(t *testing.T) {
+	storage := NewMemStorage()
+
+	repository.TestUpdates(t, storage)
+}

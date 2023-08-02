@@ -198,7 +198,91 @@ func TestUpdateWithStruct(t *testing.T, storage Repository) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.err, tt.storage.UpdateWithStruct(&tt.args))
+			err := tt.storage.UpdateWithStruct(&tt.args)
+			assert.Equal(t, tt.err, err)
+			if err == nil {
+				m, err := storage.Get(tt.args.Name, tt.args.MType)
+				require.NoError(t, err)
+				assert.Equal(t, tt.args, *m)
+			}
+		})
+	}
+}
+
+func TestUpdates(t *testing.T, storage Repository) {
+	tests := []struct {
+		name    string
+		storage Repository
+		args    []models.Metric
+		err     error
+	}{
+		{
+			name:    "Updates",
+			storage: storage,
+			args: []models.Metric{
+				{
+					Name:  "Alloc",
+					Value: utils.Ptr(120.123),
+					MType: models.Gauge,
+				},
+				{
+					Name:  "PollCount",
+					Delta: utils.Ptr(int64(1)),
+					MType: models.Counter,
+				},
+			},
+			err: nil,
+		},
+		{
+			name:    "Gauge with delta",
+			storage: storage,
+			args: []models.Metric{
+				{
+					Name:  "Alloc",
+					Value: utils.Ptr(120.123),
+					MType: models.Gauge,
+				},
+				{
+					Name:  "PollCount",
+					Delta: utils.Ptr(int64(1)),
+					MType: models.Gauge,
+				},
+			},
+			err: apierror.InvalidValue,
+		},
+		{
+			name:    "Counter with non-empty value field",
+			storage: storage,
+			args: []models.Metric{
+				{
+					Name:  "Alloc",
+					Value: utils.Ptr(120.123),
+					MType: models.Gauge,
+				},
+				{
+					Name:  "PollCount",
+					Value: utils.Ptr(1.34),
+					MType: models.Counter,
+				},
+			},
+			err: apierror.InvalidValue,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.storage.Updates(tt.args)
+			assert.Equal(t, tt.err, err)
+
+			all, err := storage.GetAll()
+			require.NoError(t, err)
+
+			if tt.err == nil {
+				assert.EqualValues(t, tt.args, all)
+			} else {
+				if ok := storage.SupportsTx(); ok {
+					assert.Empty(t, all)
+				}
+			}
 		})
 	}
 }
