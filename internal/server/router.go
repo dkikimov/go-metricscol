@@ -37,7 +37,7 @@ func (s Server) newRouter(storage repository.Repository) chi.Router {
 
 	r.Post("/update/{type}/{name}/{value}", s.diskSaverHandler(processors.Update, saveToDisk))
 	r.Post("/update/", middleware.ValidateHashHandler(s.diskSaverHandler(processors.UpdateJSON, saveToDisk), s.Config.HashKey))
-	r.Post("/updates/", s.diskSaverHandler(processors.Updates, saveToDisk))
+	r.Post("/updates/", middleware.ValidateHashesHandler(s.diskSaverHandler(processors.Updates, saveToDisk), s.Config.HashKey))
 
 	r.Get("/ping", processors.Ping)
 

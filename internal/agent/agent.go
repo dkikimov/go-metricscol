@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository/memory"
-	"log"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -15,30 +15,39 @@ import (
 )
 
 func SendMetricsToServer(addr string, m *memory.Metrics, hashKey string) error {
-	for _, metric := range m.Collection {
-		postURL := url.URL{
-			Scheme: "http",
-			Host:   addr,
-			Path:   "/update/",
-		}
+	postURL := url.URL{
+		Scheme: "http",
+		Host:   addr,
+		Path:   "/updates/",
+	}
 
-		log.Println(postURL.String())
+	metrics := make([]models.Metric, 0, len(m.Collection))
+	for _, value := range m.Collection {
+		value.Hash = value.HashValue(hashKey)
+		metrics = append(metrics, value)
+	}
 
-		metric.Hash = metric.HashValue(hashKey)
-		marshal, err := json.Marshal(metric)
+	jsonMetrics, err := json.Marshal(metrics)
+	if err != nil {
+		return errors.New("couldn't marshal metrics")
+	}
+
+	resp, err := http.Post(postURL.String(), "application/json", bytes.NewReader(jsonMetrics))
+
+	if err != nil {
+		return fmt.Errorf("couldn't post url %s", postURL.String())
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return errors.New("couldn't marshal metric")
+			return err
 		}
+		return fmt.Errorf("coudln't send metrics, status code: %d, response: %s", resp.StatusCode, body)
+	}
 
-		resp, err := http.Post(postURL.String(), "application/json", bytes.NewReader(marshal))
-
-		if err != nil {
-			return fmt.Errorf("couldn't post url %s", postURL.String())
-		}
-
-		if err := resp.Body.Close(); err != nil {
-			return errors.New("couldn't close response body")
-		}
+	if err := resp.Body.Close(); err != nil {
+		return errors.New("couldn't close response body")
 	}
 	m.ResetPollCount()
 
