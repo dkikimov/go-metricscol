@@ -17,7 +17,7 @@ func (apiError APIError) Error() string {
 }
 
 func WriteHTTP(w http.ResponseWriter, err error) {
-	var apiError *APIError
+	var apiError APIError
 	if errors.As(err, &apiError) {
 		w.WriteHeader(apiError.StatusCode)
 	} else {
@@ -30,6 +30,7 @@ var (
 		StatusCode: http.StatusNotImplemented,
 		Message:    "unknown metric type",
 	}
+
 	EmptyArguments = APIError{
 		StatusCode: http.StatusNotFound,
 		Message:    "empty arguments",
