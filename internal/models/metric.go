@@ -37,6 +37,8 @@ func (m *MetricType) Value() (driver.Value, error) {
 	return m.String(), nil
 }
 
+// TODO: насколько страшно то, что методы объявлены для указателей и для значений?
+
 func (m MetricType) String() string {
 	switch m {
 	case Gauge:
