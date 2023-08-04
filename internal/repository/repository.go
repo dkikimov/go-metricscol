@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"encoding/json"
 	"go-metricscol/internal/models"
 )
 
@@ -12,7 +11,8 @@ type Repository interface {
 	Get(key string, valueType models.MetricType) (*models.Metric, error)
 	GetAll() ([]models.Metric, error)
 	SupportsTx() bool
+	SupportsSavingToDisk() bool
 
-	json.Marshaler
-	json.Unmarshaler
+	//json.Marshaler
+	//json.Unmarshaler
 }

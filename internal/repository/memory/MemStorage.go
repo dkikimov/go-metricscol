@@ -14,6 +14,10 @@ type MemStorage struct {
 	mu      sync.Mutex
 }
 
+func (memStorage *MemStorage) SupportsSavingToDisk() bool {
+	return true
+}
+
 func (memStorage *MemStorage) SupportsTx() bool {
 	return false
 }

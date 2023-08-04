@@ -17,6 +17,10 @@ type DB struct {
 	conn *sql.DB
 }
 
+func (p DB) SupportsSavingToDisk() bool {
+	return false
+}
+
 func (p DB) SupportsTx() bool {
 	return true
 }

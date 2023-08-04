@@ -3,16 +3,14 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"go-metricscol/internal/repository/postgres"
 	"log"
 	"os"
 	"time"
 )
 
 func (s Server) enableSavingToDisk() {
-	_, ok := s.Repository.(*postgres.DB)
-	if ok {
-		log.Printf("Postgres doesn't support saving to disk")
+	if !s.Repository.SupportsSavingToDisk() {
+		log.Printf("Selected repository doesn't support saving to disk")
 		return
 	}
 
@@ -26,9 +24,8 @@ func (s Server) enableSavingToDisk() {
 }
 
 func (s Server) saveToDisk() error {
-	_, ok := s.Repository.(*postgres.DB)
-	if ok {
-		log.Printf("Postgres doesn't support saving to disk")
+	if !s.Repository.SupportsSavingToDisk() {
+		log.Printf("Selected repository doesn't support saving to disk")
 		return errors.New("unsupported storage")
 	}
 
