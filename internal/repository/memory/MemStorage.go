@@ -11,7 +11,7 @@ import (
 
 type MemStorage struct {
 	metrics Metrics
-	mu      sync.Mutex
+	mu      sync.RWMutex
 }
 
 func (memStorage *MemStorage) SupportsSavingToDisk() bool {
@@ -44,8 +44,8 @@ func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
 }
 
 func (memStorage *MemStorage) MarshalJSON() ([]byte, error) {
-	memStorage.mu.Lock()
-	defer memStorage.mu.Unlock()
+	memStorage.mu.RLock()
+	defer memStorage.mu.RUnlock()
 
 	return json.Marshal(memStorage.metrics)
 }
@@ -58,8 +58,8 @@ func (memStorage *MemStorage) UpdateWithStruct(metric *models.Metric) error {
 }
 
 func (memStorage *MemStorage) GetAll() ([]models.Metric, error) {
-	memStorage.mu.Lock()
-	defer memStorage.mu.Unlock()
+	memStorage.mu.RLock()
+	defer memStorage.mu.RUnlock()
 
 	all := memStorage.metrics.GetAll()
 
@@ -69,8 +69,8 @@ func (memStorage *MemStorage) GetAll() ([]models.Metric, error) {
 }
 
 func (memStorage *MemStorage) Get(key string, valueType models.MetricType) (*models.Metric, error) {
-	memStorage.mu.Lock()
-	defer memStorage.mu.Unlock()
+	memStorage.mu.RLock()
+	defer memStorage.mu.RUnlock()
 
 	result, err := memStorage.metrics.Get(key, valueType)
 	return result, err
