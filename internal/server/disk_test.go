@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,7 +34,7 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 	config := NewConfig("127.0.0.1:8080", storeInterval, file.Name(), false, "", "")
 
 	server, err := NewServer(config)
-	require.NoError(t, server.Repository.UpdateWithStruct(&testMetric))
+	require.NoError(t, server.Repository.UpdateWithStruct(context.Background(), &testMetric))
 	require.NoError(t, err)
 
 	t.Run("Enable saving to disk", func(t *testing.T) {
@@ -69,7 +70,7 @@ func TestServer_restoreFromDisk(t *testing.T) {
 	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "")
 	storage := memory.NewMemStorage()
 
-	require.NoError(t, storage.UpdateWithStruct(&testMetric))
+	require.NoError(t, storage.UpdateWithStruct(context.Background(), &testMetric))
 
 	server, err := NewServer(config)
 	require.NoError(t, err)
@@ -101,7 +102,7 @@ func TestServer_saveToDisk(t *testing.T) {
 	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "")
 	storage := memory.NewMemStorage()
 
-	require.NoError(t, storage.UpdateWithStruct(&testMetric))
+	require.NoError(t, storage.UpdateWithStruct(context.Background(), &testMetric))
 
 	tests := []struct {
 		name    string

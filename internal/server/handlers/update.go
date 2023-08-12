@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
 	"io"
 	"log"
 	"net/http"
+	"time"
 )
 
 func (p *Handlers) Update(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +19,10 @@ func (p *Handlers) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = p.Storage.Update(urlData.MetricName, urlData.MetricType, urlData.MetricValue); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	if err = p.Storage.Update(ctx, urlData.MetricName, urlData.MetricType, urlData.MetricValue); err != nil {
 		apierror.WriteHTTP(w, err)
 		log.Printf("Couldn't update metric with error: %s", err)
 		return
@@ -43,7 +48,10 @@ func (p *Handlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := p.Storage.UpdateWithStruct(&metric); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	if err := p.Storage.UpdateWithStruct(ctx, &metric); err != nil {
 		apierror.WriteHTTP(w, err)
 		log.Printf("Couldn't update metric with error: %s", err)
 		return
@@ -51,7 +59,10 @@ func (p *Handlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Update metric with name %s, value: %s, type: %s", metric.Name, metric.StringValue(), metric.MType)
 
-	newMetric, _ := p.Storage.Get(metric.Name, metric.MType)
+	ctxGet, cancelGet := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancelGet()
+
+	newMetric, _ := p.Storage.Get(ctxGet, metric.Name, metric.MType)
 
 	p.addHash(newMetric)
 
@@ -80,7 +91,10 @@ func (p *Handlers) Updates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := p.Storage.Updates(metrics); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	if err := p.Storage.Updates(ctx, metrics); err != nil {
 		apierror.WriteHTTP(w, err)
 		log.Printf("Couldn't update metric with error: %s", err)
 		return
@@ -90,8 +104,11 @@ func (p *Handlers) Updates(w http.ResponseWriter, r *http.Request) {
 
 	updatedMetrics := make([]models.Metric, 0, len(metrics))
 
+	ctxGet, cancelGet := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancelGet()
+
 	for _, metric := range metrics {
-		newMetric, _ := p.Storage.Get(metric.Name, metric.MType)
+		newMetric, _ := p.Storage.Get(ctxGet, metric.Name, metric.MType)
 
 		p.addHash(newMetric)
 		updatedMetrics = append(updatedMetrics, *newMetric)

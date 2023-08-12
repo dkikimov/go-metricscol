@@ -24,9 +24,9 @@ func TestHandlers_Get(t *testing.T) {
 		NewConfig(""),
 	)
 
-	require.NoError(t, h.Storage.Update("Alloc", models.Gauge, "123.4"))
-	require.NoError(t, h.Storage.Update("MemoryInUse", models.Gauge, "593"))
-	require.NoError(t, h.Storage.Update("PollCount", models.Counter, "1"))
+	require.NoError(t, h.Storage.Update(context.Background(), "Alloc", models.Gauge, "123.4"))
+	require.NoError(t, h.Storage.Update(context.Background(), "MemoryInUse", models.Gauge, "593"))
+	require.NoError(t, h.Storage.Update(context.Background(), "PollCount", models.Counter, "1"))
 
 	type want struct {
 		StatusCode int
@@ -106,9 +106,9 @@ func TestHandlers_GetAll(t *testing.T) {
 		NewConfig(""),
 	)
 
-	require.NoError(t, h.Storage.Update("Alloc", models.Gauge, "123.4"))
-	require.NoError(t, h.Storage.Update("MemoryInUse", models.Gauge, "593"))
-	require.NoError(t, h.Storage.Update("PollCount", models.Counter, "1"))
+	require.NoError(t, h.Storage.Update(context.Background(), "Alloc", models.Gauge, "123.4"))
+	require.NoError(t, h.Storage.Update(context.Background(), "MemoryInUse", models.Gauge, "593"))
+	require.NoError(t, h.Storage.Update(context.Background(), "PollCount", models.Counter, "1"))
 
 	type want struct {
 		StatusCode int
@@ -182,9 +182,9 @@ func TestHandlers_GetAllWithHash(t *testing.T) {
 		Delta: utils.Ptr(int64(1)),
 	}
 
-	require.NoError(t, h.Storage.UpdateWithStruct(&alloc))
-	require.NoError(t, h.Storage.UpdateWithStruct(&memoryInUse))
-	require.NoError(t, h.Storage.UpdateWithStruct(&pollCount))
+	require.NoError(t, h.Storage.UpdateWithStruct(context.Background(), &alloc))
+	require.NoError(t, h.Storage.UpdateWithStruct(context.Background(), &memoryInUse))
+	require.NoError(t, h.Storage.UpdateWithStruct(context.Background(), &pollCount))
 
 	type want struct {
 		StatusCode int
@@ -231,8 +231,8 @@ func TestHandlers_GetAllWithHash(t *testing.T) {
 
 func TestHandlers_GetJSON(t *testing.T) {
 	storage := memory.NewMemStorage()
-	require.NoError(t, storage.Update("Alloc", "gauge", "12.1"))
-	require.NoError(t, storage.Update("PollCount", "counter", "13"))
+	require.NoError(t, storage.Update(context.Background(), "Alloc", "gauge", "12.1"))
+	require.NoError(t, storage.Update(context.Background(), "PollCount", "counter", "13"))
 
 	h := NewHandlers(
 		storage,

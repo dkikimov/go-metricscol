@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 )
 
 func (p *Handlers) Get(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +21,10 @@ func (p *Handlers) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metric, err := p.Storage.Get(urlData.MetricName, urlData.MetricType)
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	metric, err := p.Storage.Get(ctx, urlData.MetricName, urlData.MetricType)
 	if err != nil {
 		apierror.WriteHTTP(w, err)
 		if !errors.Is(err, apierror.NotFound) {
@@ -50,7 +55,10 @@ func (p *Handlers) GetJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	foundMetric, err := p.Storage.Get(metric.Name, metric.MType)
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	foundMetric, err := p.Storage.Get(ctx, metric.Name, metric.MType)
 	if err != nil {
 		apierror.WriteHTTP(w, err)
 		if !errors.Is(err, apierror.NotFound) {
@@ -79,7 +87,7 @@ func (p *Handlers) GetJSON(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Got metric with name %s, value: %s, type: %s", foundMetric.Name, foundMetric.StringValue(), foundMetric.MType)
 }
 
-func (p *Handlers) GetAll(w http.ResponseWriter, _ *http.Request) {
+func (p *Handlers) GetAll(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	getHashSubstring := func(metric models.Metric) string {
 		if len(metric.Hash) == 0 {
@@ -89,7 +97,10 @@ func (p *Handlers) GetAll(w http.ResponseWriter, _ *http.Request) {
 		return fmt.Sprintf(", hash: %s", metric.Hash)
 	}
 
-	all, err := p.Storage.GetAll()
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	all, err := p.Storage.GetAll(ctx)
 	if err != nil {
 		apierror.WriteHTTP(w, err)
 		log.Printf("Couldn't get all metrics with error: %s", err)

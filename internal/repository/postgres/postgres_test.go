@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
@@ -8,6 +9,7 @@ import (
 	"go-metricscol/internal/repository"
 	"go-metricscol/internal/server/apierror"
 	"testing"
+	"time"
 )
 
 // TODO: Кажется не совсем правильно, что я пишу запрос ручками. А вдруг он изменится? Поискать другой способ.
@@ -36,7 +38,10 @@ func TestDB_Get(t *testing.T) {
 	postgres, err := NewFromDB(db)
 	require.NoError(t, err)
 
-	repository.TestGet(t, postgres)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFunc()
+
+	repository.TestGet(ctx, t, postgres)
 	require.NoError(t, mock.ExpectationsWereMet())
 
 }
@@ -60,7 +65,10 @@ func TestDB_GetAll(t *testing.T) {
 	postgres, err := NewFromDB(db)
 	require.NoError(t, err)
 
-	repository.TestGetAll(t, postgres)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFunc()
+
+	repository.TestGetAll(ctx, t, postgres)
 	require.NoError(t, mock.ExpectationsWereMet())
 
 }
@@ -84,8 +92,10 @@ func TestDB_Update(t *testing.T) {
 	postgres, err := NewFromDB(db)
 	require.NoError(t, err)
 
-	repository.TestUpdate(t, postgres)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFunc()
 
+	repository.TestUpdate(ctx, t, postgres)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -121,7 +131,10 @@ func TestDB_UpdateWithStruct(t *testing.T) {
 	postgres, err := NewFromDB(db)
 	require.NoError(t, err)
 
-	repository.TestUpdateWithStruct(t, postgres)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFunc()
+
+	repository.TestUpdateWithStruct(ctx, t, postgres)
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
@@ -142,7 +155,7 @@ func TestDB_Updates(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	mock.ExpectExec("INSERT INTO metrics").
-		WithArgs("PollCount", models.Counter, 2).
+		WithArgs("PollCount", models.Counter, 1).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -150,7 +163,7 @@ func TestDB_Updates(t *testing.T) {
 		WillReturnRows(
 			sqlmock.NewRows([]string{"name", "type", "value", "delta"}).
 				AddRow("Alloc", models.Gauge, 120.123, sql.NullInt64{}).
-				AddRow("PollCount", models.Counter, sql.NullFloat64{}, 2),
+				AddRow("PollCount", models.Counter, sql.NullFloat64{}, 1),
 		)
 	// #2
 
@@ -161,6 +174,8 @@ func TestDB_Updates(t *testing.T) {
 	mock.ExpectExec("INSERT INTO metrics").
 		WithArgs("Alloc", models.Gauge, 120.123).
 		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectRollback()
 
 	mock.ExpectQuery("SELECT name, type, value, delta FROM metrics").
 		WillReturnRows(
@@ -176,8 +191,20 @@ func TestDB_Updates(t *testing.T) {
 		WithArgs("Alloc", models.Gauge, 120.123).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
+	mock.ExpectRollback()
+
 	mock.ExpectQuery("SELECT name, type, value, delta FROM metrics").
 		WillReturnRows(
 			sqlmock.NewRows([]string{"name", "type", "value", "delta"}),
 		)
+
+	postgres, err := NewFromDB(db)
+	require.NoError(t, err)
+
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFunc()
+
+	repository.TestUpdates(ctx, t, postgres)
+
+	require.NoError(t, mock.ExpectationsWereMet())
 }

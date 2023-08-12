@@ -17,24 +17,21 @@ type DB struct {
 	conn *sql.DB
 }
 
-func (p DB) SupportsSavingToDisk() bool {
+func (p *DB) SupportsSavingToDisk() bool {
 	return false
 }
 
-func (p DB) SupportsTx() bool {
+func (p *DB) SupportsTx() bool {
 	return true
 }
 
-func (p DB) Updates(metrics []models.Metric) error {
+func (p *DB) Updates(ctx context.Context, metrics []models.Metric) error {
 	tx, err := p.conn.Begin()
 	if err != nil {
 		return err
 	}
 
 	defer tx.Rollback()
-
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancelFunc()
 
 	updateGaugeStmt, err := tx.PrepareContext(ctx, "INSERT INTO metrics (name, type, value) VALUES ($1, $2, $3) ON CONFLICT (name) DO UPDATE SET type = $2, value = $3")
 	if err != nil {
@@ -74,22 +71,19 @@ func (p DB) Updates(metrics []models.Metric) error {
 	return tx.Commit()
 }
 
-func (p DB) MarshalJSON() ([]byte, error) {
+func (p *DB) MarshalJSON() ([]byte, error) {
 	return nil, nil
 }
 
-func (p DB) UnmarshalJSON(_ []byte) error {
+func (p *DB) UnmarshalJSON(_ []byte) error {
 	return nil
 }
 
-func (p DB) Ping(ctx context.Context) error {
+func (p *DB) Ping(ctx context.Context) error {
 	return p.conn.PingContext(ctx)
 }
 
-func (p DB) Update(name string, valueType models.MetricType, value string) error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancelFunc()
-
+func (p *DB) Update(ctx context.Context, name string, valueType models.MetricType, value string) error {
 	switch valueType {
 	case models.Gauge:
 		floatVal, err := strconv.ParseFloat(value, 64)
@@ -116,13 +110,10 @@ func (p DB) Update(name string, valueType models.MetricType, value string) error
 	return nil
 }
 
-func (p DB) UpdateWithStruct(metric *models.Metric) error {
+func (p *DB) UpdateWithStruct(ctx context.Context, metric *models.Metric) error {
 	if metric == nil || len(metric.Name) == 0 {
 		return apierror.InvalidValue
 	}
-
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 999999*time.Second)
-	defer cancelFunc()
 
 	var err error
 	switch metric.MType {
@@ -149,10 +140,7 @@ func (p DB) UpdateWithStruct(metric *models.Metric) error {
 	return nil
 }
 
-func (p DB) Get(key string, valueType models.MetricType) (*models.Metric, error) {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancelFunc()
-
+func (p *DB) Get(ctx context.Context, key string, valueType models.MetricType) (*models.Metric, error) {
 	var metric models.Metric
 	var result *sql.Row
 	var err error
@@ -179,10 +167,7 @@ func (p DB) Get(key string, valueType models.MetricType) (*models.Metric, error)
 	return &metric, nil
 }
 
-func (p DB) GetAll() ([]models.Metric, error) {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancelFunc()
-
+func (p *DB) GetAll(ctx context.Context) ([]models.Metric, error) {
 	rows, err := p.conn.QueryContext(ctx, "SELECT name, type, value, delta FROM metrics")
 	if err != nil {
 		return nil, err

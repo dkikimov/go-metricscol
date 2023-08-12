@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"encoding/json"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
@@ -22,7 +23,7 @@ func (memStorage *MemStorage) SupportsTx() bool {
 	return false
 }
 
-func (memStorage *MemStorage) Updates(metrics []models.Metric) error {
+func (memStorage *MemStorage) Updates(_ context.Context, metrics []models.Metric) error {
 	memStorage.mu.Lock()
 	defer memStorage.mu.Unlock()
 
@@ -50,14 +51,14 @@ func (memStorage *MemStorage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(memStorage.metrics)
 }
 
-func (memStorage *MemStorage) UpdateWithStruct(metric *models.Metric) error {
+func (memStorage *MemStorage) UpdateWithStruct(_ context.Context, metric *models.Metric) error {
 	memStorage.mu.Lock()
 	defer memStorage.mu.Unlock()
 
 	return memStorage.metrics.UpdateWithStruct(metric)
 }
 
-func (memStorage *MemStorage) GetAll() ([]models.Metric, error) {
+func (memStorage *MemStorage) GetAll(context.Context) ([]models.Metric, error) {
 	memStorage.mu.RLock()
 	defer memStorage.mu.RUnlock()
 
@@ -68,7 +69,7 @@ func (memStorage *MemStorage) GetAll() ([]models.Metric, error) {
 	return all, nil
 }
 
-func (memStorage *MemStorage) Get(key string, valueType models.MetricType) (*models.Metric, error) {
+func (memStorage *MemStorage) Get(_ context.Context, key string, valueType models.MetricType) (*models.Metric, error) {
 	memStorage.mu.RLock()
 	defer memStorage.mu.RUnlock()
 
@@ -76,7 +77,7 @@ func (memStorage *MemStorage) Get(key string, valueType models.MetricType) (*mod
 	return result, err
 }
 
-func (memStorage *MemStorage) Update(name string, valueType models.MetricType, value string) error {
+func (memStorage *MemStorage) Update(_ context.Context, name string, valueType models.MetricType, value string) error {
 	memStorage.mu.Lock()
 	defer memStorage.mu.Unlock()
 

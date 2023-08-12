@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go-metricscol/internal/models"
@@ -10,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestUpdate(t *testing.T, storage Repository) {
+func TestUpdate(ctx context.Context, t *testing.T, storage Repository) {
 	type args struct {
 		key       string
 		value     string
@@ -65,12 +66,12 @@ func TestUpdate(t *testing.T, storage Repository) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.err, tt.storage.Update(tt.args.key, tt.args.valueType, tt.args.value))
+			assert.Equal(t, tt.err, tt.storage.Update(ctx, tt.args.key, tt.args.valueType, tt.args.value))
 		})
 	}
 }
 
-func TestGet(t *testing.T, storage Repository) {
+func TestGet(ctx context.Context, t *testing.T, storage Repository) {
 	type args struct {
 		key       string
 		valueType models.MetricType
@@ -128,15 +129,14 @@ func TestGet(t *testing.T, storage Repository) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := storage.Get(tt.args.key, tt.args.valueType)
-			//assert.True(t, reflect.DeepEqual(tt.want, got))
+			got, err := storage.Get(ctx, tt.args.key, tt.args.valueType)
 			assert.Equal(t, tt.want, got)
 			assert.Equal(t, tt.err, err)
 		})
 	}
 }
 
-func TestGetAll(t *testing.T, storage Repository) {
+func TestGetAll(ctx context.Context, t *testing.T, storage Repository) {
 	tests := []struct {
 		name string
 		want []models.Metric
@@ -151,14 +151,14 @@ func TestGetAll(t *testing.T, storage Repository) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			all, err := storage.GetAll()
+			all, err := storage.GetAll(ctx)
 			require.NoError(t, err)
 			assert.True(t, reflect.DeepEqual(tt.want, all))
 		})
 	}
 }
 
-func TestUpdateWithStruct(t *testing.T, storage Repository) {
+func TestUpdateWithStruct(ctx context.Context, t *testing.T, storage Repository) {
 	tests := []struct {
 		name    string
 		storage Repository
@@ -198,10 +198,10 @@ func TestUpdateWithStruct(t *testing.T, storage Repository) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.storage.UpdateWithStruct(&tt.args)
+			err := tt.storage.UpdateWithStruct(ctx, &tt.args)
 			assert.Equal(t, tt.err, err)
 			if err == nil {
-				m, err := storage.Get(tt.args.Name, tt.args.MType)
+				m, err := storage.Get(ctx, tt.args.Name, tt.args.MType)
 				require.NoError(t, err)
 				assert.Equal(t, tt.args, *m)
 			}
@@ -209,7 +209,7 @@ func TestUpdateWithStruct(t *testing.T, storage Repository) {
 	}
 }
 
-func TestUpdates(t *testing.T, storage Repository) {
+func TestUpdates(ctx context.Context, t *testing.T, storage Repository) {
 	tests := []struct {
 		name    string
 		storage Repository
@@ -270,10 +270,10 @@ func TestUpdates(t *testing.T, storage Repository) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.storage.Updates(tt.args)
+			err := tt.storage.Updates(ctx, tt.args)
 			assert.Equal(t, tt.err, err)
 
-			all, err := storage.GetAll()
+			all, err := storage.GetAll(ctx)
 			require.NoError(t, err)
 
 			if tt.err == nil {
