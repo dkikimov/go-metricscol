@@ -2,6 +2,7 @@ package agent
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,8 +33,25 @@ func SendMetricsToServer(addr string, m *memory.Metrics, hashKey string) error {
 		return errors.New("couldn't marshal metrics")
 	}
 
-	resp, err := http.Post(postURL.String(), "application/json", bytes.NewReader(jsonMetrics))
+	gzipMetrics := bytes.NewBuffer([]byte{})
+	w := gzip.NewWriter(gzipMetrics)
+	_, err = w.Write(jsonMetrics)
+	if err != nil {
+		return fmt.Errorf("couldn't gzip metrics with error: %s", err)
+	}
 
+	err = w.Close()
+	if err != nil {
+		return fmt.Errorf("couldn't close gzip writer with error: %s", err)
+	}
+
+	request, err := http.NewRequest(http.MethodPost, postURL.String(), gzipMetrics)
+	if err != nil {
+		return fmt.Errorf("couldn't create request with error: %s", err)
+	}
+	request.Header.Set("Content-Encoding", "gzip")
+
+	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return fmt.Errorf("couldn't post url %s", postURL.String())
 	}

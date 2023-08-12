@@ -29,6 +29,7 @@ func (p *Handlers) Update(w http.ResponseWriter, r *http.Request) {
 
 func (p *Handlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
+
 	if err != nil {
 		http.Error(w, "couldn't read body", http.StatusInternalServerError)
 		log.Printf("Couldn't read body with error: %s", err)
