@@ -2,12 +2,18 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"os"
 	"time"
 )
 
 func (s Server) enableSavingToDisk() {
+	if !s.Repository.SupportsSavingToDisk() {
+		log.Printf("Selected repository doesn't support saving to disk")
+		return
+	}
+
 	ticker := time.NewTicker(s.Config.StoreInterval)
 
 	for range ticker.C {
@@ -18,6 +24,11 @@ func (s Server) enableSavingToDisk() {
 }
 
 func (s Server) saveToDisk() error {
+	if !s.Repository.SupportsSavingToDisk() {
+		log.Printf("Selected repository doesn't support saving to disk")
+		return errors.New("unsupported storage")
+	}
+
 	log.Printf("saving to disk")
 
 	file, err := os.OpenFile(s.Config.StoreFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)

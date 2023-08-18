@@ -1,41 +1,78 @@
 package agent
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"go-metricscol/internal/models"
-	"log"
+	"go-metricscol/internal/repository/memory"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"runtime"
 )
 
-func SendMetricsToServer(addr string, m models.MetricsMap) error {
-	for _, metric := range m {
-		postURL := url.URL{
-			Scheme: "http",
-			Host:   addr,
-			Path:   fmt.Sprintf("/update/%s/%s/%s", metric.MType, metric.Name, metric.GetStringValue()),
-		}
+func SendMetricsToServer(addr string, m *memory.Metrics, hashKey string) error {
+	postURL := url.URL{
+		Scheme: "http",
+		Host:   addr,
+		Path:   "/updates/",
+	}
 
-		log.Println(postURL.String())
-		resp, err := http.Post(postURL.String(), "text/plain", nil)
+	metrics := make([]models.Metric, 0, len(m.Collection))
+	for _, value := range m.Collection {
+		value.Hash = value.HashValue(hashKey)
+		metrics = append(metrics, value)
+	}
 
+	jsonMetrics, err := json.Marshal(metrics)
+	if err != nil {
+		return errors.New("couldn't marshal metrics")
+	}
+
+	gzipMetrics := bytes.NewBuffer([]byte{})
+	w := gzip.NewWriter(gzipMetrics)
+	_, err = w.Write(jsonMetrics)
+	if err != nil {
+		return fmt.Errorf("couldn't gzip metrics with error: %s", err)
+	}
+
+	err = w.Close()
+	if err != nil {
+		return fmt.Errorf("couldn't close gzip writer with error: %s", err)
+	}
+
+	request, err := http.NewRequest(http.MethodPost, postURL.String(), gzipMetrics)
+	if err != nil {
+		return fmt.Errorf("couldn't create request with error: %s", err)
+	}
+	request.Header.Set("Content-Encoding", "gzip")
+
+	resp, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return fmt.Errorf("couldn't post url %s", postURL.String())
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return fmt.Errorf("couldn't post url %s", postURL.String())
+			return err
 		}
+		return fmt.Errorf("coudln't send metrics, status code: %d, response: %s", resp.StatusCode, body)
+	}
 
-		if err := resp.Body.Close(); err != nil {
-			return errors.New("couldn't close response body")
-		}
+	if err := resp.Body.Close(); err != nil {
+		return errors.New("couldn't close response body")
 	}
 	m.ResetPollCount()
 
 	return nil
 }
 
-func UpdateMetrics(metrics models.MetricsMap) {
+func UpdateMetrics(metrics *memory.Metrics) {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
 

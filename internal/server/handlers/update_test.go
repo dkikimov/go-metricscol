@@ -79,9 +79,11 @@ func TestHandlers_Update(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := Handlers{
-				Storage: memory.NewMemStorage(),
-			}
+			h := NewHandlers(
+				memory.NewMemStorage(),
+				nil,
+				NewConfig(""),
+			)
 
 			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/value/%s/%s/%s", tt.args.metricType, tt.args.metricName, tt.args.metricValue), nil)
 			if err != nil {
@@ -150,7 +152,11 @@ func TestHandlers_UpdateJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		storage := memory.NewMemStorage()
-		h := Handlers{Storage: storage}
+		h := NewHandlers(
+			storage,
+			nil,
+			NewConfig(""),
+		)
 
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPost, "/update/", bytes.NewReader([]byte(tt.body)))
@@ -165,7 +171,7 @@ func TestHandlers_UpdateJSON(t *testing.T) {
 
 			assert.Equal(t, tt.want.StatusCode, rr.Code)
 			if rr.Code == http.StatusOK {
-				got := storage.GetAll()
+				got, _ := storage.GetAll(context.Background())
 				require.Equal(t, 1, len(got))
 
 				assert.True(t, reflect.DeepEqual(tt.want.Body, got[0]))

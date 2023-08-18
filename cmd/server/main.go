@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"github.com/caarlos0/env/v9"
-	"go-metricscol/internal/repository/memory"
 	"go-metricscol/internal/server"
 	"log"
 	"time"
@@ -14,6 +13,8 @@ var (
 	storeInterval time.Duration
 	storeFile     string
 	restore       bool
+	hashKey       string
+	databaseDSN   string
 )
 
 func main() {
@@ -24,7 +25,11 @@ func main() {
 
 	log.Printf("Starting server on %s", cfg.Address)
 
-	s := server.NewServer(cfg, memory.NewMemStorage())
+	s, err := server.NewServer(cfg)
+	if err != nil {
+		log.Fatalf("couldn't create server with error: %s", err)
+	}
+
 	log.Fatal(s.ListenAndServe())
 }
 
@@ -33,11 +38,13 @@ func init() {
 	flag.DurationVar(&storeInterval, "i", 300*time.Second, "Interval to store metrics")
 	flag.StringVar(&storeFile, "f", "/tmp/devops-metrics-db.json", "File to store metrics")
 	flag.BoolVar(&restore, "r", true, "Restore metrics from file")
+	flag.StringVar(&hashKey, "k", "", "Key to encrypt metrics")
+	flag.StringVar(&databaseDSN, "d", "", "Database DSN")
 }
 
 func parseConfig() (*server.Config, error) {
 	flag.Parse()
-	config := server.NewConfig(address, storeInterval, storeFile, restore)
+	config := server.NewConfig(address, storeInterval, storeFile, restore, hashKey, databaseDSN)
 
 	if err := env.Parse(config); err != nil {
 		return nil, err

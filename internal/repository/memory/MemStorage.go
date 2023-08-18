@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"encoding/json"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
@@ -10,8 +11,30 @@ import (
 )
 
 type MemStorage struct {
-	metrics models.MetricsMap
+	metrics Metrics
 	mu      sync.RWMutex
+}
+
+func (memStorage *MemStorage) SupportsSavingToDisk() bool {
+	return true
+}
+
+func (memStorage *MemStorage) SupportsTx() bool {
+	return false
+}
+
+func (memStorage *MemStorage) Updates(_ context.Context, metrics []models.Metric) error {
+	memStorage.mu.Lock()
+	defer memStorage.mu.Unlock()
+
+	for _, metric := range metrics {
+		err := memStorage.metrics.UpdateWithStruct(&metric)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
@@ -22,46 +45,39 @@ func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
 }
 
 func (memStorage *MemStorage) MarshalJSON() ([]byte, error) {
-	memStorage.mu.Lock()
-	defer memStorage.mu.Unlock()
+	memStorage.mu.RLock()
+	defer memStorage.mu.RUnlock()
 
 	return json.Marshal(memStorage.metrics)
 }
 
-func (memStorage *MemStorage) UpdateWithStruct(metric *models.Metric) error {
+func (memStorage *MemStorage) UpdateWithStruct(_ context.Context, metric *models.Metric) error {
 	memStorage.mu.Lock()
 	defer memStorage.mu.Unlock()
 
 	return memStorage.metrics.UpdateWithStruct(metric)
 }
 
-func (memStorage *MemStorage) GetAll() []models.Metric {
-	memStorage.mu.Lock()
-	defer memStorage.mu.Unlock()
+func (memStorage *MemStorage) GetAll(context.Context) ([]models.Metric, error) {
+	memStorage.mu.RLock()
+	defer memStorage.mu.RUnlock()
 
-	kv := make([]models.Metric, 0, len(memStorage.metrics))
-	for _, value := range memStorage.metrics {
-		kv = append(kv, value)
-	}
+	all := memStorage.metrics.GetAll()
 
-	sort.Slice(kv, func(i, j int) bool { return kv[i].Name < kv[j].Name })
+	sort.Slice(all, func(i, j int) bool { return all[i].Name < all[j].Name })
 
-	return kv
+	return all, nil
 }
 
-func (memStorage *MemStorage) Get(key string, valueType models.MetricType) (*models.Metric, error) {
-	memStorage.mu.Lock()
-	defer memStorage.mu.Unlock()
+func (memStorage *MemStorage) Get(_ context.Context, key string, valueType models.MetricType) (*models.Metric, error) {
+	memStorage.mu.RLock()
+	defer memStorage.mu.RUnlock()
 
 	result, err := memStorage.metrics.Get(key, valueType)
 	return result, err
 }
 
-func NewMemStorage() *MemStorage {
-	return &MemStorage{metrics: models.MetricsMap{}}
-}
-
-func (memStorage *MemStorage) Update(name string, valueType models.MetricType, value string) error {
+func (memStorage *MemStorage) Update(_ context.Context, name string, valueType models.MetricType, value string) error {
 	memStorage.mu.Lock()
 	defer memStorage.mu.Unlock()
 
@@ -81,4 +97,8 @@ func (memStorage *MemStorage) Update(name string, valueType models.MetricType, v
 	default:
 		return apierror.UnknownMetricType
 	}
+}
+
+func NewMemStorage() *MemStorage {
+	return &MemStorage{metrics: NewMetrics()}
 }

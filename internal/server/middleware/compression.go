@@ -1,4 +1,4 @@
-package server
+package middleware
 
 import (
 	"compress/gzip"
@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func decompressHandler(next http.Handler) http.Handler {
+func DecompressHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Content-Encoding") == "gzip" {
 			reader, err := gzip.NewReader(r.Body)

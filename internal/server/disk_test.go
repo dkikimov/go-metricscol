@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,12 +31,11 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 	require.NoError(t, err)
 
 	storeInterval := 2 * time.Second
-	config := NewConfig("127.0.0.1:8080", storeInterval, file.Name(), false)
-	storage := memory.NewMemStorage()
+	config := NewConfig("127.0.0.1:8080", storeInterval, file.Name(), false, "", "")
 
-	require.NoError(t, storage.UpdateWithStruct(&testMetric))
-
-	server := NewServer(config, storage)
+	server, err := NewServer(config)
+	require.NoError(t, server.Repository.UpdateWithStruct(context.Background(), &testMetric))
+	require.NoError(t, err)
 
 	t.Run("Enable saving to disk", func(t *testing.T) {
 		go server.enableSavingToDisk()
@@ -55,7 +55,7 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 		err = json.Unmarshal(bytes, savedStorage)
 		require.NoError(t, err)
 
-		assert.Equal(t, storage, savedStorage)
+		assert.Equal(t, server.Repository, savedStorage)
 	})
 }
 
@@ -67,16 +67,19 @@ func TestServer_restoreFromDisk(t *testing.T) {
 	require.NoError(t, file.Close())
 	require.NoError(t, err)
 
-	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false)
+	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "")
 	storage := memory.NewMemStorage()
 
-	require.NoError(t, storage.UpdateWithStruct(&testMetric))
+	require.NoError(t, storage.UpdateWithStruct(context.Background(), &testMetric))
 
-	server := NewServer(config, storage)
+	server, err := NewServer(config)
+	require.NoError(t, err)
+
 	require.NoError(t, server.saveToDisk())
 
 	t.Run("Restore from disk", func(t *testing.T) {
-		newServer := NewServer(config, storage)
+		newServer, err := NewServer(config)
+		require.NoError(t, err)
 		require.NoError(t, newServer.restoreFromDisk())
 
 		assert.Equal(t, server, newServer)
@@ -96,10 +99,10 @@ func TestServer_saveToDisk(t *testing.T) {
 	require.NoError(t, file.Close())
 	require.NoError(t, err)
 
-	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false)
+	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "")
 	storage := memory.NewMemStorage()
 
-	require.NoError(t, storage.UpdateWithStruct(&testMetric))
+	require.NoError(t, storage.UpdateWithStruct(context.Background(), &testMetric))
 
 	tests := []struct {
 		name    string

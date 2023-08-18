@@ -3,6 +3,7 @@ package agent
 import (
 	"github.com/stretchr/testify/assert"
 	"go-metricscol/internal/models"
+	"go-metricscol/internal/repository/memory"
 	"testing"
 )
 
@@ -17,29 +18,29 @@ func contains(s []string, str string) bool {
 }
 
 func TestUpdateMetrics(t *testing.T) {
-	metrics := models.MetricsMap{}
+	metrics := memory.NewMetrics()
 
 	metricsMustBeUpdated := []string{"BuckHashSys", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapSys", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "OtherSys", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue", "PollCount", "Alloc"}
 	t.Run("UpdateMetrics", func(t *testing.T) {
-		UpdateMetrics(metrics)
+		UpdateMetrics(&metrics)
 
-		for key, metric := range metrics {
+		for key, metric := range metrics.Collection {
 			if contains(metricsMustBeUpdated, key) {
-				assert.NotEqual(t, metric.GetStringValue(), "0")
+				assert.NotEqual(t, metric.StringValue(), "0")
 			}
 		}
 	})
 }
 
 func TestUpdatePollCount(t *testing.T) {
-	metrics := models.MetricsMap{}
-	UpdateMetrics(metrics)
-	UpdateMetrics(metrics)
-	UpdateMetrics(metrics)
-	UpdateMetrics(metrics)
-	UpdateMetrics(metrics)
+	metrics := memory.NewMetrics()
+	UpdateMetrics(&metrics)
+	UpdateMetrics(&metrics)
+	UpdateMetrics(&metrics)
+	UpdateMetrics(&metrics)
+	UpdateMetrics(&metrics)
 
 	pollCount, err := metrics.Get("PollCount", models.Counter)
 	assert.EqualValues(t, nil, err)
-	assert.Equal(t, pollCount.GetStringValue(), "5")
+	assert.Equal(t, pollCount.StringValue(), "5")
 }

@@ -1,8 +1,9 @@
-package models
+package memory
 
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
 	"go-metricscol/internal/utils"
 	"reflect"
@@ -10,30 +11,30 @@ import (
 )
 
 func TestMetrics_Get(t *testing.T) {
-	metrics := MetricsMap{}
+	metrics := NewMetrics()
 
-	require.NoError(t, metrics.Update("Alloc", Gauge, 13))
-	require.NoError(t, metrics.Update("PollCount", Counter, 1))
+	require.NoError(t, metrics.Update("Alloc", models.Gauge, 13))
+	require.NoError(t, metrics.Update("PollCount", models.Counter, 1))
 
 	type args struct {
 		name      string
-		valueType MetricType
+		valueType models.MetricType
 	}
 	tests := []struct {
 		name string
 		args args
-		want *Metric
+		want *models.Metric
 		err  error
 	}{
 		{
 			name: "Get metric gauge",
 			args: args{
 				name:      "Alloc",
-				valueType: Gauge,
+				valueType: models.Gauge,
 			},
-			want: utils.Ptr(Metric{
+			want: utils.Ptr(models.Metric{
 				Name:  "Alloc",
-				MType: Gauge,
+				MType: models.Gauge,
 				Value: utils.Ptr(float64(13)),
 			}),
 			err: nil,
@@ -42,11 +43,11 @@ func TestMetrics_Get(t *testing.T) {
 			name: "Get metric counter",
 			args: args{
 				name:      "PollCount",
-				valueType: Counter,
+				valueType: models.Counter,
 			},
-			want: utils.Ptr(Metric{
+			want: utils.Ptr(models.Metric{
 				Name:  "PollCount",
-				MType: Counter,
+				MType: models.Counter,
 				Delta: utils.Ptr(int64(13)),
 			}),
 			err: nil,
@@ -55,7 +56,7 @@ func TestMetrics_Get(t *testing.T) {
 			name: "Metric not found",
 			args: args{
 				name:      "La",
-				valueType: Gauge,
+				valueType: models.Gauge,
 			},
 			want: nil,
 			err:  apierror.NotFound,
@@ -64,7 +65,7 @@ func TestMetrics_Get(t *testing.T) {
 			name: "Metric with another type",
 			args: args{
 				name:      "Alloc",
-				valueType: Counter,
+				valueType: models.Counter,
 			},
 			want: nil,
 			err:  apierror.NotFound,
@@ -84,12 +85,12 @@ func TestMetrics_Get(t *testing.T) {
 
 func TestMetrics_ResetPollCount(t *testing.T) {
 	t.Run("Reset poll count", func(t *testing.T) {
-		metrics := MetricsMap{}
+		metrics := NewMetrics()
 
-		require.NoError(t, metrics.Update("PollCount", Counter, 2))
+		require.NoError(t, metrics.Update("PollCount", models.Counter, 2))
 
 		metrics.ResetPollCount()
-		metric, err := metrics.Get("PollCount", Counter)
+		metric, err := metrics.Get("PollCount", models.Counter)
 
 		assert.EqualValues(t, nil, err)
 		if err == nil {
@@ -101,25 +102,26 @@ func TestMetrics_ResetPollCount(t *testing.T) {
 func TestMetrics_Update(t *testing.T) {
 	type args struct {
 		name      string
-		valueType MetricType
+		valueType models.MetricType
 		value     interface{}
 	}
+
 	tests := []struct {
 		name string
 		args args
-		want *Metric
+		want *models.Metric
 		err  error
 	}{
 		{
 			name: "Update gauge int",
 			args: args{
 				name:      "Alloc",
-				valueType: Gauge,
+				valueType: models.Gauge,
 				value:     13,
 			},
-			want: utils.Ptr(Metric{
+			want: utils.Ptr(models.Metric{
 				Name:  "Alloc",
-				MType: Gauge,
+				MType: models.Gauge,
 				Value: utils.Ptr(float64(13)),
 			}),
 			err: nil,
@@ -128,12 +130,12 @@ func TestMetrics_Update(t *testing.T) {
 			name: "Update gauge float",
 			args: args{
 				name:      "Alloc",
-				valueType: Gauge,
+				valueType: models.Gauge,
 				value:     13.41,
 			},
-			want: utils.Ptr(Metric{
+			want: utils.Ptr(models.Metric{
 				Name:  "Alloc",
-				MType: Gauge,
+				MType: models.Gauge,
 				Value: utils.Ptr(13.41),
 			}),
 			err: nil,
@@ -142,12 +144,12 @@ func TestMetrics_Update(t *testing.T) {
 			name: "Update counter int",
 			args: args{
 				name:      "PollCount",
-				valueType: Counter,
+				valueType: models.Counter,
 				value:     1,
 			},
-			want: utils.Ptr(Metric{
+			want: utils.Ptr(models.Metric{
 				Name:  "PollCount",
-				MType: Counter,
+				MType: models.Counter,
 				Delta: utils.Ptr(int64(1)),
 			}),
 			err: nil,
@@ -167,7 +169,7 @@ func TestMetrics_Update(t *testing.T) {
 			name: "Invalid value counter",
 			args: args{
 				name:      "PollCount",
-				valueType: Counter,
+				valueType: models.Counter,
 				value:     1.34,
 			},
 			want: nil,
@@ -177,7 +179,7 @@ func TestMetrics_Update(t *testing.T) {
 			name: "Invalid value gauge",
 			args: args{
 				name:      "Alloc",
-				valueType: Gauge,
+				valueType: models.Gauge,
 				value:     "",
 			},
 			want: nil,
@@ -186,12 +188,12 @@ func TestMetrics_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := MetricsMap{}
+			m := NewMetrics()
 			err := m.Update(tt.args.name, tt.args.valueType, tt.args.value)
 
-			require.EqualValues(t, tt.err, err)
+			assert.EqualValues(t, tt.err, err)
 			if err == nil {
-				require.True(t, true, reflect.DeepEqual(m[getKey(tt.args.name, tt.args.valueType)], tt.want))
+				assert.True(t, true, reflect.DeepEqual(m.Collection[getKey(tt.args.name, tt.args.valueType)], tt.want))
 			}
 		})
 	}
@@ -200,7 +202,7 @@ func TestMetrics_Update(t *testing.T) {
 func Test_getKey(t *testing.T) {
 	type args struct {
 		name      string
-		valueType MetricType
+		valueType models.MetricType
 	}
 	tests := []struct {
 		name string
@@ -211,7 +213,7 @@ func Test_getKey(t *testing.T) {
 			name: "Get key gauge",
 			args: args{
 				name:      "Alloc",
-				valueType: Gauge,
+				valueType: models.Gauge,
 			},
 			want: "Alloc:gauge",
 		},
@@ -219,7 +221,7 @@ func Test_getKey(t *testing.T) {
 			name: "Get key counter",
 			args: args{
 				name:      "PollCount",
-				valueType: Counter,
+				valueType: models.Counter,
 			},
 			want: "PollCount:counter",
 		},
@@ -227,6 +229,82 @@ func Test_getKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, getKey(tt.args.name, tt.args.valueType))
+		})
+	}
+}
+
+func TestMetrics_UpdateWithStruct(t *testing.T) {
+	tests := []struct {
+		name    string
+		metric  models.Metric
+		wantErr error
+	}{
+		{
+			name: "Update gauge int",
+			metric: models.Metric{
+				Name:  "Alloc",
+				MType: models.Gauge,
+				Value: utils.Ptr(float64(13)),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Update gauge float",
+			metric: models.Metric{
+				Name:  "Alloc",
+				MType: models.Gauge,
+				Value: utils.Ptr(13.41),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Update counter int",
+			metric: models.Metric{
+				Name:  "PollCount",
+				MType: models.Counter,
+				Delta: utils.Ptr(int64(1)),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Unknown type",
+			metric: models.Metric{
+				Name:  "PollCount",
+				MType: "unknown",
+				Delta: utils.Ptr(int64(1)),
+			},
+			wantErr: apierror.UnknownMetricType,
+		},
+		{
+			name: "Delta for gauge",
+			metric: models.Metric{
+				Name:  "Alloc",
+				MType: models.Gauge,
+				Delta: utils.Ptr(int64(1)),
+			},
+			wantErr: apierror.InvalidValue,
+		},
+		{
+			name: "Value for counter",
+			metric: models.Metric{
+				Name:  "PollCount",
+				MType: models.Counter,
+				Value: utils.Ptr(float64(1)),
+			},
+			wantErr: apierror.InvalidValue,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := NewMetrics()
+
+			err := m.UpdateWithStruct(&tt.metric)
+			assert.Equal(t, tt.wantErr, err)
+
+			if err == nil {
+				assert.True(t, true, reflect.DeepEqual(m.Collection[getKey(tt.metric.Name, tt.metric.MType)], tt.metric))
+			}
 		})
 	}
 }
