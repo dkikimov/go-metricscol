@@ -5,6 +5,7 @@ import (
 	"github.com/caarlos0/env/v9"
 	"go-metricscol/internal/agent"
 	"go-metricscol/internal/repository/memory"
+	"golang.org/x/sync/errgroup"
 	"log"
 	"time"
 )
@@ -32,7 +33,18 @@ func main() {
 		select {
 		case <-pollTimer.C:
 			log.Println("Update metrics")
-			agent.UpdateMetrics(&metrics)
+
+			g := errgroup.Group{}
+			g.Go(func() error {
+				return agent.UpdateMetrics(&metrics)
+			})
+			g.Go(func() error {
+				return agent.CollectAdditionalMetrics(&metrics)
+			})
+
+			if err := g.Wait(); err != nil {
+				log.Printf("Couldn't collect metrics: %s", err)
+			}
 		case <-reportTimer.C:
 			log.Printf("Send metrics to %s\n", cfg.Address)
 			go func() {

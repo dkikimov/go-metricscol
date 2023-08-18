@@ -5,14 +5,16 @@ import (
 	"go-metricscol/internal/server/apierror"
 	"go-metricscol/internal/utils"
 	"strings"
+	"sync"
 )
 
 type Metrics struct {
 	Collection map[string]models.Metric
+	mu         sync.RWMutex
 }
 
 func NewMetrics() Metrics {
-	return Metrics{Collection: map[string]models.Metric{}}
+	return Metrics{Collection: map[string]models.Metric{}, mu: sync.RWMutex{}}
 }
 
 func getKey(name string, valueType models.MetricType) string {
@@ -24,7 +26,10 @@ func getKey(name string, valueType models.MetricType) string {
 	return key.String()
 }
 
-func (m Metrics) Get(name string, valueType models.MetricType) (*models.Metric, error) {
+func (m *Metrics) Get(name string, valueType models.MetricType) (*models.Metric, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	metric, ok := m.Collection[getKey(name, valueType)]
 	if !ok {
 		return nil, apierror.NotFound
@@ -33,7 +38,10 @@ func (m Metrics) Get(name string, valueType models.MetricType) (*models.Metric, 
 	return &metric, nil
 }
 
-func (m Metrics) GetAll() []models.Metric {
+func (m *Metrics) GetAll() []models.Metric {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	all := make([]models.Metric, 0, len(m.Collection))
 	for _, value := range m.Collection {
 		// TODO: Возможно стоит вынести функцию в другой пакет, подумать
@@ -43,7 +51,8 @@ func (m Metrics) GetAll() []models.Metric {
 	return all
 }
 
-func (m Metrics) Update(name string, valueType models.MetricType, value interface{}) error {
+func (m *Metrics) Update(name string, valueType models.MetricType, value interface{}) error {
+
 	if valueType != models.Gauge && valueType != models.Counter {
 		return apierror.UnknownMetricType
 	}
@@ -73,7 +82,9 @@ func (m Metrics) Update(name string, valueType models.MetricType, value interfac
 			return apierror.InvalidValue
 		}
 
+		m.mu.Lock()
 		metric = models.Metric{Name: name, MType: models.Gauge, Value: utils.Ptr(floatValue)}
+		m.mu.Unlock()
 	case models.Counter:
 		var intValue int64
 		switch v := value.(type) {
@@ -99,7 +110,9 @@ func (m Metrics) Update(name string, valueType models.MetricType, value interfac
 			prevVal = *prevMetric.Delta
 		}
 
+		m.mu.Lock()
 		metric = models.Metric{Name: name, MType: models.Counter, Delta: utils.Ptr(prevVal + intValue)}
+		m.mu.Unlock()
 	default:
 		return apierror.UnknownMetricType
 	}
@@ -108,7 +121,8 @@ func (m Metrics) Update(name string, valueType models.MetricType, value interfac
 	return nil
 }
 
-func (m Metrics) UpdateWithStruct(metric *models.Metric) error {
+func (m *Metrics) UpdateWithStruct(metric *models.Metric) error {
+
 	if metric == nil {
 		return apierror.InvalidValue
 	}
@@ -123,7 +137,9 @@ func (m Metrics) UpdateWithStruct(metric *models.Metric) error {
 			return apierror.InvalidValue
 		}
 
+		m.mu.Lock()
 		m.Collection[getKey(metric.Name, metric.MType)] = *metric
+		m.mu.Unlock()
 	case models.Counter:
 		if metric.Delta == nil || metric.Value != nil {
 			return apierror.InvalidValue
@@ -143,7 +159,9 @@ func (m Metrics) UpdateWithStruct(metric *models.Metric) error {
 			currentVal = *metric.Delta
 		}
 
+		m.mu.Lock()
 		m.Collection[getKey(metric.Name, metric.MType)] = models.Metric{Name: metric.Name, MType: models.Counter, Delta: utils.Ptr(prevVal + currentVal), Hash: metric.Hash}
+		m.mu.Unlock()
 	default:
 		return apierror.UnknownMetricType
 	}
@@ -151,6 +169,9 @@ func (m Metrics) UpdateWithStruct(metric *models.Metric) error {
 	return nil
 }
 
-func (m Metrics) ResetPollCount() {
+func (m *Metrics) ResetPollCount() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	m.Collection[getKey("PollCount", models.Counter)] = models.Metric{Name: "PollCount", MType: models.Counter, Delta: utils.Ptr(int64(0))}
 }
