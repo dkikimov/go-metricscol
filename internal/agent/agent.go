@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository/memory"
+	"golang.org/x/sync/errgroup"
 	"io"
 	"math/rand"
 	"net/http"
@@ -15,16 +16,40 @@ import (
 	"runtime"
 )
 
-func SendMetricsToServer(addr string, m *memory.Metrics, hashKey string) error {
+func SendMetricsToServer(cfg *Config, m *memory.Metrics) error {
+	jobCh := make(chan bool)
+	g := errgroup.Group{}
+
+	for i := 0; i < cfg.RateLimit; i++ {
+		g.Go(func() error {
+			for range jobCh {
+				return makeRequest(cfg, m)
+			}
+			return nil
+		})
+	}
+
+	jobCh <- true
+	close(jobCh)
+
+	if err := g.Wait(); err != nil {
+		return err
+	}
+
+	m.ResetPollCount()
+	return nil
+}
+
+func makeRequest(cfg *Config, m *memory.Metrics) error {
 	postURL := url.URL{
 		Scheme: "http",
-		Host:   addr,
+		Host:   cfg.Address,
 		Path:   "/updates/",
 	}
 
 	metrics := make([]models.Metric, 0, len(m.Collection))
 	for _, value := range m.Collection {
-		value.Hash = value.HashValue(hashKey)
+		value.Hash = value.HashValue(cfg.HashKey)
 		metrics = append(metrics, value)
 	}
 
@@ -67,9 +92,8 @@ func SendMetricsToServer(addr string, m *memory.Metrics, hashKey string) error {
 	if err := resp.Body.Close(); err != nil {
 		return errors.New("couldn't close response body")
 	}
-	m.ResetPollCount()
 
-	return nil
+	return err
 }
 
 func UpdateMetrics(metrics *memory.Metrics) {

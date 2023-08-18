@@ -14,6 +14,7 @@ var (
 	reportInterval time.Duration
 	pollInterval   time.Duration
 	hashKey        string
+	rateLimit      int
 )
 
 func main() {
@@ -34,9 +35,11 @@ func main() {
 			agent.UpdateMetrics(&metrics)
 		case <-reportTimer.C:
 			log.Printf("Send metrics to %s\n", cfg.Address)
-			if err := agent.SendMetricsToServer(cfg.Address, &metrics, cfg.HashKey); err != nil {
-				log.Printf("Error while sending metrics to server: %s", err)
-			}
+			go func() {
+				if err := agent.SendMetricsToServer(cfg, &metrics); err != nil {
+					log.Printf("Error while sending metrics to server: %s", err)
+				}
+			}()
 		}
 	}
 }
@@ -46,11 +49,12 @@ func init() {
 	flag.DurationVar(&reportInterval, "r", 10*time.Second, "Interval to report metrics")
 	flag.DurationVar(&pollInterval, "p", 2*time.Second, "Interval to poll metrics")
 	flag.StringVar(&hashKey, "k", "", "Key to encrypt metrics")
+	flag.IntVar(&rateLimit, "l", 1, "Limit the number of requests to the server")
 }
 
 func parseConfig() (*agent.Config, error) {
 	flag.Parse()
-	config := agent.NewConfig(address, reportInterval, pollInterval, hashKey)
+	config := agent.NewConfig(address, reportInterval, pollInterval, hashKey, rateLimit)
 
 	if err := env.Parse(config); err != nil {
 		return nil, err
