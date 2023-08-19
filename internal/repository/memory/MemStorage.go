@@ -37,7 +37,7 @@ func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
 	memStorage.metrics.mu.Lock()
 	defer memStorage.metrics.mu.Unlock()
 
-	return json.Unmarshal(bytes, &memStorage.metrics)
+	return json.Unmarshal(bytes, &memStorage.metrics.Collection)
 }
 
 func (memStorage *MemStorage) MarshalJSON() ([]byte, error) {
