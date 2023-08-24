@@ -207,13 +207,17 @@ func CollectAdditionalMetrics(metrics *memory.Metrics) error {
 		return fmt.Errorf("couldn't collect FreeMemory: %s", err)
 	}
 
-	percent, err := cpu.Percent(time.Second, false)
+	coresPercent, err := cpu.Percent(time.Second, true)
 	if err != nil {
 		return fmt.Errorf("couldn't collect cpu utilization with error: %s", err)
 	}
 
-	if err := metrics.Update("CPUutilization1", models.Gauge, percent[0]); err != nil {
-		return fmt.Errorf("couldn't collect CPUutilization1: %s", err)
+	for i, core := range coresPercent {
+		num := i + 1
+		if err := metrics.Update(fmt.Sprintf("CPUutilization%d", num), models.Gauge, core); err != nil {
+			return fmt.Errorf("couldn't collect CPUutilization%d: %s", num, err)
+		}
 	}
+
 	return nil
 }
