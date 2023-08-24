@@ -52,13 +52,11 @@ func (m *Metrics) GetAll() []models.Metric {
 }
 
 func (m *Metrics) Update(name string, valueType models.MetricType, value interface{}) error {
-
 	if valueType != models.Gauge && valueType != models.Counter {
 		return apierror.UnknownMetricType
 	}
 
 	metricKey := getKey(name, valueType)
-	var metric models.Metric
 
 	switch valueType {
 	case models.Gauge:
@@ -83,7 +81,7 @@ func (m *Metrics) Update(name string, valueType models.MetricType, value interfa
 		}
 
 		m.mu.Lock()
-		metric = models.Metric{Name: name, MType: models.Gauge, Value: utils.Ptr(floatValue)}
+		m.Collection[metricKey] = models.Metric{Name: name, MType: models.Gauge, Value: utils.Ptr(floatValue)}
 		m.mu.Unlock()
 	case models.Counter:
 		var intValue int64
@@ -102,27 +100,25 @@ func (m *Metrics) Update(name string, valueType models.MetricType, value interfa
 			return apierror.InvalidValue
 		}
 
-		prevMetric, _ := m.Get(name, models.Counter)
+		m.mu.Lock()
+		prevMetric, ok := m.Collection[getKey(name, models.Counter)]
 		var prevVal int64
-		if prevMetric == nil {
+		if !ok {
 			prevVal = 0
 		} else {
 			prevVal = *prevMetric.Delta
 		}
 
-		m.mu.Lock()
-		metric = models.Metric{Name: name, MType: models.Counter, Delta: utils.Ptr(prevVal + intValue)}
+		m.Collection[metricKey] = models.Metric{Name: name, MType: models.Counter, Delta: utils.Ptr(prevVal + intValue)}
 		m.mu.Unlock()
 	default:
 		return apierror.UnknownMetricType
 	}
 
-	m.Collection[metricKey] = metric
 	return nil
 }
 
 func (m *Metrics) UpdateWithStruct(metric *models.Metric) error {
-
 	if metric == nil {
 		return apierror.InvalidValue
 	}
@@ -145,9 +141,10 @@ func (m *Metrics) UpdateWithStruct(metric *models.Metric) error {
 			return apierror.InvalidValue
 		}
 
-		prevMetric, _ := m.Get(metric.Name, models.Counter)
+		m.mu.Lock()
+		prevMetric, ok := m.Collection[getKey(metric.Name, models.Counter)]
 		var prevVal, currentVal int64
-		if prevMetric == nil {
+		if !ok {
 			prevVal = 0
 		} else {
 			prevVal = *prevMetric.Delta
@@ -159,7 +156,6 @@ func (m *Metrics) UpdateWithStruct(metric *models.Metric) error {
 			currentVal = *metric.Delta
 		}
 
-		m.mu.Lock()
 		m.Collection[getKey(metric.Name, metric.MType)] = models.Metric{Name: metric.Name, MType: models.Counter, Delta: utils.Ptr(prevVal + currentVal), Hash: metric.Hash}
 		m.mu.Unlock()
 	default:
