@@ -34,6 +34,7 @@ func main() {
 		case <-pollTimer.C:
 			log.Println("Update metrics")
 
+			pollTimer.Stop()
 			g := errgroup.Group{}
 			g.Go(func() error {
 				return agent.UpdateMetrics(&metrics)
@@ -45,13 +46,17 @@ func main() {
 			if err := g.Wait(); err != nil {
 				log.Printf("Couldn't collect metrics: %s", err)
 			}
+			pollTimer.Reset(cfg.PollInterval)
 		case <-reportTimer.C:
 			log.Printf("Send metrics to %s\n", cfg.Address)
+
+			reportTimer.Stop()
 			go func() {
 				if err := agent.SendMetricsToServer(cfg, &metrics); err != nil {
 					log.Printf("Error while sending metrics to server: %s", err)
 				}
 			}()
+			reportTimer.Reset(cfg.ReportInterval)
 		}
 	}
 }
