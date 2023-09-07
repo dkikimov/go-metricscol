@@ -11,6 +11,8 @@ import (
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository/memory"
 	"go-metricscol/internal/utils"
+	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -344,5 +346,89 @@ func TestHandlers_GetJSON(t *testing.T) {
 				assert.True(t, reflect.DeepEqual(tt.want.Body, gotMetric))
 			}
 		})
+	}
+}
+
+func BenchmarkHandlers_Get_MemStorage(b *testing.B) {
+	h := NewHandlers(
+		memory.NewMemStorage(),
+		nil,
+		NewConfig("hash"),
+	)
+
+	require.NoError(b, h.Storage.Update(context.Background(), "Alloc", models.Gauge, "123.4"))
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("/value/%s/%s", models.Gauge, "Alloc"), nil)
+	require.NoError(b, err)
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("type", models.Gauge.String())
+	rctx.URLParams.Add("name", "Alloc")
+
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.Get)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		handler.ServeHTTP(rr, req)
+		assert.Equal(b, 200, rr.Code)
+	}
+}
+
+func BenchmarkHandlers_GetJSON_MemStorage(b *testing.B) {
+	h := NewHandlers(
+		memory.NewMemStorage(),
+		nil,
+		NewConfig("hash"),
+	)
+
+	metric := models.Metric{Name: "Alloc", MType: models.Gauge, Value: utils.Ptr(123.4)}
+	require.NoError(b, h.Storage.UpdateWithStruct(context.Background(), &metric))
+
+	metricJSON, err := json.Marshal(models.Metric{Name: "Alloc", MType: models.Gauge})
+	require.NoError(b, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetJSON)
+
+	log.SetOutput(io.Discard)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		req, err := http.NewRequest(http.MethodPost, "/value/", bytes.NewReader(metricJSON))
+		require.NoError(b, err)
+		handler.ServeHTTP(rr, req)
+		assert.Equal(b, 200, rr.Code)
+	}
+}
+
+func BenchmarkHandlers_GetAllWithHash_MemStorage(b *testing.B) {
+	h := NewHandlers(
+		memory.NewMemStorage(),
+		nil,
+		NewConfig("hash"),
+	)
+
+	require.NoError(b, h.Storage.Update(context.Background(), "Alloc", models.Gauge, "123.4"))
+	require.NoError(b, h.Storage.Update(context.Background(), "Mem", models.Gauge, "123.4"))
+	require.NoError(b, h.Storage.Update(context.Background(), "Dealloc", models.Gauge, "123.4"))
+
+	req, err := http.NewRequest("GET", "/", nil)
+	require.NoError(b, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.GetAll)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		handler.ServeHTTP(rr, req)
+		assert.Equal(b, 200, rr.Code)
 	}
 }

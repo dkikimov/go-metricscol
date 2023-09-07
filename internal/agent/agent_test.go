@@ -32,6 +32,26 @@ func TestUpdateMetrics(t *testing.T) {
 	})
 }
 
+func BenchmarkUpdateMetrics(b *testing.B) {
+	metrics := memory.NewMetrics()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		UpdateMetrics(&metrics)
+	}
+}
+
+func BenchmarkCollectAdditionalMetrics(b *testing.B) {
+	metrics := memory.NewMetrics()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		CollectAdditionalMetrics(&metrics)
+	}
+}
+
 func TestUpdatePollCount(t *testing.T) {
 	metrics := memory.NewMetrics()
 	UpdateMetrics(&metrics)

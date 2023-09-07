@@ -10,6 +10,8 @@ import (
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository/memory"
 	"go-metricscol/internal/utils"
+	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -177,5 +179,62 @@ func TestHandlers_UpdateJSON(t *testing.T) {
 				assert.True(t, reflect.DeepEqual(tt.want.Body, got[0]))
 			}
 		})
+	}
+}
+
+func BenchmarkHandlers_Update_MemStorage(b *testing.B) {
+	h := NewHandlers(
+		memory.NewMemStorage(),
+		nil,
+		NewConfig("hash"),
+	)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/value/%s/%s/%s", "Alloc", models.Gauge, "121.14"), nil)
+	require.NoError(b, err)
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("type", models.Gauge.String())
+	rctx.URLParams.Add("name", "Alloc")
+	rctx.URLParams.Add("value", "121.14")
+
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.Update)
+
+	// Выключить логи для handler'а
+	log.SetOutput(io.Discard)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		handler.ServeHTTP(rr, req)
+		assert.Equal(b, 200, rr.Code)
+	}
+}
+
+func BenchmarkHandlers_UpdateJSON_MemStorage(b *testing.B) {
+	h := NewHandlers(
+		memory.NewMemStorage(),
+		nil,
+		NewConfig("hash"),
+	)
+
+	req, err := http.NewRequest(http.MethodPost, "/update/", bytes.NewReader([]byte(`{"id": "Alloc", "type": "gauge", "value": 13.1}`)))
+	require.NoError(b, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.UpdateJSON)
+
+	// Выключить логи для handler'а
+	log.SetOutput(io.Discard)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		handler.ServeHTTP(rr, req)
+		assert.Equal(b, 200, rr.Code)
 	}
 }
