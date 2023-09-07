@@ -7,12 +7,10 @@ import (
 	"go-metricscol/internal/server/apierror"
 	"sort"
 	"strconv"
-	"sync"
 )
 
 type MemStorage struct {
 	metrics Metrics
-	mu      sync.RWMutex
 }
 
 func (memStorage *MemStorage) SupportsSavingToDisk() bool {
@@ -24,9 +22,6 @@ func (memStorage *MemStorage) SupportsTx() bool {
 }
 
 func (memStorage *MemStorage) Updates(_ context.Context, metrics []models.Metric) error {
-	memStorage.mu.Lock()
-	defer memStorage.mu.Unlock()
-
 	for _, metric := range metrics {
 		err := memStorage.metrics.UpdateWithStruct(&metric)
 		if err != nil {
@@ -38,30 +33,25 @@ func (memStorage *MemStorage) Updates(_ context.Context, metrics []models.Metric
 }
 
 func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
-	memStorage.mu.Lock()
-	defer memStorage.mu.Unlock()
+	// TODO: Подумать
+	memStorage.metrics.mu.Lock()
+	defer memStorage.metrics.mu.Unlock()
 
-	return json.Unmarshal(bytes, &memStorage.metrics)
+	return json.Unmarshal(bytes, &memStorage.metrics.Collection)
 }
 
 func (memStorage *MemStorage) MarshalJSON() ([]byte, error) {
-	memStorage.mu.RLock()
-	defer memStorage.mu.RUnlock()
+	memStorage.metrics.mu.RLock()
+	defer memStorage.metrics.mu.RUnlock()
 
-	return json.Marshal(memStorage.metrics)
+	return json.Marshal(memStorage.metrics.Collection)
 }
 
 func (memStorage *MemStorage) UpdateWithStruct(_ context.Context, metric *models.Metric) error {
-	memStorage.mu.Lock()
-	defer memStorage.mu.Unlock()
-
 	return memStorage.metrics.UpdateWithStruct(metric)
 }
 
 func (memStorage *MemStorage) GetAll(context.Context) ([]models.Metric, error) {
-	memStorage.mu.RLock()
-	defer memStorage.mu.RUnlock()
-
 	all := memStorage.metrics.GetAll()
 
 	sort.Slice(all, func(i, j int) bool { return all[i].Name < all[j].Name })
@@ -70,17 +60,11 @@ func (memStorage *MemStorage) GetAll(context.Context) ([]models.Metric, error) {
 }
 
 func (memStorage *MemStorage) Get(_ context.Context, key string, valueType models.MetricType) (*models.Metric, error) {
-	memStorage.mu.RLock()
-	defer memStorage.mu.RUnlock()
-
 	result, err := memStorage.metrics.Get(key, valueType)
 	return result, err
 }
 
 func (memStorage *MemStorage) Update(_ context.Context, name string, valueType models.MetricType, value string) error {
-	memStorage.mu.Lock()
-	defer memStorage.mu.Unlock()
-
 	switch valueType {
 	case models.Gauge:
 		floatVal, err := strconv.ParseFloat(value, 64)
