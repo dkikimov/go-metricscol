@@ -7,8 +7,6 @@ import (
 	"go-metricscol/internal/repository/memory"
 	"golang.org/x/sync/errgroup"
 	"log"
-	"net/http"
-	_ "net/http/pprof"
 	"time"
 )
 
@@ -30,10 +28,6 @@ func main() {
 
 	pollTimer := time.NewTicker(cfg.PollInterval)
 	reportTimer := time.NewTicker(cfg.ReportInterval)
-
-	go func() {
-		http.ListenAndServe("localhost:9090", nil)
-	}()
 
 	for {
 		select {
