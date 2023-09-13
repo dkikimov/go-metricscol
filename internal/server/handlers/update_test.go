@@ -221,9 +221,6 @@ func BenchmarkHandlers_UpdateJSON_MemStorage(b *testing.B) {
 		NewConfig("hash"),
 	)
 
-	req, err := http.NewRequest(http.MethodPost, "/update/", bytes.NewReader([]byte(`{"id": "Alloc", "type": "gauge", "value": 13.1}`)))
-	require.NoError(b, err)
-
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(h.UpdateJSON)
 
@@ -234,6 +231,7 @@ func BenchmarkHandlers_UpdateJSON_MemStorage(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
+		req, _ := http.NewRequest(http.MethodPost, "/update/", bytes.NewReader([]byte(`{"id": "Alloc", "type": "gauge", "value": 13.1}`)))
 		handler.ServeHTTP(rr, req)
 		assert.Equal(b, 200, rr.Code)
 	}

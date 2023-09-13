@@ -20,8 +20,12 @@ func NewMetrics() Metrics {
 func getKey(name string, valueType models.MetricType) string {
 	key := strings.Builder{}
 	key.WriteString(name)
-	key.WriteByte(':')
-	key.WriteString(valueType.String())
+	switch valueType {
+	case models.Gauge:
+		key.WriteString("g")
+	case models.Counter:
+		key.WriteString("c")
+	}
 
 	return key.String()
 }
