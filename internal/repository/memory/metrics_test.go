@@ -215,7 +215,7 @@ func Test_getKey(t *testing.T) {
 				name:      "Alloc",
 				valueType: models.Gauge,
 			},
-			want: "Alloc:gauge",
+			want: "Allocg",
 		},
 		{
 			name: "Get key counter",
@@ -223,7 +223,7 @@ func Test_getKey(t *testing.T) {
 				name:      "PollCount",
 				valueType: models.Counter,
 			},
-			want: "PollCount:counter",
+			want: "PollCountc",
 		},
 	}
 	for _, tt := range tests {
