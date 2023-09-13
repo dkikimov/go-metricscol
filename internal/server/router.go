@@ -1,13 +1,15 @@
 package server
 
 import (
-	"github.com/go-chi/chi"
-	chiMiddleware "github.com/go-chi/chi/middleware"
+	"log"
+	"net/http"
+
 	"go-metricscol/internal/repository"
 	"go-metricscol/internal/server/handlers"
 	"go-metricscol/internal/server/middleware"
-	"log"
-	"net/http"
+
+	"github.com/go-chi/chi"
+	chiMiddleware "github.com/go-chi/chi/middleware"
 )
 
 func (s Server) diskSaverHandler(next http.HandlerFunc, saveToDisk bool) http.HandlerFunc {

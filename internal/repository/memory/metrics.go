@@ -1,11 +1,12 @@
 package memory
 
 import (
+	"strings"
+	"sync"
+
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
 	"go-metricscol/internal/utils"
-	"strings"
-	"sync"
 )
 
 type Metrics struct {

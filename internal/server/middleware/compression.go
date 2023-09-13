@@ -2,8 +2,9 @@ package middleware
 
 import (
 	"compress/gzip"
-	"go-metricscol/internal/server/apierror"
 	"net/http"
+
+	"go-metricscol/internal/server/apierror"
 )
 
 func DecompressHandler(next http.Handler) http.Handler {

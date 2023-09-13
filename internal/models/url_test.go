@@ -3,11 +3,13 @@ package models
 import (
 	"context"
 	"fmt"
-	"github.com/go-chi/chi"
-	"github.com/stretchr/testify/assert"
-	"go-metricscol/internal/server/apierror"
 	"net/http"
 	"testing"
+
+	"go-metricscol/internal/server/apierror"
+
+	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
 )
 
 type urlParams struct {

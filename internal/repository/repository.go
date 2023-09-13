@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"go-metricscol/internal/models"
 )
 
@@ -14,6 +15,6 @@ type Repository interface {
 	SupportsTx() bool
 	SupportsSavingToDisk() bool
 
-	//json.Marshaler
-	//json.Unmarshaler
+	// json.Marshaler
+	// json.Unmarshaler
 }

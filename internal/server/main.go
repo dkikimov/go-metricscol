@@ -1,12 +1,13 @@
 package server
 
 import (
-	"go-metricscol/internal/repository"
-	"go-metricscol/internal/repository/memory"
-	"go-metricscol/internal/repository/postgres"
 	"log"
 	"net/http"
 	"os"
+
+	"go-metricscol/internal/repository"
+	"go-metricscol/internal/repository/memory"
+	"go-metricscol/internal/repository/postgres"
 )
 
 type Server struct {

@@ -3,13 +3,15 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/require"
+	"testing"
+	"time"
+
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository"
 	"go-metricscol/internal/server/apierror"
-	"testing"
-	"time"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/require"
 )
 
 // TODO: Кажется не совсем правильно, что я пишу запрос ручками. А вдруг он изменится? Поискать другой способ.

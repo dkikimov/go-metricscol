@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/jackc/pgx/v5/stdlib"
-	"go-metricscol/internal/models"
-	"go-metricscol/internal/server/apierror"
 	"log"
 	"strconv"
 	"time"
+
+	"go-metricscol/internal/models"
+	"go-metricscol/internal/server/apierror"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type DB struct {

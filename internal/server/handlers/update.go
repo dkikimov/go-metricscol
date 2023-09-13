@@ -3,12 +3,13 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"go-metricscol/internal/models"
-	"go-metricscol/internal/server/apierror"
 	"io"
 	"log"
 	"net/http"
 	"time"
+
+	"go-metricscol/internal/models"
+	"go-metricscol/internal/server/apierror"
 )
 
 func (p *Handlers) Update(w http.ResponseWriter, r *http.Request) {

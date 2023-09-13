@@ -2,10 +2,12 @@ package main
 
 import (
 	"flag"
-	"github.com/caarlos0/env/v9"
-	"go-metricscol/internal/server"
 	"log"
 	"time"
+
+	"go-metricscol/internal/server"
+
+	"github.com/caarlos0/env/v9"
 )
 
 var (

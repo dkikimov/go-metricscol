@@ -6,17 +6,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/mem"
-	"go-metricscol/internal/models"
-	"go-metricscol/internal/repository/memory"
-	"golang.org/x/sync/errgroup"
 	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"runtime"
 	"time"
+
+	"go-metricscol/internal/models"
+	"go-metricscol/internal/repository/memory"
+
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
+	"golang.org/x/sync/errgroup"
 )
 
 func SendMetricsToServer(cfg *Config, m *memory.Metrics) error {

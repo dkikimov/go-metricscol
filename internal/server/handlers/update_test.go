@@ -4,18 +4,20 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/go-chi/chi"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go-metricscol/internal/models"
-	"go-metricscol/internal/repository/memory"
-	"go-metricscol/internal/utils"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"go-metricscol/internal/models"
+	"go-metricscol/internal/repository/memory"
+	"go-metricscol/internal/utils"
+
+	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHandlers_Update(t *testing.T) {

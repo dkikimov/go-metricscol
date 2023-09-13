@@ -2,10 +2,12 @@ package memory
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
+	"testing"
+
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository"
-	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMemStorage_Update(t *testing.T) {

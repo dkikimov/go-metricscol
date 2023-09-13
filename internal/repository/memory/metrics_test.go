@@ -1,13 +1,15 @@
 package memory
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"reflect"
+	"testing"
+
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
 	"go-metricscol/internal/utils"
-	"reflect"
-	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMetrics_Get(t *testing.T) {

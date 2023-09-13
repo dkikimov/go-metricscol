@@ -5,18 +5,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go-metricscol/internal/models"
-	"go-metricscol/internal/repository/memory"
-	"go-metricscol/internal/utils"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"go-metricscol/internal/models"
+	"go-metricscol/internal/repository/memory"
+	"go-metricscol/internal/utils"
+
+	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHandlers_Get(t *testing.T) {
@@ -249,7 +251,7 @@ func TestHandlers_GetJSON(t *testing.T) {
 	tests := []struct {
 		name string
 
-		//TODO: Как сделать предподчительнее: писать сырой json, или маршалить из структуры?
+		// TODO: Как сделать предподчительнее: писать сырой json, или маршалить из структуры?
 		body models.Metric
 		want want
 	}{

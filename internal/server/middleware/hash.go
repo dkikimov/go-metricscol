@@ -3,9 +3,10 @@ package middleware
 import (
 	"bytes"
 	"encoding/json"
-	"go-metricscol/internal/models"
 	"io"
 	"net/http"
+
+	"go-metricscol/internal/models"
 )
 
 func ValidateHashHandler(next http.HandlerFunc, key string) http.HandlerFunc {

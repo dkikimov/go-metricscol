@@ -3,10 +3,11 @@ package memory
 import (
 	"context"
 	"encoding/json"
-	"go-metricscol/internal/models"
-	"go-metricscol/internal/server/apierror"
 	"sort"
 	"strconv"
+
+	"go-metricscol/internal/models"
+	"go-metricscol/internal/server/apierror"
 )
 
 type MemStorage struct {

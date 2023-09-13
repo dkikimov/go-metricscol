@@ -1,9 +1,11 @@
 package models
 
 import (
-	"github.com/go-chi/chi"
-	"go-metricscol/internal/server/apierror"
 	"net/http"
+
+	"go-metricscol/internal/server/apierror"
+
+	"github.com/go-chi/chi"
 )
 
 type GetURLData struct {
