@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Config describes parameters required for Server.
 type Config struct {
 	Address       string        `env:"ADDRESS"`
 	StoreInterval time.Duration `env:"STORE_INTERVAL"`
@@ -13,6 +14,7 @@ type Config struct {
 	DatabaseDSN   string        `env:"DATABASE_DSN"`
 }
 
+// NewConfig returns new instance of Config with given parameters.
 func NewConfig(address string, storeInterval time.Duration, storeFile string, restore bool, hashKey string, databaseDSN string) *Config {
 	return &Config{
 		Address:       address,

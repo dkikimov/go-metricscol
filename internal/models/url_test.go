@@ -43,7 +43,7 @@ func TestParseGetURLData(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "Get metric gauge",
+			name: "Find metric gauge",
 			args: urlParams{
 				metricName: "Alloc",
 				metricType: Gauge,
@@ -54,7 +54,7 @@ func TestParseGetURLData(t *testing.T) {
 			},
 		},
 		{
-			name: "Get metric counter",
+			name: "Find metric counter",
 			args: urlParams{
 				metricName: "PollCount",
 				metricType: Counter,

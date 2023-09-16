@@ -15,6 +15,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
+// DB is a Postgres database which implements Repository interface.
 type DB struct {
 	conn *sql.DB
 }

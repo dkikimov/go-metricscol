@@ -10,15 +10,6 @@ import (
 	"github.com/caarlos0/env/v9"
 )
 
-var (
-	address       string
-	storeInterval time.Duration
-	storeFile     string
-	restore       bool
-	hashKey       string
-	databaseDSN   string
-)
-
 func main() {
 	cfg, err := parseConfig()
 	if err != nil {
@@ -35,6 +26,16 @@ func main() {
 	log.Fatal(s.ListenAndServe())
 }
 
+var (
+	address       string
+	storeInterval time.Duration
+	storeFile     string
+	restore       bool
+	hashKey       string
+	databaseDSN   string
+)
+
+// Declare variables in which the values of the flags will be written.
 func init() {
 	flag.StringVar(&address, "a", "127.0.0.1:8080", "Address to listen")
 	flag.DurationVar(&storeInterval, "i", 300*time.Second, "Interval to store metrics")
@@ -44,6 +45,7 @@ func init() {
 	flag.StringVar(&databaseDSN, "d", "", "Database DSN")
 }
 
+// Parses server.Config from environment variables or flags.
 func parseConfig() (*server.Config, error) {
 	flag.Parse()
 	config := server.NewConfig(address, storeInterval, storeFile, restore, hashKey, databaseDSN)

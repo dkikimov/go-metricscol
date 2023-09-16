@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestHandlers_Get(t *testing.T) {
+func TestHandlers_Find(t *testing.T) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
 		nil,
@@ -46,7 +46,7 @@ func TestHandlers_Get(t *testing.T) {
 		want want
 	}{
 		{
-			name: "Get Alloc value",
+			name: "Find Alloc value",
 			args: args{
 				metricType: models.Gauge.String(),
 				metricName: "Alloc",
@@ -93,7 +93,7 @@ func TestHandlers_Get(t *testing.T) {
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 			rr := httptest.NewRecorder()
-			handler := http.HandlerFunc(h.Get)
+			handler := http.HandlerFunc(h.Find)
 
 			handler.ServeHTTP(rr, req)
 
@@ -127,7 +127,7 @@ func TestHandlers_GetAll(t *testing.T) {
 		want want
 	}{
 		{
-			name: "Get all values",
+			name: "Find all values",
 			args: args{
 				url: "/",
 			},
@@ -203,7 +203,7 @@ func TestHandlers_GetAllWithHash(t *testing.T) {
 		want want
 	}{
 		{
-			name: "Get all values",
+			name: "Find all values",
 			args: args{
 				url: "/",
 			},
@@ -233,7 +233,7 @@ func TestHandlers_GetAllWithHash(t *testing.T) {
 	}
 }
 
-func TestHandlers_GetJSON(t *testing.T) {
+func TestHandlers_FindJSON(t *testing.T) {
 	storage := memory.NewMemStorage()
 	require.NoError(t, storage.Update(context.Background(), "Alloc", "gauge", "12.1"))
 	require.NoError(t, storage.Update(context.Background(), "PollCount", "counter", "13"))
@@ -256,7 +256,7 @@ func TestHandlers_GetJSON(t *testing.T) {
 		want want
 	}{
 		{
-			name: "Get gauge",
+			name: "Find gauge",
 			body: models.Metric{
 				Name:  "Alloc",
 				MType: models.Gauge,
@@ -271,7 +271,7 @@ func TestHandlers_GetJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "Get counter",
+			name: "Find counter",
 			body: models.Metric{
 				Name:  "PollCount",
 				MType: models.Counter,
@@ -286,7 +286,7 @@ func TestHandlers_GetJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "Get unknown metric",
+			name: "Find unknown metric",
 			body: models.Metric{
 				Name:  "H",
 				MType: models.Counter,
@@ -296,7 +296,7 @@ func TestHandlers_GetJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "Get wrong type",
+			name: "Find wrong type",
 			body: models.Metric{
 				Name:  "PollCount",
 				MType: "unknown",
@@ -306,7 +306,7 @@ func TestHandlers_GetJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "Get gauge with counter type",
+			name: "Find gauge with counter type",
 			body: models.Metric{
 				Name:  "Alloc",
 				MType: models.Counter,
@@ -316,7 +316,7 @@ func TestHandlers_GetJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "Get counter with gauge type",
+			name: "Find counter with gauge type",
 			body: models.Metric{
 				Name:  "PollCount",
 				MType: models.Gauge,
@@ -337,7 +337,7 @@ func TestHandlers_GetJSON(t *testing.T) {
 			}
 
 			rr := httptest.NewRecorder()
-			handler := http.HandlerFunc(h.GetJSON)
+			handler := http.HandlerFunc(h.FindJSON)
 
 			handler.ServeHTTP(rr, req)
 
@@ -351,7 +351,7 @@ func TestHandlers_GetJSON(t *testing.T) {
 	}
 }
 
-func BenchmarkHandlers_Get_MemStorage(b *testing.B) {
+func BenchmarkHandlers_Find_MemStorage(b *testing.B) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
 		nil,
@@ -369,7 +369,7 @@ func BenchmarkHandlers_Get_MemStorage(b *testing.B) {
 
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.Get)
+	handler := http.HandlerFunc(h.Find)
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -380,7 +380,7 @@ func BenchmarkHandlers_Get_MemStorage(b *testing.B) {
 	}
 }
 
-func BenchmarkHandlers_GetJSON_MemStorage(b *testing.B) {
+func BenchmarkHandlers_FindJSON_MemStorage(b *testing.B) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
 		nil,
@@ -394,7 +394,7 @@ func BenchmarkHandlers_GetJSON_MemStorage(b *testing.B) {
 	require.NoError(b, err)
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(h.GetJSON)
+	handler := http.HandlerFunc(h.FindJSON)
 
 	log.SetOutput(io.Discard)
 
@@ -409,7 +409,7 @@ func BenchmarkHandlers_GetJSON_MemStorage(b *testing.B) {
 	}
 }
 
-func BenchmarkHandlers_GetAllWithHash_MemStorage(b *testing.B) {
+func BenchmarkHandlers_FindAllWithHash_MemStorage(b *testing.B) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
 		nil,

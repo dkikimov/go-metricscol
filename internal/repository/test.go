@@ -85,7 +85,7 @@ func TestGet(ctx context.Context, t *testing.T, storage Repository) {
 		err  error
 	}{
 		{
-			name: "Get metric gauge",
+			name: "Find metric gauge",
 			args: args{
 				key:       "Alloc",
 				valueType: models.Gauge,
@@ -98,7 +98,7 @@ func TestGet(ctx context.Context, t *testing.T, storage Repository) {
 			err: nil,
 		},
 		{
-			name: "Get metric counter",
+			name: "Find metric counter",
 			args: args{
 				key:       "PollCount",
 				valueType: models.Counter,
@@ -111,7 +111,7 @@ func TestGet(ctx context.Context, t *testing.T, storage Repository) {
 			err: nil,
 		},
 		{
-			name: "Get metric with another type",
+			name: "Find metric with another type",
 			args: args{
 				key:       "Alloc",
 				valueType: models.Counter,
@@ -120,7 +120,7 @@ func TestGet(ctx context.Context, t *testing.T, storage Repository) {
 			err:  apierror.NotFound,
 		},
 		{
-			name: "Get metric with unknown type",
+			name: "Find metric with unknown type",
 			args: args{
 				key:       "Alloc",
 				valueType: "unknown",
@@ -144,7 +144,7 @@ func TestGetAll(ctx context.Context, t *testing.T, storage Repository) {
 		want []models.Metric
 	}{
 		{
-			name: "Get all",
+			name: "Find all",
 			want: []models.Metric{
 				{Name: "Alloc", MType: models.Gauge, Value: utils.Ptr(101.42)},
 				{Name: "PollCount", MType: models.Counter, Delta: utils.Ptr(int64(1))},

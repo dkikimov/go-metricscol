@@ -29,7 +29,7 @@ func TestMetrics_Get(t *testing.T) {
 		err  error
 	}{
 		{
-			name: "Get metric gauge",
+			name: "Find metric gauge",
 			args: args{
 				name:      "Alloc",
 				valueType: models.Gauge,
@@ -42,7 +42,7 @@ func TestMetrics_Get(t *testing.T) {
 			err: nil,
 		},
 		{
-			name: "Get metric counter",
+			name: "Find metric counter",
 			args: args{
 				name:      "PollCount",
 				valueType: models.Counter,
@@ -212,7 +212,7 @@ func Test_getKey(t *testing.T) {
 		want string
 	}{
 		{
-			name: "Get key gauge",
+			name: "Find key gauge",
 			args: args{
 				name:      "Alloc",
 				valueType: models.Gauge,
@@ -220,7 +220,7 @@ func Test_getKey(t *testing.T) {
 			want: "Allocg",
 		},
 		{
-			name: "Get key counter",
+			name: "Find key counter",
 			args: args{
 				name:      "PollCount",
 				valueType: models.Counter,

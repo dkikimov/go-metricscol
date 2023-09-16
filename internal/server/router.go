@@ -34,8 +34,8 @@ func (s Server) newRouter(storage repository.Repository) chi.Router {
 
 	saveToDisk := s.Config.StoreInterval == 0 && len(s.Config.StoreFile) != 0 && len(s.Config.DatabaseDSN) == 0
 
-	r.Get("/value/{type}/{name}", processors.Get)
-	r.Post("/value/", processors.GetJSON)
+	r.Get("/value/{type}/{name}", processors.Find)
+	r.Post("/value/", processors.FindJSON)
 
 	r.Post("/update/{type}/{name}/{value}", s.diskSaverHandler(processors.Update, saveToDisk))
 	r.Post("/update/", middleware.ValidateHashHandler(s.diskSaverHandler(processors.UpdateJSON, saveToDisk), s.Config.HashKey))

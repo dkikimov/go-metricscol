@@ -9,11 +9,14 @@ import (
 	"go-metricscol/internal/utils"
 )
 
+// Metrics is an in-memory key-value storage for models.Metric.
+// Should be used only by agent as it offers additional necessary methods.
 type Metrics struct {
 	Collection map[string]models.Metric
 	mu         sync.RWMutex
 }
 
+// NewMetrics returns new instance of Metrics
 func NewMetrics() Metrics {
 	return Metrics{Collection: map[string]models.Metric{}, mu: sync.RWMutex{}}
 }
@@ -31,6 +34,8 @@ func getKey(name string, valueType models.MetricType) string {
 	return key.String()
 }
 
+// Get returns a models.Metric if metric is found.
+// If not apierror.NotFound error and nil models.Metric pointer returned.
 func (m *Metrics) Get(name string, valueType models.MetricType) (*models.Metric, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -43,19 +48,22 @@ func (m *Metrics) Get(name string, valueType models.MetricType) (*models.Metric,
 	return &metric, nil
 }
 
+// GetAll returns slice of all models.Metric
 func (m *Metrics) GetAll() []models.Metric {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	all := make([]models.Metric, 0, len(m.Collection))
 	for _, value := range m.Collection {
-		// TODO: Возможно стоит вынести функцию в другой пакет, подумать
 		all = append(all, value)
 	}
 
 	return all
 }
 
+// Update adds or replaces existing metric with new one.
+// Value is pattern matched with expected metric value type.
+// If the value does not match the expected type, apierror.InvalidValue is returned.
 func (m *Metrics) Update(name string, valueType models.MetricType, value interface{}) error {
 	if valueType != models.Gauge && valueType != models.Counter {
 		return apierror.UnknownMetricType
@@ -123,6 +131,8 @@ func (m *Metrics) Update(name string, valueType models.MetricType, value interfa
 	return nil
 }
 
+// UpdateWithStruct adds or replaces metric that was passed as models.Metric struct.
+// If the metric validation fails, apierror.InvalidValue is returned.
 func (m *Metrics) UpdateWithStruct(metric *models.Metric) error {
 	if metric == nil {
 		return apierror.InvalidValue
@@ -170,6 +180,7 @@ func (m *Metrics) UpdateWithStruct(metric *models.Metric) error {
 	return nil
 }
 
+// ResetPollCount sets "PollCount" counter metric value to 0.
 func (m *Metrics) ResetPollCount() {
 	m.mu.Lock()
 	defer m.mu.Unlock()

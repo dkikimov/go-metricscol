@@ -21,6 +21,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// SendMetricsToServer sends metrics stored is memory.Metrics to the address given in agent.Config.
+// Rate limit defined in config is not exceeded.
 func SendMetricsToServer(cfg *Config, m *memory.Metrics) error {
 	jobCh := make(chan bool)
 	g := errgroup.Group{}
@@ -101,6 +103,7 @@ func makeRequest(cfg *Config, m *memory.Metrics) error {
 	return err
 }
 
+// UpdateMetrics gets all metrics from runtime.MemStats and writes them to memory.Metrics.
 func UpdateMetrics(metrics *memory.Metrics) error {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
@@ -195,6 +198,8 @@ func UpdateMetrics(metrics *memory.Metrics) error {
 
 	return nil
 }
+
+// CollectAdditionalMetrics writes memory and CPU usage metrics to the memory.Metrics.
 func CollectAdditionalMetrics(metrics *memory.Metrics) error {
 	v, err := mem.VirtualMemory()
 	if err != nil {

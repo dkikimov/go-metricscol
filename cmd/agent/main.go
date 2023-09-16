@@ -12,14 +12,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var (
-	address        string
-	reportInterval time.Duration
-	pollInterval   time.Duration
-	hashKey        string
-	rateLimit      int
-)
-
 func main() {
 	cfg, err := parseConfig()
 	if err != nil {
@@ -64,6 +56,15 @@ func main() {
 
 }
 
+var (
+	address        string
+	reportInterval time.Duration
+	pollInterval   time.Duration
+	hashKey        string
+	rateLimit      int
+)
+
+// Declare variables in which the values of the flags will be written.
 func init() {
 	flag.StringVar(&address, "a", "127.0.0.1:8080", "Address to listen")
 	flag.DurationVar(&reportInterval, "r", 10*time.Second, "Interval to report metrics")
@@ -72,6 +73,7 @@ func init() {
 	flag.IntVar(&rateLimit, "l", 1, "Limit the number of requests to the server")
 }
 
+// Parses agent.Config from environment variables or flags.
 func parseConfig() (*agent.Config, error) {
 	flag.Parse()
 	config := agent.NewConfig(address, reportInterval, pollInterval, hashKey, rateLimit)

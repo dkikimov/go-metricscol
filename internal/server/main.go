@@ -10,12 +10,15 @@ import (
 	"go-metricscol/internal/repository/postgres"
 )
 
+// Server defines config and repository for HTTP server instance.
 type Server struct {
 	Config     *Config
 	Repository repository.Repository
 	Postgres   *postgres.DB
 }
 
+// NewServer returns new Server with defined config.
+// Initialized database if necessary.
 func NewServer(config *Config) (*Server, error) {
 	db, err := postgres.New(config.DatabaseDSN)
 	if err != nil {
@@ -33,6 +36,8 @@ func getRepository(config *Config, db *postgres.DB) repository.Repository {
 	}
 }
 
+// ListenAndServe listens on the TCP network address given in config and then calls Serve to handle requests on incoming connections.
+// Accepted connections are configured to enable TCP keep-alives.
 func (s Server) ListenAndServe() error {
 	r := s.newRouter(s.Repository)
 

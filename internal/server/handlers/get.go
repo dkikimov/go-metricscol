@@ -14,7 +14,10 @@ import (
 	"go-metricscol/internal/server/apierror"
 )
 
-func (p *Handlers) Get(w http.ResponseWriter, r *http.Request) {
+// Find is a handler that finds models.Metric based on the parameters in the URL.
+// If metric is not found 404 status code returned.
+// Otherwise, metric value is returned.
+func (p *Handlers) Find(w http.ResponseWriter, r *http.Request) {
 	urlData, err := models.ParseGetURLData(r)
 	if err != nil {
 		apierror.WriteHTTP(w, err)
@@ -40,7 +43,11 @@ func (p *Handlers) Get(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (p *Handlers) GetJSON(w http.ResponseWriter, r *http.Request) {
+// FindJSON is a handler that finds models.Metric based on the json passed in request body.
+// In case the json could not be parsed, the status code 400 is returned.
+// If metric is not found 404 status code returned.
+// Otherwise, metric value is returned.
+func (p *Handlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
@@ -81,13 +88,14 @@ func (p *Handlers) GetJSON(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(jsonFoundMetric)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("Couldn't write response to GetJSON request with error: %s", err)
+		log.Printf("Couldn't write response to FindJSON request with error: %s", err)
 		return
 	}
 
 	log.Printf("Got metric with name %s, value: %s, type: %s", foundMetric.Name, foundMetric.StringValue(), foundMetric.MType)
 }
 
+// GetAll returns list of all metrics stored on repository.
 func (p *Handlers) GetAll(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	getHashSubstring := func(metric models.Metric) string {

@@ -10,6 +10,7 @@ import (
 	"go-metricscol/internal/server/apierror"
 )
 
+// MemStorage is a metrics in-memory storage which implements Repository interface.
 type MemStorage struct {
 	metrics Metrics
 }
@@ -34,7 +35,6 @@ func (memStorage *MemStorage) Updates(_ context.Context, metrics []models.Metric
 }
 
 func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
-	// TODO: Подумать
 	memStorage.metrics.mu.Lock()
 	defer memStorage.metrics.mu.Unlock()
 

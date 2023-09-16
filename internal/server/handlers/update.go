@@ -12,6 +12,7 @@ import (
 	"go-metricscol/internal/server/apierror"
 )
 
+// Update is a handler that updates models.Metric with given key based on the parameters in the URL.
 func (p *Handlers) Update(w http.ResponseWriter, r *http.Request) {
 	urlData, err := models.ParsePostURLData(r)
 	if err != nil {
@@ -33,6 +34,7 @@ func (p *Handlers) Update(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// UpdateJSON is a handler that updates models.Metric with the given key based on the json in the request body.
 func (p *Handlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 
@@ -74,9 +76,9 @@ func (p *Handlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Couldn't encode json with error: %s", err)
 		return
 	}
-
 }
 
+// Updates is a handler that updates []models.Metric based on the json in the request body.
 func (p *Handlers) Updates(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
