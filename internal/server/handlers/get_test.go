@@ -387,6 +387,7 @@ func ExampleHandlers_FindJSON() {
 	marshaledMetric, err := json.Marshal(metricToFind)
 	if err != nil {
 		// Handle error
+		return
 	}
 
 	updatePostURL := fmt.Sprintf("%s/value/", address)
@@ -394,6 +395,7 @@ func ExampleHandlers_FindJSON() {
 	response, err := http.Post(updatePostURL, "application/json", bytes.NewReader(marshaledMetric))
 	if err != nil {
 		// Handle error
+		return
 	}
 	response.Body.Close()
 }

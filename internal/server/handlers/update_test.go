@@ -196,6 +196,7 @@ func ExampleHandlers_Update() {
 	response, err := http.Post(updatePostURL, "text/plain", nil)
 	if err != nil {
 		// Handle error
+		return
 	}
 	response.Body.Close()
 }
@@ -244,6 +245,7 @@ func ExampleHandlers_UpdateJSON() {
 	marshaledMetric, err := json.Marshal(metricToUpdate)
 	if err != nil {
 		// Handle error
+		return
 	}
 
 	updatePostURL := fmt.Sprintf("%s/update/", address)
@@ -251,6 +253,7 @@ func ExampleHandlers_UpdateJSON() {
 	response, err := http.Post(updatePostURL, "application/json", bytes.NewReader(marshaledMetric))
 	if err != nil {
 		// Handle error
+		return
 	}
 	response.Body.Close()
 }
@@ -300,6 +303,10 @@ func TestHandlers_Updates(t *testing.T) {
 
 	updatePostURL := fmt.Sprintf("%s/updates/", address)
 
-	response, _ := http.Post(updatePostURL, "application/json", bytes.NewReader(marshaledMetrics))
+	response, err := http.Post(updatePostURL, "application/json", bytes.NewReader(marshaledMetrics))
+	if err != nil {
+		// Handle error
+		return
+	}
 	response.Body.Close()
 }

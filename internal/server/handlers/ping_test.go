@@ -13,6 +13,7 @@ func ExampleHandlers_Ping() {
 	response, err := http.Get(pingURL)
 	if err != nil {
 		// Handle error
+		return
 	}
 	response.Body.Close()
 }
