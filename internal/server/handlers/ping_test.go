@@ -10,5 +10,9 @@ func ExampleHandlers_Ping() {
 
 	pingURL := fmt.Sprintf("%s/ping", address)
 
-	http.Get(pingURL)
+	response, err := http.Get(pingURL)
+	if err != nil {
+		// Handle error
+	}
+	response.Body.Close()
 }

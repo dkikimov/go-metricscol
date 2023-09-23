@@ -111,7 +111,11 @@ func ExampleHandlers_Find() {
 
 	findURL := fmt.Sprintf("%s/value/%s/%s", address, metricType, metricName)
 
-	http.Get(findURL)
+	response, err := http.Get(findURL)
+	if err != nil {
+		// Handle error
+	}
+	response.Body.Close()
 }
 
 func TestHandlers_GetAll(t *testing.T) {
@@ -173,7 +177,11 @@ func ExampleHandlers_GetAll() {
 
 	getAllURL := fmt.Sprintf("%s/", address)
 
-	http.Get(getAllURL)
+	response, err := http.Get(getAllURL)
+	if err != nil {
+		// Handle error
+	}
+	response.Body.Close()
 }
 
 func TestHandlers_GetAllWithHash(t *testing.T) {
@@ -383,7 +391,11 @@ func ExampleHandlers_FindJSON() {
 
 	updatePostURL := fmt.Sprintf("%s/value/", address)
 
-	http.Post(updatePostURL, "application/json", bytes.NewReader(marshaledMetric))
+	response, err := http.Post(updatePostURL, "application/json", bytes.NewReader(marshaledMetric))
+	if err != nil {
+		// Handle error
+	}
+	response.Body.Close()
 }
 
 func BenchmarkHandlers_Find_MemStorage(b *testing.B) {

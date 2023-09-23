@@ -193,7 +193,11 @@ func ExampleHandlers_Update() {
 
 	updatePostURL := fmt.Sprintf("%s/update/%s/%s/%d", address, metricType, metricName, metricValue)
 
-	http.Post(updatePostURL, "text/plain", nil)
+	response, err := http.Post(updatePostURL, "text/plain", nil)
+	if err != nil {
+		// Handle error
+	}
+	response.Body.Close()
 }
 
 func BenchmarkHandlers_Update_MemStorage(b *testing.B) {
@@ -244,7 +248,11 @@ func ExampleHandlers_UpdateJSON() {
 
 	updatePostURL := fmt.Sprintf("%s/update/", address)
 
-	http.Post(updatePostURL, "application/json", bytes.NewReader(marshaledMetric))
+	response, err := http.Post(updatePostURL, "application/json", bytes.NewReader(marshaledMetric))
+	if err != nil {
+		// Handle error
+	}
+	response.Body.Close()
 }
 
 func BenchmarkHandlers_UpdateJSON_MemStorage(b *testing.B) {
@@ -277,23 +285,21 @@ func TestHandlers_Updates(t *testing.T) {
 	var countValue int64 = 2
 
 	metricsToUpdate := []models.Metric{
-		models.Metric{
+		{
 			Name:  "Alloc",
 			MType: models.Gauge,
 			Value: &allocValue,
 		},
-		models.Metric{
+		{
 			Name:  "Count",
 			MType: models.Counter,
 			Delta: &countValue,
 		},
 	}
-	marshaledMetrics, err := json.Marshal(metricsToUpdate)
-	if err != nil {
-		// Handle error
-	}
+	marshaledMetrics, _ := json.Marshal(metricsToUpdate)
 
 	updatePostURL := fmt.Sprintf("%s/updates/", address)
 
-	http.Post(updatePostURL, "application/json", bytes.NewReader(marshaledMetrics))
+	response, _ := http.Post(updatePostURL, "application/json", bytes.NewReader(marshaledMetrics))
+	response.Body.Close()
 }
