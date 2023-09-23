@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -184,6 +185,17 @@ func TestHandlers_UpdateJSON(t *testing.T) {
 	}
 }
 
+func ExampleHandlers_Update() {
+	address := "localhost:8080"
+	metricType := models.Gauge
+	metricName := "Alloc"
+	metricValue := 5
+
+	updatePostURL := fmt.Sprintf("%s/update/%s/%s/%d", address, metricType, metricName, metricValue)
+
+	http.Post(updatePostURL, "text/plain", nil)
+}
+
 func BenchmarkHandlers_Update_MemStorage(b *testing.B) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
@@ -216,6 +228,25 @@ func BenchmarkHandlers_Update_MemStorage(b *testing.B) {
 	}
 }
 
+func ExampleHandlers_UpdateJSON() {
+	address := "localhost:8080"
+
+	var metricValue float64 = 1
+	metricToUpdate := models.Metric{
+		Name:  "Alloc",
+		MType: models.Gauge,
+		Value: &metricValue,
+	}
+	marshaledMetric, err := json.Marshal(metricToUpdate)
+	if err != nil {
+		// Handle error
+	}
+
+	updatePostURL := fmt.Sprintf("%s/update/", address)
+
+	http.Post(updatePostURL, "application/json", bytes.NewReader(marshaledMetric))
+}
+
 func BenchmarkHandlers_UpdateJSON_MemStorage(b *testing.B) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
@@ -237,4 +268,32 @@ func BenchmarkHandlers_UpdateJSON_MemStorage(b *testing.B) {
 		handler.ServeHTTP(rr, req)
 		assert.Equal(b, 200, rr.Code)
 	}
+}
+
+func TestHandlers_Updates(t *testing.T) {
+	address := "localhost:8080"
+
+	var allocValue float64 = 1
+	var countValue int64 = 2
+
+	metricsToUpdate := []models.Metric{
+		models.Metric{
+			Name:  "Alloc",
+			MType: models.Gauge,
+			Value: &allocValue,
+		},
+		models.Metric{
+			Name:  "Count",
+			MType: models.Counter,
+			Delta: &countValue,
+		},
+	}
+	marshaledMetrics, err := json.Marshal(metricsToUpdate)
+	if err != nil {
+		// Handle error
+	}
+
+	updatePostURL := fmt.Sprintf("%s/updates/", address)
+
+	http.Post(updatePostURL, "application/json", bytes.NewReader(marshaledMetrics))
 }

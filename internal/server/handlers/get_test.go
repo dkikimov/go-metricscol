@@ -103,6 +103,17 @@ func TestHandlers_Find(t *testing.T) {
 	}
 }
 
+func ExampleHandlers_Find() {
+	address := "localhost:8080"
+
+	metricType := models.Gauge
+	metricName := "Alloc"
+
+	findURL := fmt.Sprintf("%s/value/%s/%s", address, metricType, metricName)
+
+	http.Get(findURL)
+}
+
 func TestHandlers_GetAll(t *testing.T) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
@@ -157,7 +168,13 @@ func TestHandlers_GetAll(t *testing.T) {
 	}
 }
 
-// TODO: Добавить тесты для постгреса
+func ExampleHandlers_GetAll() {
+	address := "localhost:8080"
+
+	getAllURL := fmt.Sprintf("%s/", address)
+
+	http.Get(getAllURL)
+}
 
 func TestHandlers_GetAllWithHash(t *testing.T) {
 	hashKey := "test"
@@ -349,6 +366,24 @@ func TestHandlers_FindJSON(t *testing.T) {
 			}
 		})
 	}
+}
+
+func ExampleHandlers_FindJSON() {
+	address := "localhost:8080"
+
+	metricToFind := models.Metric{
+		Name:  "Alloc",
+		MType: models.Gauge,
+	}
+
+	marshaledMetric, err := json.Marshal(metricToFind)
+	if err != nil {
+		// Handle error
+	}
+
+	updatePostURL := fmt.Sprintf("%s/value/", address)
+
+	http.Post(updatePostURL, "application/json", bytes.NewReader(marshaledMetric))
 }
 
 func BenchmarkHandlers_Find_MemStorage(b *testing.B) {
