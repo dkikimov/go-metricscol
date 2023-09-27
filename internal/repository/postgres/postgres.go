@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"time"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
+
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 // DB is a Postgres database which implements Repository interface.

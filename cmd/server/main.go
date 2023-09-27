@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	"go-metricscol/internal/server"
-
 	"github.com/caarlos0/env/v9"
+
+	"go-metricscol/internal/server"
 )
 
 func main() {

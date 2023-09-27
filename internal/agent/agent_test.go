@@ -3,10 +3,10 @@ package agent
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository/memory"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func contains(s []string, str string) bool {

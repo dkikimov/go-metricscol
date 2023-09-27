@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/require"
+
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository"
 	"go-metricscol/internal/server/apierror"
-
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/require"
 )
 
 // TODO: Кажется не совсем правильно, что я пишу запрос ручками. А вдруг он изменится? Поискать другой способ.

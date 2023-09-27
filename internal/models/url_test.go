@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"testing"
 
-	"go-metricscol/internal/server/apierror"
-
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
+
+	"go-metricscol/internal/server/apierror"
 )
 
 type urlParams struct {

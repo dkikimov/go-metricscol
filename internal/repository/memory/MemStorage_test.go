@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestMemStorage_Update(t *testing.T) {

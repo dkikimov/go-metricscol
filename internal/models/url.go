@@ -3,9 +3,9 @@ package models
 import (
 	"net/http"
 
-	"go-metricscol/internal/server/apierror"
-
 	"github.com/go-chi/chi"
+
+	"go-metricscol/internal/server/apierror"
 )
 
 // GetURLData describes the parameters passed to the URL in the GET request.

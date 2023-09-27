@@ -5,11 +5,11 @@ import (
 	"log"
 	"time"
 
-	"go-metricscol/internal/agent"
-	"go-metricscol/internal/repository/memory"
-
 	"github.com/caarlos0/env/v9"
 	"golang.org/x/sync/errgroup"
+
+	"go-metricscol/internal/agent"
+	"go-metricscol/internal/repository/memory"
 )
 
 func main() {

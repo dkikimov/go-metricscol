@@ -13,12 +13,12 @@ import (
 	"runtime"
 	"time"
 
-	"go-metricscol/internal/models"
-	"go-metricscol/internal/repository/memory"
-
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 	"golang.org/x/sync/errgroup"
+
+	"go-metricscol/internal/models"
+	"go-metricscol/internal/repository/memory"
 )
 
 // SendMetricsToServer sends metrics stored is memory.Metrics to the address given in agent.Config.

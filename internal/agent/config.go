@@ -1,6 +1,8 @@
 package agent
 
-import "time"
+import (
+	"time"
+)
 
 // Config describes parameters required for Agent work.
 type Config struct {
