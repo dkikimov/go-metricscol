@@ -1,6 +1,8 @@
-package staticlint
+package main
 
 import (
+	"github.com/gordonklaus/ineffassign/pkg/ineffassign"
+	"github.com/kisielk/errcheck/errcheck"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"
 	"golang.org/x/tools/go/analysis/passes/asmdecl"
@@ -105,8 +107,11 @@ func main() {
 
 	// Concatenate all analyzers
 	var allChecks []*analysis.Analyzer
-	allChecks = append(allChecks, defaultAnalyzers...)
-	allChecks = append(allChecks, staticcheckAnalyzers...)
+	allChecks = append(allChecks, defaultAnalyzers...)     // Add default analyzers
+	allChecks = append(allChecks, staticcheckAnalyzers...) // Add staticcheck analyzers
+	allChecks = append(allChecks, errcheck.Analyzer)       // Add errcheck analyzer
+	allChecks = append(allChecks, ineffassign.Analyzer)    // Add ineffassign analyzer
+
 	multichecker.Main(
 		allChecks...,
 	)
