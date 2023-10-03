@@ -111,7 +111,7 @@ func main() {
 	allChecks = append(allChecks, staticcheckAnalyzers...) // Add staticcheck analyzers
 	allChecks = append(allChecks, errcheck.Analyzer)       // Add errcheck analyzer
 	allChecks = append(allChecks, ineffassign.Analyzer)    // Add ineffassign analyzer
-
+	allChecks = append(allChecks, OsExitChecker)           // Add own OsExit linter
 	multichecker.Main(
 		allChecks...,
 	)
