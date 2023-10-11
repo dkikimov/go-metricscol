@@ -1,4 +1,4 @@
-package main
+package osexitchecker
 
 import (
 	"go/ast"
@@ -24,13 +24,16 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			if !ok {
 				continue
 			}
+			if mainDecl.Name.Name != "main" {
+				continue
+			}
 
 			ast.Inspect(mainDecl, func(node ast.Node) bool {
 				if c, ok := node.(*ast.CallExpr); ok {
 					if s, ok := c.Fun.(*ast.SelectorExpr); ok {
 						if xIdent, ok := s.X.(*ast.Ident); ok {
 							if xIdent.Name == "os" && s.Sel.Name == "Exit" {
-								pass.Reportf(s.X.Pos(), "using os.Exit() in main file of main package")
+								pass.Reportf(s.Sel.End(), "using os.Exit() in main file of main package")
 							}
 						}
 					}

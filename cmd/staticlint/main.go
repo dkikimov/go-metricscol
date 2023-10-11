@@ -49,6 +49,8 @@ import (
 	"golang.org/x/tools/go/analysis/passes/unusedwrite"
 	"golang.org/x/tools/go/analysis/passes/usesgenerics"
 	"honnef.co/go/tools/staticcheck"
+
+	"staticlint/osexitchecker"
 )
 
 // Standard analyzers
@@ -107,11 +109,11 @@ func main() {
 
 	// Concatenate all analyzers
 	var allChecks []*analysis.Analyzer
-	allChecks = append(allChecks, defaultAnalyzers...)     // Add default analyzers
-	allChecks = append(allChecks, staticcheckAnalyzers...) // Add staticcheck analyzers
-	allChecks = append(allChecks, errcheck.Analyzer)       // Add errcheck analyzer
-	allChecks = append(allChecks, ineffassign.Analyzer)    // Add ineffassign analyzer
-	allChecks = append(allChecks, OsExitChecker)           // Add own OsExit linter
+	allChecks = append(allChecks, defaultAnalyzers...)         // Add default analyzers
+	allChecks = append(allChecks, staticcheckAnalyzers...)     // Add staticcheck analyzers
+	allChecks = append(allChecks, errcheck.Analyzer)           // Add errcheck analyzer
+	allChecks = append(allChecks, ineffassign.Analyzer)        // Add ineffassign analyzer
+	allChecks = append(allChecks, osexitchecker.OsExitChecker) // Add own OsExit linter
 	multichecker.Main(
 		allChecks...,
 	)
