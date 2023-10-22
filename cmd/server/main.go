@@ -10,7 +10,16 @@ import (
 	"go-metricscol/internal/server"
 )
 
+// go run -ldflags "-X main.buildVersion=v1.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d')' -X 'main.buildCommit=$(git rev-parse --short HEAD)'" main.go
+var (
+	buildVersion string = "N/A"
+	buildDate    string = "N/A"
+	buildCommit  string = "N/A"
+)
+
 func main() {
+	printBuildProperties()
+
 	cfg, err := parseConfig()
 	if err != nil {
 		log.Fatalf("couldn't parse config with error: %s", err)
@@ -55,4 +64,10 @@ func parseConfig() (*server.Config, error) {
 	}
 
 	return config, nil
+}
+
+func printBuildProperties() {
+	log.Printf("Build version: %s", buildVersion)
+	log.Printf("Build date: %s", buildDate)
+	log.Printf("Build commit: %s", buildCommit)
 }
