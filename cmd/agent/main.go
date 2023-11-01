@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 	"time"
 
 	"github.com/caarlos0/env/v9"
@@ -71,6 +72,7 @@ var (
 	pollInterval   time.Duration
 	hashKey        string
 	rateLimit      int
+	cryptoKey      string
 )
 
 // Declare variables in which the values of the flags will be written.
@@ -80,12 +82,25 @@ func init() {
 	flag.DurationVar(&pollInterval, "p", 2*time.Second, "Interval to poll metrics")
 	flag.StringVar(&hashKey, "k", "", "Key to encrypt metrics")
 	flag.IntVar(&rateLimit, "l", 1, "Limit the number of requests to the server")
+	flag.Func("crypto-key", "Crypto key for asymmetric encryption", func(input string) error {
+		if len(input) != 0 {
+			cryptoKeyBytes, err := os.ReadFile(cryptoKey)
+			if err != nil {
+				return err
+			}
+
+			cryptoKey = string(cryptoKeyBytes)
+		}
+
+		return nil
+	})
 }
 
 // Parses agent.Config from environment variables or flags.
 func parseConfig() (*agent.Config, error) {
 	flag.Parse()
-	config := agent.NewConfig(address, reportInterval, pollInterval, hashKey, rateLimit)
+
+	config := agent.NewConfig(address, reportInterval, pollInterval, hashKey, rateLimit, cryptoKey)
 
 	if err := env.Parse(config); err != nil {
 		return nil, err
