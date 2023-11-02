@@ -2,6 +2,8 @@ package main
 
 import (
 	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"flag"
 	"log"
 	"os"
@@ -9,7 +11,6 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v9"
-	"golang.org/x/crypto/ssh"
 	"golang.org/x/sync/errgroup"
 
 	"go-metricscol/internal/agent"
@@ -86,14 +87,11 @@ func rsaPublicKeyParser(input string) (interface{}, error) {
 			return nil, err
 		}
 
-		parsed, _, _, _, err := ssh.ParseAuthorizedKey(cryptoKeyBytes)
+		block, _ := pem.Decode(cryptoKeyBytes)
+		result, err = x509.ParsePKCS1PublicKey(block.Bytes)
 		if err != nil {
 			return nil, err
 		}
-
-		parsedCryptoKey := parsed.(ssh.CryptoPublicKey)
-		pubCrypto := parsedCryptoKey.CryptoPublicKey()
-		result = pubCrypto.(*rsa.PublicKey)
 	}
 
 	return *result, nil
