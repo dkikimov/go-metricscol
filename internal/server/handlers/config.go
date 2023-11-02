@@ -1,9 +1,15 @@
 package handlers
 
+import "crypto/rsa"
+
 type Config struct {
-	HashKey string
+	HashKey          string
+	PrivateCryptoKey *rsa.PrivateKey
 }
 
-func NewConfig(hashKey string) *Config {
-	return &Config{HashKey: hashKey}
+func NewConfig(hashKey string, privateCryptoKey *rsa.PrivateKey) *Config {
+	return &Config{
+		HashKey:          hashKey,
+		PrivateCryptoKey: privateCryptoKey,
+	}
 }
