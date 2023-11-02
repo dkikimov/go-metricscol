@@ -1,12 +1,15 @@
 package main
 
 import (
+	"crypto/rsa"
 	"flag"
 	"log"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/caarlos0/env/v9"
+	"golang.org/x/crypto/ssh"
 	"golang.org/x/sync/errgroup"
 
 	"go-metricscol/internal/agent"
@@ -72,8 +75,29 @@ var (
 	pollInterval   time.Duration
 	hashKey        string
 	rateLimit      int
-	cryptoKey      string
+	cryptoKey      *rsa.PublicKey
 )
+
+func rsaPublicKeyParser(input string) (interface{}, error) {
+	var result *rsa.PublicKey
+	if len(input) != 0 {
+		cryptoKeyBytes, err := os.ReadFile(input)
+		if err != nil {
+			return nil, err
+		}
+
+		parsed, _, _, _, err := ssh.ParseAuthorizedKey(cryptoKeyBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		parsedCryptoKey := parsed.(ssh.CryptoPublicKey)
+		pubCrypto := parsedCryptoKey.CryptoPublicKey()
+		result = pubCrypto.(*rsa.PublicKey)
+	}
+
+	return *result, nil
+}
 
 // Declare variables in which the values of the flags will be written.
 func init() {
@@ -83,15 +107,12 @@ func init() {
 	flag.StringVar(&hashKey, "k", "", "Key to encrypt metrics")
 	flag.IntVar(&rateLimit, "l", 1, "Limit the number of requests to the server")
 	flag.Func("crypto-key", "Crypto key for asymmetric encryption", func(input string) error {
-		if len(input) != 0 {
-			cryptoKeyBytes, err := os.ReadFile(cryptoKey)
-			if err != nil {
-				return err
-			}
-
-			cryptoKey = string(cryptoKeyBytes)
+		parseResult, err := rsaPublicKeyParser(input)
+		if err != nil {
+			return err
 		}
 
+		cryptoKey = parseResult.(*rsa.PublicKey)
 		return nil
 	})
 }
@@ -102,7 +123,13 @@ func parseConfig() (*agent.Config, error) {
 
 	config := agent.NewConfig(address, reportInterval, pollInterval, hashKey, rateLimit, cryptoKey)
 
-	if err := env.Parse(config); err != nil {
+	opts := env.Options{
+		FuncMap: map[reflect.Type]env.ParserFunc{
+			reflect.TypeOf(rsa.PublicKey{}): rsaPublicKeyParser,
+		},
+	}
+
+	if err := env.ParseWithOptions(config, opts); err != nil {
 		return nil, err
 	}
 	return config, nil
