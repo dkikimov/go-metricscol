@@ -33,7 +33,7 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 	require.NoError(t, err)
 
 	storeInterval := 2 * time.Second
-	config := NewConfig("127.0.0.1:8080", storeInterval, file.Name(), false, "", "")
+	config := NewConfig("127.0.0.1:8080", storeInterval, file.Name(), false, "", "", nil)
 
 	server, err := NewServer(config)
 	require.NoError(t, server.Repository.UpdateWithStruct(context.Background(), &testMetric))
@@ -69,7 +69,7 @@ func TestServer_restoreFromDisk(t *testing.T) {
 	require.NoError(t, file.Close())
 	require.NoError(t, err)
 
-	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "")
+	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "", nil)
 	storage := memory.NewMemStorage()
 
 	require.NoError(t, storage.UpdateWithStruct(context.Background(), &testMetric))
@@ -101,7 +101,7 @@ func TestServer_saveToDisk(t *testing.T) {
 	require.NoError(t, file.Close())
 	require.NoError(t, err)
 
-	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "")
+	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "", nil)
 	storage := memory.NewMemStorage()
 
 	require.NoError(t, storage.UpdateWithStruct(context.Background(), &testMetric))

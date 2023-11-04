@@ -25,7 +25,7 @@ func TestHandlers_Find(t *testing.T) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
 		nil,
-		NewConfig(""),
+		NewConfig("", nil),
 	)
 
 	require.NoError(t, h.Storage.Update(context.Background(), "Alloc", models.Gauge, "123.4"))
@@ -122,7 +122,7 @@ func TestHandlers_GetAll(t *testing.T) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
 		nil,
-		NewConfig(""),
+		NewConfig("", nil),
 	)
 
 	require.NoError(t, h.Storage.Update(context.Background(), "Alloc", models.Gauge, "123.4"))
@@ -190,7 +190,7 @@ func TestHandlers_GetAllWithHash(t *testing.T) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
 		nil,
-		NewConfig(hashKey),
+		NewConfig(hashKey, nil),
 	)
 
 	alloc := models.Metric{
@@ -266,7 +266,7 @@ func TestHandlers_FindJSON(t *testing.T) {
 	h := NewHandlers(
 		storage,
 		nil,
-		NewConfig(""),
+		NewConfig("", nil),
 	)
 	type want struct {
 		Body       models.Metric
@@ -404,7 +404,7 @@ func BenchmarkHandlers_Find_MemStorage(b *testing.B) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
 		nil,
-		NewConfig("hash"),
+		NewConfig("hash", nil),
 	)
 
 	require.NoError(b, h.Storage.Update(context.Background(), "Alloc", models.Gauge, "123.4"))
@@ -433,7 +433,7 @@ func BenchmarkHandlers_FindJSON_MemStorage(b *testing.B) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
 		nil,
-		NewConfig("hash"),
+		NewConfig("hash", nil),
 	)
 
 	metric := models.Metric{Name: "Alloc", MType: models.Gauge, Value: utils.Ptr(123.4)}
@@ -462,7 +462,7 @@ func BenchmarkHandlers_FindAllWithHash_MemStorage(b *testing.B) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
 		nil,
-		NewConfig("hash"),
+		NewConfig("hash", nil),
 	)
 
 	require.NoError(b, h.Storage.Update(context.Background(), "Alloc", models.Gauge, "123.4"))
