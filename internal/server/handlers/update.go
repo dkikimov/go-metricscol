@@ -47,11 +47,16 @@ func (p *Handlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decryptedJSON, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, p.config.PrivateCryptoKey, body, nil)
-	if err != nil {
-		http.Error(w, "couldn't decrypt json", http.StatusInternalServerError)
-		log.Printf("couldn't decrypt json: %s", err)
-		return
+	var decryptedJSON []byte
+	if p.config.PrivateCryptoKey != nil {
+		decryptedJSON, err = rsa.DecryptOAEP(sha256.New(), rand.Reader, p.config.PrivateCryptoKey, body, nil)
+		if err != nil {
+			http.Error(w, "couldn't decrypt json", http.StatusInternalServerError)
+			log.Printf("couldn't decrypt json: %s", err)
+			return
+		}
+	} else {
+		decryptedJSON = body
 	}
 
 	var metric models.Metric

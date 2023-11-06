@@ -1,13 +1,9 @@
 package main
 
 import (
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"flag"
+	"fmt"
 	"log"
-	"os"
-	"reflect"
 	"time"
 
 	"github.com/caarlos0/env/v9"
@@ -41,32 +37,14 @@ func main() {
 }
 
 var (
-	address       string
-	storeInterval time.Duration
-	storeFile     string
-	restore       bool
-	hashKey       string
-	databaseDSN   string
-	cryptoKey     *rsa.PrivateKey
+	address           string
+	storeInterval     time.Duration
+	storeFile         string
+	restore           bool
+	hashKey           string
+	databaseDSN       string
+	cryptoKeyFilePath string
 )
-
-func rsaPrivateKeyParser(input string) (interface{}, error) {
-	var result *rsa.PrivateKey
-	if len(input) != 0 {
-		cryptoKeyBytes, err := os.ReadFile(input)
-		if err != nil {
-			return nil, err
-		}
-
-		block, _ := pem.Decode(cryptoKeyBytes)
-		result, err = x509.ParsePKCS1PrivateKey(block.Bytes)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return *result, nil
-}
 
 // Declare variables in which the values of the flags will be written.
 func init() {
@@ -76,29 +54,18 @@ func init() {
 	flag.BoolVar(&restore, "r", true, "Restore metrics from file")
 	flag.StringVar(&hashKey, "k", "", "Key to encrypt metrics")
 	flag.StringVar(&databaseDSN, "d", "", "Database DSN")
-	flag.Func("crypto-key", "Private crypto key for asymmetric encryption", func(input string) error {
-		parseResult, err := rsaPrivateKeyParser(input)
-		if err != nil {
-			return err
-		}
-
-		cryptoKey = parseResult.(*rsa.PrivateKey)
-		return nil
-	})
+	flag.StringVar(&cryptoKeyFilePath, "crypto-key", "", "Private crypto key for asymmetric encryption")
 }
 
 // Parses server.Config from environment variables or flags.
 func parseConfig() (*server.Config, error) {
 	flag.Parse()
-	config := server.NewConfig(address, storeInterval, storeFile, restore, hashKey, databaseDSN, cryptoKey)
-
-	opts := env.Options{
-		FuncMap: map[reflect.Type]env.ParserFunc{
-			reflect.TypeOf(rsa.PrivateKey{}): rsaPrivateKeyParser,
-		},
+	config, err := server.NewConfig(address, storeInterval, storeFile, restore, hashKey, databaseDSN, cryptoKeyFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't parse config: %s", err)
 	}
 
-	if err := env.ParseWithOptions(config, opts); err != nil {
+	if err := env.Parse(config); err != nil {
 		return nil, err
 	}
 
