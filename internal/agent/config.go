@@ -9,14 +9,18 @@ import (
 	"time"
 )
 
+var (
+	DefaultAddress = "127.0.0.1:8080"
+)
+
 // Config describes parameters required for Agent work.
 type Config struct {
-	Address        string         `env:"ADDRESS"`
-	ReportInterval time.Duration  `env:"REPORT_INTERVAL"`
-	PollInterval   time.Duration  `env:"POLL_INTERVAL"`
-	HashKey        string         `env:"KEY"`
-	RateLimit      int            `env:"RATE_LIMIT"`
-	CryptoKey      *rsa.PublicKey `env:"CRYPTO_KEY"`
+	Address        string
+	ReportInterval time.Duration
+	PollInterval   time.Duration
+	HashKey        string
+	RateLimit      int
+	CryptoKey      *rsa.PublicKey
 }
 
 func rsaPublicKeyParser(input string) (*rsa.PublicKey, error) {

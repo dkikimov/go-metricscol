@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/caarlos0/env/v9"
@@ -66,37 +68,60 @@ func main() {
 
 }
 
-var (
-	address           string
-	reportInterval    time.Duration
-	pollInterval      time.Duration
-	hashKey           string
-	rateLimit         int
-	cryptoKeyFilePath string
-)
+type commandLineArguments struct {
+	Address           string        `json:"address,omitempty" env:"ADDRESS"`
+	ReportInterval    time.Duration `json:"report_interval,omitempty" env:"REPORT_INTERVAL"`
+	PollInterval      time.Duration `json:"poll_interval,omitempty" env:"POLL_INTERVAL"`
+	HashKey           string        `json:"hash_key,omitempty" env:"KEY"`
+	RateLimit         int           `json:"rate_limit,omitempty" env:"RATE_LIMIT"`
+	CryptoKeyFilePath string        `json:"crypto_key_file_path,omitempty" env:"CRYPTO_KEY"`
+	JsonConfigPath    string        `env:"CONFIG"`
+}
+
+var arguments commandLineArguments
 
 // Declare variables in which the values of the flags will be written.
 func init() {
-	flag.StringVar(&address, "a", "127.0.0.1:8080", "Address to listen")
-	flag.DurationVar(&reportInterval, "r", 10*time.Second, "Interval to report metrics")
-	flag.DurationVar(&pollInterval, "p", 2*time.Second, "Interval to poll metrics")
-	flag.StringVar(&hashKey, "k", "", "Key to encrypt metrics")
-	flag.IntVar(&rateLimit, "l", 1, "Limit the number of requests to the server")
-	flag.StringVar(&cryptoKeyFilePath, "crypto-key", "", "Private crypto key for asymmetric encryption")
+	flag.StringVar(&arguments.Address, "a", agent.DefaultAddress, "Address to listen")
+	flag.DurationVar(&arguments.ReportInterval, "r", 10*time.Second, "Interval to report metrics")
+	flag.DurationVar(&arguments.PollInterval, "p", 2*time.Second, "Interval to poll metrics")
+	flag.StringVar(&arguments.HashKey, "k", "", "Key to encrypt metrics")
+	flag.IntVar(&arguments.RateLimit, "l", 1, "Limit the number of requests to the server")
+	flag.StringVar(&arguments.CryptoKeyFilePath, "crypto-key", "", "Private crypto key for asymmetric encryption")
+	flag.StringVar(&arguments.JsonConfigPath, "c", "", "Path to json config")
 }
 
 // Parses agent.Config from environment variables or flags.
 func parseConfig() (*agent.Config, error) {
 	flag.Parse()
 
-	config, err := agent.NewConfig(address, reportInterval, pollInterval, hashKey, rateLimit, cryptoKeyFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't parse config: %s", err)
+	if err := env.Parse(&arguments); err != nil {
+		return nil, fmt.Errorf("couldn't parse config from env: %s", err)
 	}
 
-	if err := env.Parse(config); err != nil {
-		return nil, err
+	if len(arguments.JsonConfigPath) != 0 {
+		jsonConfig, err := os.ReadFile(arguments.JsonConfigPath)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't read config file")
+		}
+
+		if err := json.Unmarshal(jsonConfig, &arguments); err != nil {
+			return nil, fmt.Errorf("couldn't unmarshal json config")
+		}
 	}
+
+	config, err := agent.NewConfig(
+		arguments.Address,
+		arguments.ReportInterval,
+		arguments.PollInterval,
+		arguments.HashKey,
+		arguments.RateLimit,
+		arguments.CryptoKeyFilePath,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create config: %s", err)
+	}
+
 	return config, nil
 }
 

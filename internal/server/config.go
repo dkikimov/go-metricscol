@@ -11,13 +11,13 @@ import (
 
 // Config describes parameters required for Server.
 type Config struct {
-	Address       string          `env:"ADDRESS" json:"address"`
-	StoreInterval time.Duration   `env:"STORE_INTERVAL" json:"store_interval"`
-	StoreFile     string          `env:"STORE_FILE" json:"store_file"`
-	Restore       bool            `env:"RESTORE" json:"restore"`
-	HashKey       string          `env:"KEY" json:"hash_key"`
-	DatabaseDSN   string          `env:"DATABASE_DSN" json:"database_dsn"`
-	CryptoKey     *rsa.PrivateKey `env:"CRYPTO_KEY" json:"crypto_key"`
+	Address       string
+	StoreInterval time.Duration
+	StoreFile     string
+	Restore       bool
+	HashKey       string
+	DatabaseDSN   string
+	CryptoKey     *rsa.PrivateKey
 }
 
 func rsaPrivateKeyParser(input string) (*rsa.PrivateKey, error) {
