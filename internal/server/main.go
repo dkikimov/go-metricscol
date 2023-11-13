@@ -36,9 +36,8 @@ func getRepository(config *Config, db *postgres.DB) repository.Repository {
 	}
 }
 
-// ListenAndServe listens on the TCP network address given in config and then calls Serve to handle requests on incoming connections.
-// Accepted connections are configured to enable TCP keep-alives.
-func (s Server) ListenAndServe() error {
+// GetHttpServer returns configured http.Server.
+func (s Server) GetHttpServer() *http.Server {
 	r := s.newRouter(s.Repository)
 
 	serv := http.Server{
@@ -58,5 +57,5 @@ func (s Server) ListenAndServe() error {
 		go s.enableSavingToDisk()
 	}
 
-	return serv.ListenAndServe()
+	return &serv
 }

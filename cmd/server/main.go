@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/caarlos0/env/v9"
@@ -31,11 +36,30 @@ func main() {
 	log.Printf("Starting server on %s", cfg.Address)
 
 	s, err := server.NewServer(cfg)
+	httpServer := s.GetHttpServer()
+
+	idleConnsClosed := make(chan struct{})
+	sigint := make(chan os.Signal, 1)
+	signal.Notify(sigint, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
+	go func() {
+		<-sigint
+
+		if err := httpServer.Shutdown(context.Background()); err != nil {
+			log.Printf("couldn't shutdown HTTP server: %v", err)
+		}
+		close(idleConnsClosed)
+	}()
+
 	if err != nil {
 		log.Fatalf("couldn't create server with error: %s", err)
 	}
 
-	log.Fatal(s.ListenAndServe())
+	if err := httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		log.Fatalf("HTTP server ListenAndServe: %v", err)
+	}
+
+	<-idleConnsClosed
+	log.Println("Server Shutdown gracefully")
 }
 
 type commandLineArguments struct {
