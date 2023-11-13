@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/caarlos0/env/v9"
@@ -35,6 +37,9 @@ func main() {
 	pollTimer := time.NewTicker(cfg.PollInterval)
 	reportTimer := time.NewTicker(cfg.ReportInterval)
 
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
+
 	for {
 		select {
 		case <-pollTimer.C:
@@ -63,6 +68,18 @@ func main() {
 				}
 			}()
 			reportTimer.Reset(cfg.ReportInterval)
+		case <-sigChan:
+			log.Printf("Send metrics to %s before graceful shutdown \n", cfg.Address)
+
+			pollTimer.Stop()
+			reportTimer.Stop()
+
+			if err := agent.SendMetricsToServer(cfg, &metrics); err != nil {
+				log.Printf("Error while sending metrics to server: %s", err)
+			}
+
+			log.Print("Agent graceful shutdown \n")
+			os.Exit(0)
 		}
 	}
 
@@ -75,7 +92,7 @@ type commandLineArguments struct {
 	HashKey           string        `json:"hash_key,omitempty" env:"KEY"`
 	RateLimit         int           `json:"rate_limit,omitempty" env:"RATE_LIMIT"`
 	CryptoKeyFilePath string        `json:"crypto_key_file_path,omitempty" env:"CRYPTO_KEY"`
-	JsonConfigPath    string        `env:"CONFIG"`
+	JSONConfigPath    string        `env:"CONFIG"`
 }
 
 var arguments commandLineArguments
@@ -88,7 +105,7 @@ func init() {
 	flag.StringVar(&arguments.HashKey, "k", "", "Key to encrypt metrics")
 	flag.IntVar(&arguments.RateLimit, "l", 1, "Limit the number of requests to the server")
 	flag.StringVar(&arguments.CryptoKeyFilePath, "crypto-key", "", "Private crypto key for asymmetric encryption")
-	flag.StringVar(&arguments.JsonConfigPath, "c", "", "Path to json config")
+	flag.StringVar(&arguments.JSONConfigPath, "c", "", "Path to json config")
 }
 
 // Parses agent.Config from environment variables or flags.
@@ -99,8 +116,8 @@ func parseConfig() (*agent.Config, error) {
 		return nil, fmt.Errorf("couldn't parse config from env: %s", err)
 	}
 
-	if len(arguments.JsonConfigPath) != 0 {
-		jsonConfig, err := os.ReadFile(arguments.JsonConfigPath)
+	if len(arguments.JSONConfigPath) != 0 {
+		jsonConfig, err := os.ReadFile(arguments.JSONConfigPath)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't read config file")
 		}

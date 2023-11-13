@@ -36,8 +36,8 @@ func getRepository(config *Config, db *postgres.DB) repository.Repository {
 	}
 }
 
-// GetHttpServer returns configured http.Server.
-func (s Server) GetHttpServer() *http.Server {
+// GetHTTPServer returns configured http.Server.
+func (s Server) GetHTTPServer() *http.Server {
 	r := s.newRouter(s.Repository)
 
 	serv := http.Server{

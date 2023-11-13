@@ -36,13 +36,14 @@ func main() {
 	log.Printf("Starting server on %s", cfg.Address)
 
 	s, err := server.NewServer(cfg)
-	httpServer := s.GetHttpServer()
+	httpServer := s.GetHTTPServer()
 
 	idleConnsClosed := make(chan struct{})
-	sigint := make(chan os.Signal, 1)
-	signal.Notify(sigint, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
+
 	go func() {
-		<-sigint
+		<-sigChan
 
 		if err := httpServer.Shutdown(context.Background()); err != nil {
 			log.Printf("couldn't shutdown HTTP server: %v", err)
@@ -70,7 +71,7 @@ type commandLineArguments struct {
 	HashKey           string        `json:"hash_key,omitempty" env:"KEY"`
 	DatabaseDSN       string        `json:"database_dsn,omitempty" env:"DATABASE_DSN"`
 	CryptoKeyFilePath string        `json:"crypto_key_file_path,omitempty" env:"CRYPTO_KEY"`
-	JsonConfigPath    string        `env:"CONFIG"`
+	JSONConfigPath    string        `env:"CONFIG"`
 }
 
 var arguments commandLineArguments
@@ -84,7 +85,7 @@ func init() {
 	flag.StringVar(&arguments.HashKey, "k", "", "Key to encrypt metrics")
 	flag.StringVar(&arguments.DatabaseDSN, "d", "", "Database DSN")
 	flag.StringVar(&arguments.CryptoKeyFilePath, "crypto-key", "", "Private crypto key for asymmetric encryption")
-	flag.StringVar(&arguments.JsonConfigPath, "c", "", "Path to json config")
+	flag.StringVar(&arguments.JSONConfigPath, "c", "", "Path to json config")
 }
 
 // Parses server.Config from environment variables or flags.
@@ -95,8 +96,8 @@ func parseConfig() (*server.Config, error) {
 		return nil, fmt.Errorf("couldn't parse config from env: %s", err)
 	}
 
-	if len(arguments.JsonConfigPath) != 0 {
-		jsonConfig, err := os.ReadFile(arguments.JsonConfigPath)
+	if len(arguments.JSONConfigPath) != 0 {
+		jsonConfig, err := os.ReadFile(arguments.JSONConfigPath)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't read config file")
 		}
