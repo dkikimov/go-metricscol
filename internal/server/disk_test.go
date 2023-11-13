@@ -3,15 +3,17 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository"
 	"go-metricscol/internal/repository/memory"
 	"go-metricscol/internal/utils"
-	"os"
-	"testing"
-	"time"
 )
 
 var testMetric = models.Metric{

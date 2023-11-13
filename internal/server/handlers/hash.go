@@ -1,6 +1,8 @@
 package handlers
 
-import "go-metricscol/internal/models"
+import (
+	"go-metricscol/internal/models"
+)
 
 func (p *Handlers) addHash(metric *models.Metric) {
 	metric.Hash = metric.HashValue(p.config.HashKey)

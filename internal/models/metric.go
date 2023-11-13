@@ -9,13 +9,27 @@ import (
 	"strconv"
 )
 
+// MetricType is type describing type of metric.
 type MetricType string
 
+// Declaration of the metric types used.
 const (
 	Gauge   MetricType = "gauge"
 	Counter MetricType = "counter"
 )
 
+// String returns string representation.
+func (m MetricType) String() string {
+	switch m {
+	case Gauge:
+		return "gauge"
+	case Counter:
+		return "counter"
+	}
+	return ""
+}
+
+// Scan overrides logic of scanning MetricType in database.
 func (m *MetricType) Scan(src any) error {
 	str, ok := src.(string)
 	if !ok {
@@ -33,22 +47,12 @@ func (m *MetricType) Scan(src any) error {
 	return nil
 }
 
+// Value overrides logic of storing MetricType in database.
 func (m *MetricType) Value() (driver.Value, error) {
 	return m.String(), nil
 }
 
-// TODO: насколько страшно то, что методы объявлены для указателей и для значений?
-
-func (m MetricType) String() string {
-	switch m {
-	case Gauge:
-		return "gauge"
-	case Counter:
-		return "counter"
-	}
-	return ""
-}
-
+// Metric is a description of metric entity.
 type Metric struct {
 	Name  string     `json:"id"`              // имя метрики
 	MType MetricType `json:"type"`            // параметр, принимающий значение gauge или counter
@@ -57,6 +61,7 @@ type Metric struct {
 	Hash  string     `json:"hash,omitempty"`  // значение хеш-функции
 }
 
+// StringValue returns metric value in string.
 func (m Metric) StringValue() string {
 	switch m.MType {
 	case Gauge:
@@ -69,6 +74,7 @@ func (m Metric) StringValue() string {
 	return ""
 }
 
+// HashValue returns hash of metric based on name, type and value.
 func (m Metric) HashValue(id string) string {
 	if len(id) == 0 {
 		return ""

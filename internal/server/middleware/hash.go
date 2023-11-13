@@ -3,11 +3,14 @@ package middleware
 import (
 	"bytes"
 	"encoding/json"
-	"go-metricscol/internal/models"
 	"io"
 	"net/http"
+
+	"go-metricscol/internal/models"
 )
 
+// ValidateHashHandler is a middleware which gets models.Metric from request, calculates hash and compares it with given.
+// If the hashes do not match, http.Error is called with code 400.
 func ValidateHashHandler(next http.HandlerFunc, key string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if len(key) != 0 {
@@ -35,6 +38,8 @@ func ValidateHashHandler(next http.HandlerFunc, key string) http.HandlerFunc {
 	}
 }
 
+// ValidateHashesHandler is a middleware which gets []models.Metric from request, calculates hashes and compares them with given.
+// If at least one of the hashes do not match, http.Error is called with code 400.
 func ValidateHashesHandler(next http.HandlerFunc, key string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if len(key) != 0 {

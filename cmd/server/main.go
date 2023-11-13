@@ -2,22 +2,24 @@ package main
 
 import (
 	"flag"
-	"github.com/caarlos0/env/v9"
-	"go-metricscol/internal/server"
 	"log"
 	"time"
+
+	"github.com/caarlos0/env/v9"
+
+	"go-metricscol/internal/server"
 )
 
+// go run -ldflags "-X main.buildVersion=v1.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d')' -X 'main.buildCommit=$(git rev-parse --short HEAD)'" main.go
 var (
-	address       string
-	storeInterval time.Duration
-	storeFile     string
-	restore       bool
-	hashKey       string
-	databaseDSN   string
+	buildVersion string = "N/A"
+	buildDate    string = "N/A"
+	buildCommit  string = "N/A"
 )
 
 func main() {
+	printBuildProperties()
+
 	cfg, err := parseConfig()
 	if err != nil {
 		log.Fatalf("couldn't parse config with error: %s", err)
@@ -33,6 +35,16 @@ func main() {
 	log.Fatal(s.ListenAndServe())
 }
 
+var (
+	address       string
+	storeInterval time.Duration
+	storeFile     string
+	restore       bool
+	hashKey       string
+	databaseDSN   string
+)
+
+// Declare variables in which the values of the flags will be written.
 func init() {
 	flag.StringVar(&address, "a", "127.0.0.1:8080", "Address to listen")
 	flag.DurationVar(&storeInterval, "i", 300*time.Second, "Interval to store metrics")
@@ -42,6 +54,7 @@ func init() {
 	flag.StringVar(&databaseDSN, "d", "", "Database DSN")
 }
 
+// Parses server.Config from environment variables or flags.
 func parseConfig() (*server.Config, error) {
 	flag.Parse()
 	config := server.NewConfig(address, storeInterval, storeFile, restore, hashKey, databaseDSN)
@@ -51,4 +64,10 @@ func parseConfig() (*server.Config, error) {
 	}
 
 	return config, nil
+}
+
+func printBuildProperties() {
+	log.Printf("Build version: %s", buildVersion)
+	log.Printf("Build date: %s", buildDate)
+	log.Printf("Build commit: %s", buildCommit)
 }

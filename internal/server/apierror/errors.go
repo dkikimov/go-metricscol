@@ -1,5 +1,3 @@
-//TODO: Как лучше назвать пакет?
-
 package apierror
 
 import (

@@ -2,10 +2,13 @@ package middleware
 
 import (
 	"compress/gzip"
-	"go-metricscol/internal/server/apierror"
 	"net/http"
+
+	"go-metricscol/internal/server/apierror"
 )
 
+// DecompressHandler is a middleware which analyzes HTTP request header and if necessary parses Gzip request.
+// http.Request body is replaced with parsed Gzip body.
 func DecompressHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Content-Encoding") == "gzip" {

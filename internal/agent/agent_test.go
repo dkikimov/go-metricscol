@@ -1,10 +1,12 @@
 package agent
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
+
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository/memory"
-	"testing"
 )
 
 func contains(s []string, str string) bool {
@@ -30,6 +32,26 @@ func TestUpdateMetrics(t *testing.T) {
 			}
 		}
 	})
+}
+
+func BenchmarkUpdateMetrics(b *testing.B) {
+	metrics := memory.NewMetrics()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		UpdateMetrics(&metrics)
+	}
+}
+
+func BenchmarkCollectAdditionalMetrics(b *testing.B) {
+	metrics := memory.NewMetrics()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		CollectAdditionalMetrics(&metrics)
+	}
 }
 
 func TestUpdatePollCount(t *testing.T) {

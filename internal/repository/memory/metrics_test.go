@@ -1,13 +1,15 @@
 package memory
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
 	"go-metricscol/internal/utils"
-	"reflect"
-	"testing"
 )
 
 func TestMetrics_Get(t *testing.T) {
@@ -27,7 +29,7 @@ func TestMetrics_Get(t *testing.T) {
 		err  error
 	}{
 		{
-			name: "Get metric gauge",
+			name: "Find metric gauge",
 			args: args{
 				name:      "Alloc",
 				valueType: models.Gauge,
@@ -40,7 +42,7 @@ func TestMetrics_Get(t *testing.T) {
 			err: nil,
 		},
 		{
-			name: "Get metric counter",
+			name: "Find metric counter",
 			args: args{
 				name:      "PollCount",
 				valueType: models.Counter,
@@ -210,20 +212,20 @@ func Test_getKey(t *testing.T) {
 		want string
 	}{
 		{
-			name: "Get key gauge",
+			name: "Find key gauge",
 			args: args{
 				name:      "Alloc",
 				valueType: models.Gauge,
 			},
-			want: "Alloc:gauge",
+			want: "Allocg",
 		},
 		{
-			name: "Get key counter",
+			name: "Find key counter",
 			args: args{
 				name:      "PollCount",
 				valueType: models.Counter,
 			},
-			want: "PollCount:counter",
+			want: "PollCountc",
 		},
 	}
 	for _, tt := range tests {

@@ -2,23 +2,26 @@ package main
 
 import (
 	"flag"
-	"github.com/caarlos0/env/v9"
-	"go-metricscol/internal/agent"
-	"go-metricscol/internal/repository/memory"
-	"golang.org/x/sync/errgroup"
 	"log"
 	"time"
+
+	"github.com/caarlos0/env/v9"
+	"golang.org/x/sync/errgroup"
+
+	"go-metricscol/internal/agent"
+	"go-metricscol/internal/repository/memory"
 )
 
+// go run -ldflags "-X main.buildVersion=v1.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d')' -X 'main.buildCommit=$(git rev-parse --short HEAD)'" main.go
 var (
-	address        string
-	reportInterval time.Duration
-	pollInterval   time.Duration
-	hashKey        string
-	rateLimit      int
+	buildVersion string = "N/A"
+	buildDate    string = "N/A"
+	buildCommit  string = "N/A"
 )
 
 func main() {
+	printBuildProperties()
+
 	cfg, err := parseConfig()
 	if err != nil {
 		log.Fatalf("couldn't parse config with error: %s", err)
@@ -59,8 +62,18 @@ func main() {
 			reportTimer.Reset(cfg.ReportInterval)
 		}
 	}
+
 }
 
+var (
+	address        string
+	reportInterval time.Duration
+	pollInterval   time.Duration
+	hashKey        string
+	rateLimit      int
+)
+
+// Declare variables in which the values of the flags will be written.
 func init() {
 	flag.StringVar(&address, "a", "127.0.0.1:8080", "Address to listen")
 	flag.DurationVar(&reportInterval, "r", 10*time.Second, "Interval to report metrics")
@@ -69,6 +82,7 @@ func init() {
 	flag.IntVar(&rateLimit, "l", 1, "Limit the number of requests to the server")
 }
 
+// Parses agent.Config from environment variables or flags.
 func parseConfig() (*agent.Config, error) {
 	flag.Parse()
 	config := agent.NewConfig(address, reportInterval, pollInterval, hashKey, rateLimit)
@@ -77,4 +91,10 @@ func parseConfig() (*agent.Config, error) {
 		return nil, err
 	}
 	return config, nil
+}
+
+func printBuildProperties() {
+	log.Printf("Build version: %s", buildVersion)
+	log.Printf("Build date: %s", buildDate)
+	log.Printf("Build commit: %s", buildCommit)
 }

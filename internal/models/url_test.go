@@ -3,11 +3,13 @@ package models
 import (
 	"context"
 	"fmt"
-	"github.com/go-chi/chi"
-	"github.com/stretchr/testify/assert"
-	"go-metricscol/internal/server/apierror"
 	"net/http"
 	"testing"
+
+	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
+
+	"go-metricscol/internal/server/apierror"
 )
 
 type urlParams struct {
@@ -41,7 +43,7 @@ func TestParseGetURLData(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "Get metric gauge",
+			name: "Find metric gauge",
 			args: urlParams{
 				metricName: "Alloc",
 				metricType: Gauge,
@@ -52,7 +54,7 @@ func TestParseGetURLData(t *testing.T) {
 			},
 		},
 		{
-			name: "Get metric counter",
+			name: "Find metric counter",
 			args: urlParams{
 				metricName: "PollCount",
 				metricType: Counter,

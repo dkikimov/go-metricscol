@@ -6,19 +6,23 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/mem"
-	"go-metricscol/internal/models"
-	"go-metricscol/internal/repository/memory"
-	"golang.org/x/sync/errgroup"
 	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"runtime"
 	"time"
+
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
+	"golang.org/x/sync/errgroup"
+
+	"go-metricscol/internal/models"
+	"go-metricscol/internal/repository/memory"
 )
 
+// SendMetricsToServer sends metrics stored is memory.Metrics to the address given in agent.Config.
+// Rate limit defined in config is not exceeded.
 func SendMetricsToServer(cfg *Config, m *memory.Metrics) error {
 	jobCh := make(chan bool)
 	g := errgroup.Group{}
@@ -99,6 +103,7 @@ func makeRequest(cfg *Config, m *memory.Metrics) error {
 	return err
 }
 
+// UpdateMetrics gets all metrics from runtime.MemStats and writes them to memory.Metrics.
 func UpdateMetrics(metrics *memory.Metrics) error {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
@@ -193,6 +198,8 @@ func UpdateMetrics(metrics *memory.Metrics) error {
 
 	return nil
 }
+
+// CollectAdditionalMetrics writes memory and CPU usage metrics to the memory.Metrics.
 func CollectAdditionalMetrics(metrics *memory.Metrics) error {
 	v, err := mem.VirtualMemory()
 	if err != nil {

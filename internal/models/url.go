@@ -1,21 +1,26 @@
 package models
 
 import (
-	"github.com/go-chi/chi"
-	"go-metricscol/internal/server/apierror"
 	"net/http"
+
+	"github.com/go-chi/chi"
+
+	"go-metricscol/internal/server/apierror"
 )
 
+// GetURLData describes the parameters passed to the URL in the GET request.
 type GetURLData struct {
 	MetricName string
 	MetricType MetricType
 }
 
+// PostURLData describes the parameters passed to the URL in the POST request.
 type PostURLData struct {
 	GetURLData
 	MetricValue string
 }
 
+// ParsePostURLData parses parameters passed to the URL and saves it into PostURLData struct.
 func ParsePostURLData(r *http.Request) (*PostURLData, error) {
 	getData, apiError := ParseGetURLData(r)
 	if apiError != nil {
@@ -36,6 +41,7 @@ func ParsePostURLData(r *http.Request) (*PostURLData, error) {
 	return &postData, nil
 }
 
+// ParseGetURLData parses parameters passed to the URL and saves it into GetURLData struct.
 func ParseGetURLData(r *http.Request) (*GetURLData, error) {
 	urlData := GetURLData{}
 	switch chi.URLParam(r, "type") {

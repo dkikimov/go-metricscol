@@ -5,14 +5,17 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/jackc/pgx/v5/stdlib"
-	"go-metricscol/internal/models"
-	"go-metricscol/internal/server/apierror"
 	"log"
 	"strconv"
 	"time"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
+
+	"go-metricscol/internal/models"
+	"go-metricscol/internal/server/apierror"
 )
 
+// DB is a Postgres database which implements Repository interface.
 type DB struct {
 	conn *sql.DB
 }
