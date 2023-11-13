@@ -39,10 +39,11 @@ func main() {
 	httpServer := s.GetHttpServer()
 
 	idleConnsClosed := make(chan struct{})
-	sigint := make(chan os.Signal, 1)
-	signal.Notify(sigint, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
+
 	go func() {
-		<-sigint
+		<-sigChan
 
 		if err := httpServer.Shutdown(context.Background()); err != nil {
 			log.Printf("couldn't shutdown HTTP server: %v", err)

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/caarlos0/env/v9"
@@ -35,6 +37,9 @@ func main() {
 	pollTimer := time.NewTicker(cfg.PollInterval)
 	reportTimer := time.NewTicker(cfg.ReportInterval)
 
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
+
 	for {
 		select {
 		case <-pollTimer.C:
@@ -63,6 +68,18 @@ func main() {
 				}
 			}()
 			reportTimer.Reset(cfg.ReportInterval)
+		case <-sigChan:
+			log.Printf("Send metrics to %s before graceful shutdown \n", cfg.Address)
+
+			pollTimer.Stop()
+			reportTimer.Stop()
+
+			if err := agent.SendMetricsToServer(cfg, &metrics); err != nil {
+				log.Printf("Error while sending metrics to server: %s", err)
+			}
+
+			log.Print("Agent graceful shutdown \n")
+			os.Exit(0)
 		}
 	}
 
