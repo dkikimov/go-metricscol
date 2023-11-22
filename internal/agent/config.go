@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"go-metricscol/internal/models"
 )
 
 var (
@@ -44,8 +46,8 @@ func rsaPublicKeyParser(input string) (*rsa.PublicKey, error) {
 // NewConfig returns new instance of Config with given parameters.
 func NewConfig(
 	address string,
-	reportInterval time.Duration,
-	pollInterval time.Duration,
+	reportInterval models.Duration,
+	pollInterval models.Duration,
 	hashKey string,
 	rateLimit int,
 	cryptoKeyFilePath string,
@@ -57,8 +59,8 @@ func NewConfig(
 
 	return &Config{
 		Address:        address,
-		ReportInterval: reportInterval,
-		PollInterval:   pollInterval,
+		ReportInterval: reportInterval.Duration,
+		PollInterval:   pollInterval.Duration,
 		HashKey:        hashKey,
 		RateLimit:      rateLimit,
 		CryptoKey:      cryptoKey,

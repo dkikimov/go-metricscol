@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"go-metricscol/internal/models"
 )
 
 // Config describes parameters required for Server.
@@ -41,7 +43,7 @@ func rsaPrivateKeyParser(input string) (*rsa.PrivateKey, error) {
 // NewConfig returns new instance of Config with given parameters.
 func NewConfig(
 	address string,
-	storeInterval time.Duration,
+	storeInterval models.Duration,
 	storeFile string,
 	restore bool,
 	hashKey string,
@@ -55,7 +57,7 @@ func NewConfig(
 
 	return &Config{
 		Address:       address,
-		StoreInterval: storeInterval,
+		StoreInterval: storeInterval.Duration,
 		StoreFile:     storeFile,
 		Restore:       restore,
 		HashKey:       hashKey,

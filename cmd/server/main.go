@@ -10,19 +10,21 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"reflect"
 	"syscall"
 	"time"
 
 	"github.com/caarlos0/env/v9"
 
+	"go-metricscol/internal/models"
 	"go-metricscol/internal/server"
 )
 
 // go run -ldflags "-X main.buildVersion=v1.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d')' -X 'main.buildCommit=$(git rev-parse --short HEAD)'" main.go
 var (
-	buildVersion string = "N/A"
-	buildDate    string = "N/A"
-	buildCommit  string = "N/A"
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
 )
 
 func main() {
@@ -55,56 +57,60 @@ func main() {
 		log.Fatalf("couldn't create server with error: %s", err)
 	}
 
-	if err := httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-		log.Fatalf("HTTP server ListenAndServe: %v", err)
-	}
+	go func() {
+		if err := httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("HTTP server ListenAndServe: %v", err)
+		}
+	}()
 
 	<-idleConnsClosed
 	log.Println("Server Shutdown gracefully")
 }
 
-type commandLineArguments struct {
-	Address           string        `json:"address,omitempty" env:"ADDRESS"`
-	StoreInterval     time.Duration `json:"store_interval,omitempty" env:"STORE_INTERVAL"`
-	StoreFile         string        `json:"store_file,omitempty" env:"STORE_FILE"`
-	Restore           bool          `json:"restore,omitempty" env:"RESTORE"`
-	HashKey           string        `json:"hash_key,omitempty" env:"KEY"`
-	DatabaseDSN       string        `json:"database_dsn,omitempty" env:"DATABASE_DSN"`
-	CryptoKeyFilePath string        `json:"crypto_key_file_path,omitempty" env:"CRYPTO_KEY"`
-	JSONConfigPath    string        `env:"CONFIG"`
-}
-
+var jsonParsedArguments commandLineArguments
 var arguments commandLineArguments
 
 // Declare variables in which the values of the flags will be written.
 func init() {
 	flag.StringVar(&arguments.Address, "a", "127.0.0.1:8080", "Address to listen")
-	flag.DurationVar(&arguments.StoreInterval, "i", 300*time.Second, "Interval to store metrics")
+	flag.Var(&arguments.StoreInterval, "i", "Interval to store metrics")
 	flag.StringVar(&arguments.StoreFile, "f", "/tmp/devops-metrics-db.json", "File to store metrics")
 	flag.BoolVar(&arguments.Restore, "r", true, "Restore metrics from file")
 	flag.StringVar(&arguments.HashKey, "k", "", "Key to encrypt metrics")
 	flag.StringVar(&arguments.DatabaseDSN, "d", "", "Database DSN")
 	flag.StringVar(&arguments.CryptoKeyFilePath, "crypto-key", "", "Private crypto key for asymmetric encryption")
 	flag.StringVar(&arguments.JSONConfigPath, "c", "", "Path to json config")
+
+	arguments.StoreInterval = models.Duration{Duration: 300 * time.Second}
 }
 
 // Parses server.Config from environment variables or flags.
 func parseConfig() (*server.Config, error) {
 	flag.Parse()
 
-	if err := env.Parse(&arguments); err != nil {
-		return nil, fmt.Errorf("couldn't parse config from env: %s", err)
-	}
-
-	if len(arguments.JSONConfigPath) != 0 {
-		jsonConfig, err := os.ReadFile(arguments.JSONConfigPath)
+	// Parse from JSON configuration file.
+	if len(jsonParsedArguments.JSONConfigPath) != 0 {
+		jsonConfig, err := os.ReadFile(jsonParsedArguments.JSONConfigPath)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't read config file")
 		}
 
-		if err := json.Unmarshal(jsonConfig, &arguments); err != nil {
+		if err := json.Unmarshal(jsonConfig, &jsonParsedArguments); err != nil {
 			return nil, fmt.Errorf("couldn't unmarshal json config")
 		}
+	}
+
+	// Parse from flags
+	arguments.Merge(jsonParsedArguments)
+
+	// Parse from environment variables.
+	opts := env.Options{
+		FuncMap: map[reflect.Type]env.ParserFunc{
+			reflect.TypeOf(arguments.StoreInterval): models.ParseDurationFromEnv,
+		},
+	}
+	if err := env.ParseWithOptions(&arguments, opts); err != nil {
+		return nil, fmt.Errorf("couldn't parse config from env: %s", err)
 	}
 
 	config, err := server.NewConfig(

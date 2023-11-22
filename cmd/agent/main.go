@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"reflect"
 	"syscall"
 	"time"
 
@@ -14,14 +15,15 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"go-metricscol/internal/agent"
+	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository/memory"
 )
 
 // go run -ldflags "-X main.buildVersion=v1.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d')' -X 'main.buildCommit=$(git rev-parse --short HEAD)'" main.go
 var (
-	buildVersion string = "N/A"
-	buildDate    string = "N/A"
-	buildCommit  string = "N/A"
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
 )
 
 func main() {
@@ -85,46 +87,50 @@ func main() {
 
 }
 
-type commandLineArguments struct {
-	Address           string        `json:"address,omitempty" env:"ADDRESS"`
-	ReportInterval    time.Duration `json:"report_interval,omitempty" env:"REPORT_INTERVAL"`
-	PollInterval      time.Duration `json:"poll_interval,omitempty" env:"POLL_INTERVAL"`
-	HashKey           string        `json:"hash_key,omitempty" env:"KEY"`
-	RateLimit         int           `json:"rate_limit,omitempty" env:"RATE_LIMIT"`
-	CryptoKeyFilePath string        `json:"crypto_key_file_path,omitempty" env:"CRYPTO_KEY"`
-	JSONConfigPath    string        `env:"CONFIG"`
-}
-
+var jsonParsedArguments commandLineArguments
 var arguments commandLineArguments
 
 // Declare variables in which the values of the flags will be written.
 func init() {
 	flag.StringVar(&arguments.Address, "a", agent.DefaultAddress, "Address to listen")
-	flag.DurationVar(&arguments.ReportInterval, "r", 10*time.Second, "Interval to report metrics")
-	flag.DurationVar(&arguments.PollInterval, "p", 2*time.Second, "Interval to poll metrics")
+	flag.Var(&arguments.ReportInterval, "r", "Interval to report metrics")
+	flag.Var(&arguments.PollInterval, "p", "Interval to poll metrics")
 	flag.StringVar(&arguments.HashKey, "k", "", "Key to encrypt metrics")
 	flag.IntVar(&arguments.RateLimit, "l", 1, "Limit the number of requests to the server")
 	flag.StringVar(&arguments.CryptoKeyFilePath, "crypto-key", "", "Private crypto key for asymmetric encryption")
 	flag.StringVar(&arguments.JSONConfigPath, "c", "", "Path to json config")
+
+	arguments.ReportInterval = models.Duration{Duration: 10 * time.Second}
+	arguments.PollInterval = models.Duration{Duration: 2 * time.Second}
 }
 
 // Parses agent.Config from environment variables or flags.
 func parseConfig() (*agent.Config, error) {
 	flag.Parse()
 
-	if err := env.Parse(&arguments); err != nil {
-		return nil, fmt.Errorf("couldn't parse config from env: %s", err)
-	}
-
-	if len(arguments.JSONConfigPath) != 0 {
-		jsonConfig, err := os.ReadFile(arguments.JSONConfigPath)
+	// Parse from JSON configuration file.
+	if len(jsonParsedArguments.JSONConfigPath) != 0 {
+		jsonConfig, err := os.ReadFile(jsonParsedArguments.JSONConfigPath)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't read config file")
 		}
 
-		if err := json.Unmarshal(jsonConfig, &arguments); err != nil {
+		if err := json.Unmarshal(jsonConfig, &jsonParsedArguments); err != nil {
 			return nil, fmt.Errorf("couldn't unmarshal json config")
 		}
+	}
+
+	// Parse from flags
+	arguments.Merge(jsonParsedArguments)
+
+	// Parse from environment variables.
+	opts := env.Options{
+		FuncMap: map[reflect.Type]env.ParserFunc{
+			reflect.TypeOf(arguments.ReportInterval): models.ParseDurationFromEnv,
+		},
+	}
+	if err := env.ParseWithOptions(&arguments, opts); err != nil {
+		return nil, fmt.Errorf("couldn't parse config from env: %s", err)
 	}
 
 	config, err := agent.NewConfig(
