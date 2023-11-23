@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log"
@@ -8,17 +9,25 @@ import (
 	"time"
 )
 
-func (s Server) enableSavingToDisk() {
+func (s Server) enableSavingToDisk(ctx context.Context) error {
 	if !s.Repository.SupportsSavingToDisk() {
-		log.Printf("Selected repository doesn't support saving to disk")
-		return
+		return errors.New("selected repository doesn't support saving to disk")
 	}
 
 	ticker := time.NewTicker(s.Config.StoreInterval)
 
-	for range ticker.C {
-		if err := s.saveToDisk(); err != nil {
-			log.Printf("Couldn't save metrics to disk with error: %s", err)
+	for {
+		select {
+		case <-ticker.C:
+			if err := s.saveToDisk(); err != nil {
+				log.Printf("Couldn't save metrics to disk with error: %s", err)
+			}
+
+		case <-ctx.Done():
+			if err := s.saveToDisk(); err != nil {
+				log.Printf("Couldn't save metrics to disk with error: %s", err)
+			}
+			return nil
 		}
 	}
 }
@@ -36,7 +45,6 @@ func (s Server) saveToDisk() error {
 		return err
 	}
 
-	// TODO: Нужно ли ловить ошибку?
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)

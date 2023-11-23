@@ -1,9 +1,14 @@
 package server
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"sync"
+
+	"golang.org/x/sync/errgroup"
 
 	"go-metricscol/internal/repository"
 	"go-metricscol/internal/repository/memory"
@@ -36,11 +41,12 @@ func getRepository(config *Config, db *postgres.DB) repository.Repository {
 	}
 }
 
-// GetHTTPServer returns configured http.Server.
-func (s Server) GetHTTPServer() *http.Server {
+// ListenAndServe listens on the TCP network address given in config and then calls Serve to handle requests on incoming connections.
+// Accepted connections are configured to enable TCP keep-alives.
+func (s Server) ListenAndServe(ctx context.Context) error {
 	r := s.newRouter(s.Repository)
 
-	serv := http.Server{
+	httpServer := http.Server{
 		Addr:    s.Config.Address,
 		Handler: r,
 	}
@@ -53,9 +59,39 @@ func (s Server) GetHTTPServer() *http.Server {
 		}
 	}
 
+	group, _ := errgroup.WithContext(context.Background())
+
+	shutdownWg := sync.WaitGroup{}
+	diskContext, cancel := context.WithCancel(context.Background())
 	if len(s.Config.StoreFile) != 0 && s.Config.StoreInterval != 0 && len(s.Config.DatabaseDSN) == 0 {
-		go s.enableSavingToDisk()
+		group.Go(func() error {
+			shutdownWg.Add(1)
+			defer shutdownWg.Done()
+
+			err := s.enableSavingToDisk(diskContext)
+			if err != nil {
+				return fmt.Errorf("couldn't enable saving to disk: %s", err)
+			}
+			return nil
+		})
 	}
 
-	return &serv
+	group.Go(func() error {
+		if err := httpServer.ListenAndServe(); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	<-ctx.Done()
+	err := httpServer.Shutdown(context.Background())
+	cancel()
+
+	shutdownWg.Wait()
+	if err := group.Wait(); err != nil {
+		return err
+	}
+
+	return err
 }

@@ -46,7 +46,7 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("Enable saving to disk", func(t *testing.T) {
-		go server.enableSavingToDisk()
+		go server.enableSavingToDisk(context.Background())
 
 		time.Sleep(storeInterval - 1*time.Second)
 

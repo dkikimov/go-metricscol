@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"sync"
 	"syscall"
 	"time"
 
@@ -38,7 +39,10 @@ func main() {
 	log.Printf("Starting server on %s", cfg.Address)
 
 	s, err := server.NewServer(cfg)
-	httpServer := s.GetHTTPServer()
+	serverContext, serverContextCancel := context.WithCancel(context.Background())
+	if err != nil {
+		log.Fatalf("couldn't create server with error: %s", err)
+	}
 
 	idleConnsClosed := make(chan struct{})
 	sigChan := make(chan os.Signal, 1)
@@ -47,23 +51,21 @@ func main() {
 	go func() {
 		<-sigChan
 
-		if err := httpServer.Shutdown(context.Background()); err != nil {
-			log.Printf("couldn't shutdown HTTP server: %v", err)
-		}
+		serverContextCancel()
 		close(idleConnsClosed)
 	}()
 
-	if err != nil {
-		log.Fatalf("couldn't create server with error: %s", err)
-	}
-
+	group := sync.WaitGroup{}
+	group.Add(1)
 	go func() {
-		if err := httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		if err := s.ListenAndServe(serverContext); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("HTTP server ListenAndServe: %v", err)
 		}
+		group.Done()
 	}()
 
 	<-idleConnsClosed
+	group.Wait()
 	log.Println("Server Shutdown gracefully")
 }
 
