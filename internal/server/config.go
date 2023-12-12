@@ -20,6 +20,7 @@ type Config struct {
 	HashKey       string
 	DatabaseDSN   string
 	CryptoKey     *rsa.PrivateKey
+	TrustedSubnet string
 }
 
 func rsaPrivateKeyParser(input string) (*rsa.PrivateKey, error) {
@@ -49,6 +50,7 @@ func NewConfig(
 	hashKey string,
 	databaseDSN string,
 	cryptoKeyFilePath string,
+	trustedSubnet string,
 ) (*Config, error) {
 	cryptoKey, err := rsaPrivateKeyParser(cryptoKeyFilePath)
 	if err != nil {
@@ -63,5 +65,6 @@ func NewConfig(
 		HashKey:       hashKey,
 		DatabaseDSN:   databaseDSN,
 		CryptoKey:     cryptoKey,
+		TrustedSubnet: trustedSubnet,
 	}, nil
 }

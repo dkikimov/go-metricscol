@@ -14,7 +14,7 @@ var err error
 var triedToGet atomic.Bool
 
 func getOutboundIP() (net.IP, error) {
-	if triedToGet.Load() == false {
+	if !triedToGet.Load() {
 		defer triedToGet.Store(true)
 
 		response, err := http.Get("https://eth0.me")
@@ -22,6 +22,8 @@ func getOutboundIP() (net.IP, error) {
 			err = errors.New("couldn't reach eth0.me website")
 			return nil, err
 		}
+
+		defer response.Body.Close()
 
 		responseBytes, err := io.ReadAll(response.Body)
 		if err != nil {

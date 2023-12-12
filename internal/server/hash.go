@@ -1,4 +1,4 @@
-package middleware
+package server
 
 import (
 	"bytes"
@@ -11,9 +11,10 @@ import (
 
 // ValidateHashHandler is a middleware which gets models.Metric from request, calculates hash and compares it with given.
 // If the hashes do not match, http.Error is called with code 400.
-func ValidateHashHandler(next http.HandlerFunc, key string) http.HandlerFunc {
+func ValidateHashHandler(next http.HandlerFunc, config *Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if len(key) != 0 {
+		hashKey := config.HashKey
+		if len(hashKey) != 0 {
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
 				http.Error(w, "couldn't read body", http.StatusInternalServerError)
@@ -27,7 +28,7 @@ func ValidateHashHandler(next http.HandlerFunc, key string) http.HandlerFunc {
 				return
 			}
 
-			if metric.HashValue(key) != metric.Hash {
+			if metric.HashValue(hashKey) != metric.Hash {
 				http.Error(w, "hash mismatch", http.StatusBadRequest)
 				return
 			}
@@ -40,9 +41,10 @@ func ValidateHashHandler(next http.HandlerFunc, key string) http.HandlerFunc {
 
 // ValidateHashesHandler is a middleware which gets []models.Metric from request, calculates hashes and compares them with given.
 // If at least one of the hashes do not match, http.Error is called with code 400.
-func ValidateHashesHandler(next http.HandlerFunc, key string) http.HandlerFunc {
+func ValidateHashesHandler(next http.HandlerFunc, config *Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if len(key) != 0 {
+		hashKey := config.HashKey
+		if len(hashKey) != 0 {
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
 				http.Error(w, "couldn't read body", http.StatusInternalServerError)
@@ -57,7 +59,7 @@ func ValidateHashesHandler(next http.HandlerFunc, key string) http.HandlerFunc {
 			}
 
 			for _, metric := range metrics {
-				if metric.HashValue(key) != metric.Hash {
+				if metric.HashValue(hashKey) != metric.Hash {
 					http.Error(w, "hash mismatch", http.StatusBadRequest)
 					return
 				}

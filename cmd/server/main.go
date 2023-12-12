@@ -124,6 +124,7 @@ func parseConfig() (*server.Config, error) {
 		arguments.HashKey,
 		arguments.DatabaseDSN,
 		arguments.CryptoKeyFilePath,
+		arguments.TrustedSubnet,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create config: %s", err)

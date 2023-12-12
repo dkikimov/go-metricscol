@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"net/http"
 	"os"
 	"time"
 )
@@ -69,4 +70,17 @@ func (s Server) restoreFromDisk() error {
 	}
 
 	return nil
+}
+
+func (s Server) diskSaverHandler(next http.HandlerFunc, _ *Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
+
+		saveToDisk := s.Config.StoreInterval == 0 && len(s.Config.StoreFile) != 0 && len(s.Config.DatabaseDSN) == 0
+		if saveToDisk {
+			if err := s.saveToDisk(); err != nil {
+				log.Printf("Couldn't save metrics to disk with error: %s", err)
+			}
+		}
+	}
 }

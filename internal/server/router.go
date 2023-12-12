@@ -1,9 +1,6 @@
 package server
 
 import (
-	"log"
-	"net/http"
-
 	"github.com/go-chi/chi"
 	chiMiddleware "github.com/go-chi/chi/middleware"
 
@@ -11,17 +8,6 @@ import (
 	"go-metricscol/internal/server/handlers"
 	"go-metricscol/internal/server/middleware"
 )
-
-func (s Server) diskSaverHandler(next http.HandlerFunc, saveToDisk bool) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(w, r)
-		if saveToDisk {
-			if err := s.saveToDisk(); err != nil {
-				log.Printf("Couldn't save metrics to disk with error: %s", err)
-			}
-		}
-	}
-}
 
 func (s Server) newRouter(storage repository.Repository) chi.Router {
 	processors := handlers.NewHandlers(
@@ -38,15 +24,14 @@ func (s Server) newRouter(storage repository.Repository) chi.Router {
 	r.Use(chiMiddleware.Logger)
 	r.Use(middleware.DecompressHandler)
 	r.Use(chiMiddleware.AllowContentEncoding("gzip"))
-
-	saveToDisk := s.Config.StoreInterval == 0 && len(s.Config.StoreFile) != 0 && len(s.Config.DatabaseDSN) == 0
+	r.Use(s.TrustedSubnetHandler)
 
 	r.Get("/value/{type}/{name}", processors.Find)
 	r.Post("/value/", processors.FindJSON)
 
-	r.Post("/update/{type}/{name}/{value}", s.diskSaverHandler(processors.Update, saveToDisk))
-	r.Post("/update/", middleware.ValidateHashHandler(s.diskSaverHandler(processors.UpdateJSON, saveToDisk), s.Config.HashKey))
-	r.Post("/updates/", middleware.ValidateHashesHandler(s.diskSaverHandler(processors.Updates, saveToDisk), s.Config.HashKey))
+	r.Post("/update/{type}/{name}/{value}", Conveyor(s.Config, processors.Update, s.diskSaverHandler))
+	r.Post("/update/", Conveyor(s.Config, processors.UpdateJSON, s.diskSaverHandler, ValidateHashHandler))
+	r.Post("/updates/", Conveyor(s.Config, processors.Updates, s.diskSaverHandler, ValidateHashesHandler))
 
 	r.Get("/ping", processors.Ping)
 
