@@ -92,7 +92,15 @@ func sendMetricsByOne(cfg *Config, m *memory.Metrics) error {
 		if err != nil {
 			return fmt.Errorf("couldn't create request with error: %s", err)
 		}
+
 		request.Header.Set("Content-Encoding", "gzip")
+
+		ip, err := getOutboundIP()
+		if err != nil {
+			return fmt.Errorf("couldn't get outbound ip: %s", err.Error())
+		}
+
+		request.Header.Set("X-Real-IP", ip.String())
 
 		resp, err := http.DefaultClient.Do(request)
 		if err != nil {
@@ -150,6 +158,13 @@ func sendMetricsAllTogether(cfg *Config, m *memory.Metrics) error {
 		return fmt.Errorf("couldn't create request with error: %s", err)
 	}
 	request.Header.Set("Content-Encoding", "gzip")
+
+	ip, err := getOutboundIP()
+	if err != nil {
+		return fmt.Errorf("couldn't get outbound ip: %s", err.Error())
+	}
+
+	request.Header.Set("X-Real-IP", ip.String())
 
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {

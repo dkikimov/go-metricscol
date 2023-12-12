@@ -82,6 +82,7 @@ func init() {
 	flag.StringVar(&arguments.DatabaseDSN, "d", "", "Database DSN")
 	flag.StringVar(&arguments.CryptoKeyFilePath, "crypto-key", "", "Private crypto key for asymmetric encryption")
 	flag.StringVar(&arguments.JSONConfigPath, "c", "", "Path to json config")
+	flag.StringVar(&arguments.TrustedSubnet, "t", "", "Trusted subnet")
 
 	arguments.StoreInterval = models.Duration{Duration: 300 * time.Second}
 }
