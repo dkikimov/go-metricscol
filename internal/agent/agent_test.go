@@ -24,7 +24,7 @@ func TestUpdateMetrics(t *testing.T) {
 
 	metricsMustBeUpdated := []string{"BuckHashSys", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapSys", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "OtherSys", "StackInuse", "StackSys", "Sys", "TotalAlloc", "RandomValue", "PollCount", "Alloc"}
 	t.Run("UpdateMetrics", func(t *testing.T) {
-		UpdateMetrics(&metrics)
+		assert.NoError(t, UpdateMetrics(&metrics))
 
 		for key, metric := range metrics.Collection {
 			if contains(metricsMustBeUpdated, key) {
@@ -40,7 +40,7 @@ func BenchmarkUpdateMetrics(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		UpdateMetrics(&metrics)
+		assert.NoError(b, UpdateMetrics(&metrics))
 	}
 }
 
@@ -50,17 +50,17 @@ func BenchmarkCollectAdditionalMetrics(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		CollectAdditionalMetrics(&metrics)
+		assert.NoError(b, CollectAdditionalMetrics(&metrics))
 	}
 }
 
 func TestUpdatePollCount(t *testing.T) {
 	metrics := memory.NewMetrics()
-	UpdateMetrics(&metrics)
-	UpdateMetrics(&metrics)
-	UpdateMetrics(&metrics)
-	UpdateMetrics(&metrics)
-	UpdateMetrics(&metrics)
+	assert.NoError(t, UpdateMetrics(&metrics))
+	assert.NoError(t, UpdateMetrics(&metrics))
+	assert.NoError(t, UpdateMetrics(&metrics))
+	assert.NoError(t, UpdateMetrics(&metrics))
+	assert.NoError(t, UpdateMetrics(&metrics))
 
 	pollCount, err := metrics.Get("PollCount", models.Counter)
 	assert.EqualValues(t, nil, err)

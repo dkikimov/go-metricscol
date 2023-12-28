@@ -35,6 +35,7 @@ func main() {
 	}
 
 	metrics := memory.NewMetrics()
+	agentClient := agent.NewHttp(cfg)
 
 	pollTimer := time.NewTicker(cfg.PollInterval)
 	reportTimer := time.NewTicker(cfg.ReportInterval)
@@ -65,7 +66,7 @@ func main() {
 
 			reportTimer.Stop()
 			go func() {
-				if err := agent.SendMetricsToServer(cfg, &metrics); err != nil {
+				if err := agentClient.SendMetricsToServer(&metrics); err != nil {
 					log.Printf("Error while sending metrics to server: %s", err)
 				}
 			}()
@@ -76,7 +77,7 @@ func main() {
 			pollTimer.Stop()
 			reportTimer.Stop()
 
-			if err := agent.SendMetricsToServer(cfg, &metrics); err != nil {
+			if err := agentClient.SendMetricsToServer(&metrics); err != nil {
 				log.Printf("Error while sending metrics to server: %s", err)
 			}
 
