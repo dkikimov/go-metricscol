@@ -13,8 +13,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"golang.org/x/sync/errgroup"
-
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository/memory"
 )
@@ -27,54 +25,28 @@ func NewHttp(cfg *Config) *Http {
 	return &Http{cfg: cfg}
 }
 
-// SendMetricsToServer sends metrics stored is memory.Metrics to the address given in agent.Config.
-// Rate limit defined in config is not exceeded.
-func (h Http) SendMetricsToServer(m *memory.Metrics) error {
-	jobCh := make(chan bool)
-	g := errgroup.Group{}
-
-	for i := 0; i < h.cfg.RateLimit; i++ {
-		g.Go(func() error {
-			for range jobCh {
-				return makeRequest(h.cfg, m)
-			}
-			return nil
-		})
+func (h Http) makeRequest(m *memory.Metrics) error {
+	if h.cfg.CryptoKey == nil {
+		return h.sendMetricsAllTogether(m)
 	}
-
-	jobCh <- true
-	close(jobCh)
-
-	if err := g.Wait(); err != nil {
-		return err
-	}
-
-	m.ResetPollCount()
-	return nil
+	return h.sendMetricsByOne(m)
 }
 
-func makeRequest(cfg *Config, m *memory.Metrics) error {
-	if cfg.CryptoKey == nil {
-		return sendMetricsAllTogether(cfg, m)
-	}
-	return sendMetricsByOne(cfg, m)
-}
-
-func sendMetricsByOne(cfg *Config, m *memory.Metrics) error {
+func (h Http) sendMetricsByOne(m *memory.Metrics) error {
 	postURL := url.URL{
 		Scheme: "http",
-		Host:   cfg.Address,
+		Host:   h.cfg.Address,
 		Path:   "/update/",
 	}
 
 	for _, value := range m.Collection {
-		value.Hash = value.HashValue(cfg.HashKey)
+		value.Hash = value.HashValue(h.cfg.HashKey)
 
 		processedMetrics, err := json.Marshal(value)
 		if err != nil {
 			return errors.New("couldn't marshal metric")
 		}
-		processedMetrics, err = rsa.EncryptOAEP(sha256.New(), rand.Reader, cfg.CryptoKey, processedMetrics, nil)
+		processedMetrics, err = rsa.EncryptOAEP(sha256.New(), rand.Reader, h.cfg.CryptoKey, processedMetrics, nil)
 		if err != nil {
 			return fmt.Errorf("couldn't encrypt metric: %s", err)
 		}
@@ -126,16 +98,16 @@ func sendMetricsByOne(cfg *Config, m *memory.Metrics) error {
 	return nil
 }
 
-func sendMetricsAllTogether(cfg *Config, m *memory.Metrics) error {
+func (h Http) sendMetricsAllTogether(m *memory.Metrics) error {
 	postURL := url.URL{
 		Scheme: "http",
-		Host:   cfg.Address,
+		Host:   h.cfg.Address,
 		Path:   "/updates/",
 	}
 
 	metrics := make([]models.Metric, 0, len(m.Collection))
 	for _, value := range m.Collection {
-		value.Hash = value.HashValue(cfg.HashKey)
+		value.Hash = value.HashValue(h.cfg.HashKey)
 		metrics = append(metrics, value)
 	}
 

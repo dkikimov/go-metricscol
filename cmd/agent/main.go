@@ -35,7 +35,10 @@ func main() {
 	}
 
 	metrics := memory.NewMetrics()
-	agentClient := agent.NewHttp(cfg)
+	agentClient, err := agent.NewAgent(cfg, agent.HTTP)
+	if err != nil {
+		log.Fatalf("couldn't create agent with error: %s", err)
+	}
 
 	pollTimer := time.NewTicker(cfg.PollInterval)
 	reportTimer := time.NewTicker(cfg.ReportInterval)

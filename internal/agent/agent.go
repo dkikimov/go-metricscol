@@ -8,15 +8,71 @@ import (
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
+	"golang.org/x/sync/errgroup"
 
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository/memory"
 )
 
-// "google.golang.org/grpc"
+type BackendType int
 
-type Agent interface {
-	SendMetricsToServer(m *memory.Metrics) error
+const (
+	GRPC BackendType = iota
+	HTTP
+)
+
+type Agent struct {
+	cfg     *Config
+	backend Backend
+}
+
+func NewAgent(cfg *Config, backendType BackendType) (*Agent, error) {
+	backend, err := createBackendBasedOnType(cfg, backendType)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create backend: %s", err)
+	}
+
+	return &Agent{cfg: cfg, backend: backend}, nil
+}
+
+func createBackendBasedOnType(cfg *Config, backendType BackendType) (Backend, error) {
+	switch backendType {
+	case GRPC:
+		return NewGrpc(cfg), nil
+	case HTTP:
+		return NewHttp(cfg), nil
+	default:
+		return nil, fmt.Errorf("unknown backend type id: %d", backendType)
+	}
+}
+
+// SendMetricsToServer sends metrics stored is memory.Metrics to the address given in agent.Config.
+// Rate limit defined in config is not exceeded.
+func (agent Agent) SendMetricsToServer(m *memory.Metrics) error {
+	jobCh := make(chan bool)
+	g := errgroup.Group{}
+
+	for i := 0; i < agent.cfg.RateLimit; i++ {
+		g.Go(func() error {
+			for range jobCh {
+				if agent.cfg.CryptoKey == nil {
+					return agent.backend.sendMetricsAllTogether(m)
+				}
+				return agent.backend.sendMetricsByOne(m)
+			}
+			return nil
+		})
+	}
+
+	jobCh <- true
+	close(jobCh)
+
+	if err := g.Wait(); err != nil {
+		return err
+	}
+
+	m.ResetPollCount()
+	return nil
 }
 
 // UpdateMetrics gets all metrics from runtime.MemStats and writes them to memory.Metrics.
