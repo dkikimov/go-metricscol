@@ -25,14 +25,11 @@ func NewHttp(cfg *Config) *Http {
 	return &Http{cfg: cfg}
 }
 
-func (h Http) makeRequest(m *memory.Metrics) error {
-	if h.cfg.CryptoKey == nil {
-		return h.sendMetricsAllTogether(m)
-	}
-	return h.sendMetricsByOne(m)
+func (h Http) Close() error {
+	return nil
 }
 
-func (h Http) sendMetricsByOne(m *memory.Metrics) error {
+func (h Http) SendMetricsByOne(m *memory.Metrics) error {
 	postURL := url.URL{
 		Scheme: "http",
 		Host:   h.cfg.Address,
@@ -98,7 +95,7 @@ func (h Http) sendMetricsByOne(m *memory.Metrics) error {
 	return nil
 }
 
-func (h Http) sendMetricsAllTogether(m *memory.Metrics) error {
+func (h Http) SendMetricsAllTogether(m *memory.Metrics) error {
 	postURL := url.URL{
 		Scheme: "http",
 		Host:   h.cfg.Address,

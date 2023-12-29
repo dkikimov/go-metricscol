@@ -52,6 +52,17 @@ func (m *MetricType) Value() (driver.Value, error) {
 	return m.String(), nil
 }
 
+func (m *MetricType) IntGrpc() int {
+	switch *m {
+	case Gauge:
+		return 1
+	case Counter:
+		return 2
+	}
+
+	return 0
+}
+
 // Metric is a description of metric entity.
 type Metric struct {
 	Name  string     `json:"id"`              // имя метрики

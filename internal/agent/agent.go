@@ -26,6 +26,17 @@ type Agent struct {
 	backend Backend
 }
 
+func createBackendBasedOnType(cfg *Config, backendType BackendType) (Backend, error) {
+	switch backendType {
+	case GRPC:
+		return NewGrpc(cfg)
+	case HTTP:
+		return NewHttp(cfg), nil
+	default:
+		return nil, fmt.Errorf("unknown backend type id: %d", backendType)
+	}
+}
+
 func NewAgent(cfg *Config, backendType BackendType) (*Agent, error) {
 	backend, err := createBackendBasedOnType(cfg, backendType)
 	if err != nil {
@@ -35,15 +46,8 @@ func NewAgent(cfg *Config, backendType BackendType) (*Agent, error) {
 	return &Agent{cfg: cfg, backend: backend}, nil
 }
 
-func createBackendBasedOnType(cfg *Config, backendType BackendType) (Backend, error) {
-	switch backendType {
-	case GRPC:
-		return NewGrpc(cfg), nil
-	case HTTP:
-		return NewHttp(cfg), nil
-	default:
-		return nil, fmt.Errorf("unknown backend type id: %d", backendType)
-	}
+func (agent Agent) Close() error {
+	return agent.backend.Close()
 }
 
 // SendMetricsToServer sends metrics stored is memory.Metrics to the address given in agent.Config.
@@ -56,9 +60,9 @@ func (agent Agent) SendMetricsToServer(m *memory.Metrics) error {
 		g.Go(func() error {
 			for range jobCh {
 				if agent.cfg.CryptoKey == nil {
-					return agent.backend.sendMetricsAllTogether(m)
+					return agent.backend.SendMetricsAllTogether(m)
 				}
-				return agent.backend.sendMetricsByOne(m)
+				return agent.backend.SendMetricsByOne(m)
 			}
 			return nil
 		})
