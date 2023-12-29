@@ -3,11 +3,14 @@ package agent
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
+	mathRand "math/rand"
 	"net/http"
 	"net/url"
 	"runtime"
@@ -48,6 +51,71 @@ func SendMetricsToServer(cfg *Config, m *memory.Metrics) error {
 }
 
 func makeRequest(cfg *Config, m *memory.Metrics) error {
+	if cfg.CryptoKey == nil {
+		return sendMetricsAllTogether(cfg, m)
+	}
+	return sendMetricsByOne(cfg, m)
+}
+
+func sendMetricsByOne(cfg *Config, m *memory.Metrics) error {
+	postURL := url.URL{
+		Scheme: "http",
+		Host:   cfg.Address,
+		Path:   "/update/",
+	}
+
+	for _, value := range m.Collection {
+		value.Hash = value.HashValue(cfg.HashKey)
+
+		processedMetrics, err := json.Marshal(value)
+		if err != nil {
+			return errors.New("couldn't marshal metric")
+		}
+		processedMetrics, err = rsa.EncryptOAEP(sha256.New(), rand.Reader, cfg.CryptoKey, processedMetrics, nil)
+		if err != nil {
+			return fmt.Errorf("couldn't encrypt metric: %s", err)
+		}
+
+		gzipMetrics := bytes.NewBuffer([]byte{})
+		w := gzip.NewWriter(gzipMetrics)
+		_, err = w.Write(processedMetrics)
+		if err != nil {
+			return fmt.Errorf("couldn't gzip metric with error: %s", err)
+		}
+
+		err = w.Close()
+		if err != nil {
+			return fmt.Errorf("couldn't close gzip writer with error: %s", err)
+		}
+
+		request, err := http.NewRequest(http.MethodPost, postURL.String(), gzipMetrics)
+		if err != nil {
+			return fmt.Errorf("couldn't create request with error: %s", err)
+		}
+		request.Header.Set("Content-Encoding", "gzip")
+
+		resp, err := http.DefaultClient.Do(request)
+		if err != nil {
+			return fmt.Errorf("couldn't post url %s", postURL.String())
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return err
+			}
+			return fmt.Errorf("coudln't send metrics, status code: %d, response: %s", resp.StatusCode, body)
+		}
+
+		if err := resp.Body.Close(); err != nil {
+			return errors.New("couldn't close response body")
+		}
+	}
+
+	return nil
+}
+
+func sendMetricsAllTogether(cfg *Config, m *memory.Metrics) error {
 	postURL := url.URL{
 		Scheme: "http",
 		Host:   cfg.Address,
@@ -60,14 +128,14 @@ func makeRequest(cfg *Config, m *memory.Metrics) error {
 		metrics = append(metrics, value)
 	}
 
-	jsonMetrics, err := json.Marshal(metrics)
+	processedMetrics, err := json.Marshal(metrics)
 	if err != nil {
 		return errors.New("couldn't marshal metrics")
 	}
 
 	gzipMetrics := bytes.NewBuffer([]byte{})
 	w := gzip.NewWriter(gzipMetrics)
-	_, err = w.Write(jsonMetrics)
+	_, err = w.Write(processedMetrics)
 	if err != nil {
 		return fmt.Errorf("couldn't gzip metrics with error: %s", err)
 	}
@@ -189,7 +257,7 @@ func UpdateMetrics(metrics *memory.Metrics) error {
 	if err := metrics.Update("TotalAlloc", models.Gauge, float64(stats.TotalAlloc)); err != nil {
 		return fmt.Errorf("couldn't collect TotalAlloc: %s", err)
 	}
-	if err := metrics.Update("RandomValue", models.Gauge, rand.Float64()); err != nil {
+	if err := metrics.Update("RandomValue", models.Gauge, mathRand.Float64()); err != nil {
 		return fmt.Errorf("couldn't collect RandomValue: %s", err)
 	}
 	if err := metrics.Update("PollCount", models.Counter, 1); err != nil {

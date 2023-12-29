@@ -2,6 +2,9 @@ package handlers
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
 	"encoding/json"
 	"io"
 	"log"
@@ -44,8 +47,20 @@ func (p *Handlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var decryptedJSON []byte
+	if p.config.PrivateCryptoKey != nil {
+		decryptedJSON, err = rsa.DecryptOAEP(sha256.New(), rand.Reader, p.config.PrivateCryptoKey, body, nil)
+		if err != nil {
+			http.Error(w, "couldn't decrypt json", http.StatusInternalServerError)
+			log.Printf("couldn't decrypt json: %s", err)
+			return
+		}
+	} else {
+		decryptedJSON = body
+	}
+
 	var metric models.Metric
-	if err := json.Unmarshal(body, &metric); err != nil {
+	if err := json.Unmarshal(decryptedJSON, &metric); err != nil {
 		http.Error(w, "couldn't parse json", http.StatusBadRequest)
 		log.Printf("Couldn't parse json with error: %s", err)
 		return

@@ -62,7 +62,7 @@ type Metric struct {
 }
 
 // StringValue returns metric value in string.
-func (m Metric) StringValue() string {
+func (m *Metric) StringValue() string {
 	switch m.MType {
 	case Gauge:
 		return strconv.FormatFloat(*m.Value, 'g', -1, 64)
@@ -75,7 +75,7 @@ func (m Metric) StringValue() string {
 }
 
 // HashValue returns hash of metric based on name, type and value.
-func (m Metric) HashValue(id string) string {
+func (m *Metric) HashValue(id string) string {
 	if len(id) == 0 {
 		return ""
 	}

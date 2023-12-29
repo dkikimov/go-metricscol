@@ -1,20 +1,31 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"flag"
+	"fmt"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"reflect"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/caarlos0/env/v9"
 
+	"go-metricscol/internal/models"
 	"go-metricscol/internal/server"
 )
 
 // go run -ldflags "-X main.buildVersion=v1.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d')' -X 'main.buildCommit=$(git rev-parse --short HEAD)'" main.go
 var (
-	buildVersion string = "N/A"
-	buildDate    string = "N/A"
-	buildCommit  string = "N/A"
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
 )
 
 func main() {
@@ -28,39 +39,93 @@ func main() {
 	log.Printf("Starting server on %s", cfg.Address)
 
 	s, err := server.NewServer(cfg)
+	serverContext, serverContextCancel := context.WithCancel(context.Background())
 	if err != nil {
 		log.Fatalf("couldn't create server with error: %s", err)
 	}
 
-	log.Fatal(s.ListenAndServe())
+	idleConnsClosed := make(chan struct{})
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
+
+	go func() {
+		<-sigChan
+
+		serverContextCancel()
+		close(idleConnsClosed)
+	}()
+
+	group := sync.WaitGroup{}
+	group.Add(1)
+	go func() {
+		if err := s.ListenAndServe(serverContext); !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("HTTP server ListenAndServe: %v", err)
+		}
+		group.Done()
+	}()
+
+	<-idleConnsClosed
+	group.Wait()
+	log.Println("Server Shutdown gracefully")
 }
 
-var (
-	address       string
-	storeInterval time.Duration
-	storeFile     string
-	restore       bool
-	hashKey       string
-	databaseDSN   string
-)
+var jsonParsedArguments commandLineArguments
+var arguments commandLineArguments
 
 // Declare variables in which the values of the flags will be written.
 func init() {
-	flag.StringVar(&address, "a", "127.0.0.1:8080", "Address to listen")
-	flag.DurationVar(&storeInterval, "i", 300*time.Second, "Interval to store metrics")
-	flag.StringVar(&storeFile, "f", "/tmp/devops-metrics-db.json", "File to store metrics")
-	flag.BoolVar(&restore, "r", true, "Restore metrics from file")
-	flag.StringVar(&hashKey, "k", "", "Key to encrypt metrics")
-	flag.StringVar(&databaseDSN, "d", "", "Database DSN")
+	flag.StringVar(&arguments.Address, "a", "127.0.0.1:8080", "Address to listen")
+	flag.Var(&arguments.StoreInterval, "i", "Interval to store metrics")
+	flag.StringVar(&arguments.StoreFile, "f", "/tmp/devops-metrics-db.json", "File to store metrics")
+	flag.BoolVar(&arguments.Restore, "r", true, "Restore metrics from file")
+	flag.StringVar(&arguments.HashKey, "k", "", "Key to encrypt metrics")
+	flag.StringVar(&arguments.DatabaseDSN, "d", "", "Database DSN")
+	flag.StringVar(&arguments.CryptoKeyFilePath, "crypto-key", "", "Private crypto key for asymmetric encryption")
+	flag.StringVar(&arguments.JSONConfigPath, "c", "", "Path to json config")
+
+	arguments.StoreInterval = models.Duration{Duration: 300 * time.Second}
 }
 
 // Parses server.Config from environment variables or flags.
 func parseConfig() (*server.Config, error) {
 	flag.Parse()
-	config := server.NewConfig(address, storeInterval, storeFile, restore, hashKey, databaseDSN)
 
-	if err := env.Parse(config); err != nil {
-		return nil, err
+	// Parse from JSON configuration file.
+	if len(jsonParsedArguments.JSONConfigPath) != 0 {
+		jsonConfig, err := os.ReadFile(jsonParsedArguments.JSONConfigPath)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't read config file")
+		}
+
+		if err := json.Unmarshal(jsonConfig, &jsonParsedArguments); err != nil {
+			return nil, fmt.Errorf("couldn't unmarshal json config")
+		}
+	}
+
+	// Parse from flags
+	arguments.Merge(jsonParsedArguments)
+
+	// Parse from environment variables.
+	opts := env.Options{
+		FuncMap: map[reflect.Type]env.ParserFunc{
+			reflect.TypeOf(arguments.StoreInterval): models.ParseDurationFromEnv,
+		},
+	}
+	if err := env.ParseWithOptions(&arguments, opts); err != nil {
+		return nil, fmt.Errorf("couldn't parse config from env: %s", err)
+	}
+
+	config, err := server.NewConfig(
+		arguments.Address,
+		arguments.StoreInterval,
+		arguments.StoreFile,
+		arguments.Restore,
+		arguments.HashKey,
+		arguments.DatabaseDSN,
+		arguments.CryptoKeyFilePath,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create config: %s", err)
 	}
 
 	return config, nil

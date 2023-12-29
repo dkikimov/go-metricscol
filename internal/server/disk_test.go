@@ -33,14 +33,20 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 	require.NoError(t, err)
 
 	storeInterval := 2 * time.Second
-	config := NewConfig("127.0.0.1:8080", storeInterval, file.Name(), false, "", "")
+
+	config := &Config{
+		Address:       "127.0.0.1:8080",
+		StoreInterval: storeInterval,
+		StoreFile:     file.Name(),
+		Restore:       false,
+	}
 
 	server, err := NewServer(config)
 	require.NoError(t, server.Repository.UpdateWithStruct(context.Background(), &testMetric))
 	require.NoError(t, err)
 
 	t.Run("Enable saving to disk", func(t *testing.T) {
-		go server.enableSavingToDisk()
+		go server.enableSavingToDisk(context.Background())
 
 		time.Sleep(storeInterval - 1*time.Second)
 
@@ -69,7 +75,12 @@ func TestServer_restoreFromDisk(t *testing.T) {
 	require.NoError(t, file.Close())
 	require.NoError(t, err)
 
-	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "")
+	config := &Config{
+		Address:       "127.0.0.1:8080",
+		StoreInterval: 5 * time.Second,
+		StoreFile:     file.Name(),
+		Restore:       false,
+	}
 	storage := memory.NewMemStorage()
 
 	require.NoError(t, storage.UpdateWithStruct(context.Background(), &testMetric))
@@ -101,7 +112,13 @@ func TestServer_saveToDisk(t *testing.T) {
 	require.NoError(t, file.Close())
 	require.NoError(t, err)
 
-	config := NewConfig("127.0.0.1:8080", 5*time.Second, file.Name(), false, "", "")
+	config := &Config{
+		Address:       "127.0.0.1:8080",
+		StoreInterval: 5 * time.Second,
+		StoreFile:     file.Name(),
+		Restore:       false,
+	}
+
 	storage := memory.NewMemStorage()
 
 	require.NoError(t, storage.UpdateWithStruct(context.Background(), &testMetric))

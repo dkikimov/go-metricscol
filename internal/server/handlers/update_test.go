@@ -87,7 +87,7 @@ func TestHandlers_Update(t *testing.T) {
 			h := NewHandlers(
 				memory.NewMemStorage(),
 				nil,
-				NewConfig(""),
+				NewConfig("", nil),
 			)
 
 			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/value/%s/%s/%s", tt.args.metricType, tt.args.metricName, tt.args.metricValue), nil)
@@ -160,7 +160,7 @@ func TestHandlers_UpdateJSON(t *testing.T) {
 		h := NewHandlers(
 			storage,
 			nil,
-			NewConfig(""),
+			NewConfig("", nil),
 		)
 
 		t.Run(tt.name, func(t *testing.T) {
@@ -205,7 +205,7 @@ func BenchmarkHandlers_Update_MemStorage(b *testing.B) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
 		nil,
-		NewConfig("hash"),
+		NewConfig("hash", nil),
 	)
 
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/value/%s/%s/%s", "Alloc", models.Gauge, "121.14"), nil)
@@ -262,7 +262,7 @@ func BenchmarkHandlers_UpdateJSON_MemStorage(b *testing.B) {
 	h := NewHandlers(
 		memory.NewMemStorage(),
 		nil,
-		NewConfig("hash"),
+		NewConfig("hash", nil),
 	)
 
 	rr := httptest.NewRecorder()
