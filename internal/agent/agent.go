@@ -14,13 +14,6 @@ import (
 	"go-metricscol/internal/repository/memory"
 )
 
-type BackendType int
-
-const (
-	GRPC BackendType = iota
-	HTTP
-)
-
 type Agent struct {
 	cfg     *Config
 	backend Backend

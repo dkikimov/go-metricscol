@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"sort"
-	"strconv"
 
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
@@ -65,20 +64,13 @@ func (memStorage *MemStorage) Get(_ context.Context, key string, valueType model
 	return result, err
 }
 
-func (memStorage *MemStorage) Update(_ context.Context, name string, valueType models.MetricType, value string) error {
-	switch valueType {
+func (memStorage *MemStorage) Update(ctx context.Context, metric models.Metric) error {
+	switch metric.MType {
 	case models.Gauge:
-		floatVal, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			return apierror.NumberParse
-		}
-		return memStorage.metrics.Update(name, models.Gauge, floatVal)
+		// TODO: update signature
+		return memStorage.metrics.Update(metric.Name, models.Gauge, *metric.Value)
 	case models.Counter:
-		intVal, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			return apierror.NumberParse
-		}
-		return memStorage.metrics.Update(name, models.Counter, intVal)
+		return memStorage.metrics.Update(metric.Name, models.Gauge, *metric.Delta)
 	default:
 		return apierror.UnknownMetricType
 	}

@@ -68,7 +68,7 @@ func TestUpdate(ctx context.Context, t *testing.T, storage Repository) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.err, tt.storage.Update(ctx, tt.args.key, tt.args.valueType, tt.args.value))
+			assert.Equal(t, tt.err, tt.storage.Update(ctx))
 		})
 	}
 }

@@ -1,11 +1,13 @@
-package server
+package middleware
 
 import (
 	"net"
 	"net/http"
+
+	"go-metricscol/internal/server"
 )
 
-func (s Server) TrustedSubnetHandler(next http.Handler) http.Handler {
+func (s server.Server) TrustedSubnetHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		headerValue := r.Header.Get("X-Real-IP")
 		if len(headerValue) != 0 && len(s.Config.TrustedSubnet) != 0 {

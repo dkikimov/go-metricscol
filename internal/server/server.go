@@ -22,6 +22,17 @@ type Server struct {
 	Postgres   *postgres.DB
 }
 
+// func createBackendBasedOnType(cfg *repository.Repository, backendType BackendType) (Backend, error) {
+// 	switch backendType {
+// 	case GRPC:
+// 		return NewGrpc(cfg)
+// 	case HTTP:
+// 		return newHttpRouter(cfg), nil
+// 	default:
+// 		return nil, fmt.Errorf("unknown backend type id: %d", backendType)
+// 	}
+// }
+
 // NewServer returns new Server with defined config.
 // Initialized database if necessary.
 func NewServer(config *Config) (*Server, error) {
@@ -44,7 +55,7 @@ func getRepository(config *Config, db *postgres.DB) repository.Repository {
 // ListenAndServe listens on the TCP network address given in config and then calls Serve to handle requests on incoming connections.
 // Accepted connections are configured to enable TCP keep-alives.
 func (s Server) ListenAndServe(ctx context.Context) error {
-	r := s.newRouter(s.Repository)
+	r := s.newHttpRouter(s.Repository)
 
 	httpServer := http.Server{
 		Addr:    s.Config.Address,
