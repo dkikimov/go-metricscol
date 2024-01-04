@@ -2,24 +2,31 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"sync"
 
+	"github.com/go-chi/chi"
 	"golang.org/x/sync/errgroup"
 
+	"go-metricscol/internal/config"
 	"go-metricscol/internal/repository"
-	"go-metricscol/internal/repository/memory"
 	"go-metricscol/internal/repository/postgres"
 )
 
 // Server defines config and repository for HTTP server instance.
 type Server struct {
-	Config     *Config
-	Repository repository.Repository
-	Postgres   *postgres.DB
+	Config   *config.ServerConfig
+	Repo     repository.Repository
+	Postgres *postgres.DB
+}
+
+// NewServer returns new Server with defined config.
+func NewServer(config *config.ServerConfig, repo repository.Repository, postgres *postgres.DB) *Server {
+	return &Server{Config: config, Repo: repo, Postgres: postgres}
 }
 
 // func createBackendBasedOnType(cfg *repository.Repository, backendType BackendType) (Backend, error) {
@@ -33,29 +40,14 @@ type Server struct {
 // 	}
 // }
 
-// NewServer returns new Server with defined config.
-// Initialized database if necessary.
-func NewServer(config *Config) (*Server, error) {
-	db, err := postgres.New(config.DatabaseDSN)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Server{Config: config, Repository: getRepository(config, db), Postgres: db}, nil
-}
-
-func getRepository(config *Config, db *postgres.DB) repository.Repository {
-	if len(config.DatabaseDSN) == 0 {
-		return memory.NewMemStorage()
-	} else {
-		return db
-	}
-}
-
 // ListenAndServe listens on the TCP network address given in config and then calls Serve to handle requests on incoming connections.
 // Accepted connections are configured to enable TCP keep-alives.
 func (s Server) ListenAndServe(ctx context.Context) error {
-	r := s.newHttpRouter(s.Repository)
+	r := chi.NewRouter()
+
+	if err := s.MapHandlers(r); err != nil {
+		return errors.New("couldn't map handlers")
+	}
 
 	httpServer := http.Server{
 		Addr:    s.Config.Address,
@@ -63,7 +55,7 @@ func (s Server) ListenAndServe(ctx context.Context) error {
 	}
 
 	if s.Config.Restore {
-		if err := s.restoreFromDisk(); err != nil {
+		if err := s.Repo.RestoreFromDisk(s.Config.StoreFile); err != nil {
 			if !os.IsNotExist(err) {
 				log.Printf("error while restoring from disk: %s", err)
 			}

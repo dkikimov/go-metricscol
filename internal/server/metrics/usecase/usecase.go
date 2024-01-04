@@ -3,34 +3,34 @@ package usecase
 import (
 	"context"
 
+	"go-metricscol/internal/config"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository"
 	"go-metricscol/internal/repository/postgres"
-	"go-metricscol/internal/server"
 )
 
-type metricsUC struct {
+type MetricsUC struct {
 	Storage  repository.Repository
 	Postgres *postgres.DB
-	config   *server.Config
+	config   *config.ServerConfig
 }
 
-func (m *metricsUC) Find(ctx context.Context, name string, mType models.MetricType) (*models.Metric, error) {
+func (m *MetricsUC) Find(ctx context.Context, name string, mType models.MetricType) (*models.Metric, error) {
 	return m.Storage.Get(ctx, name, mType)
 }
 
-func (m *metricsUC) Update(ctx context.Context, metric models.Metric) error {
+func (m *MetricsUC) Update(ctx context.Context, metric models.Metric) error {
 	return m.Storage.Update(ctx, metric)
 }
 
-func (m *metricsUC) Updates(ctx context.Context, metrics []models.Metric) error {
+func (m *MetricsUC) Updates(ctx context.Context, metrics []models.Metric) error {
 	return m.Storage.Updates(ctx, metrics)
 }
 
-func (m *metricsUC) GetAll(ctx context.Context) ([]models.Metric, error) {
+func (m *MetricsUC) GetAll(ctx context.Context) ([]models.Metric, error) {
 	return m.Storage.GetAll(ctx)
 }
 
-func NewMetricsUC(storage repository.Repository, postgres *postgres.DB, config *server.Config) *metricsUC {
-	return &metricsUC{Storage: storage, Postgres: postgres, config: config}
+func NewMetricsUC(storage repository.Repository, postgres *postgres.DB, config *config.ServerConfig) *MetricsUC {
+	return &MetricsUC{Storage: storage, Postgres: postgres, config: config}
 }

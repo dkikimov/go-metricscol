@@ -17,7 +17,10 @@ import (
 
 	"github.com/caarlos0/env/v9"
 
+	"go-metricscol/internal/config"
 	"go-metricscol/internal/models"
+	"go-metricscol/internal/repository/memory"
+	"go-metricscol/internal/repository/postgres"
 	"go-metricscol/internal/server"
 )
 
@@ -38,7 +41,18 @@ func main() {
 
 	log.Printf("Starting server on %s", cfg.Address)
 
-	s, err := server.NewServer(cfg)
+	var s *server.Server
+	if len(cfg.DatabaseDSN) > 0 {
+		db, err := postgres.New(cfg.DatabaseDSN)
+		if err != nil {
+			log.Fatalf("couldn't create new postgres db: %s", err)
+		}
+
+		s = server.NewServer(cfg, db, db)
+	} else {
+		s = server.NewServer(cfg, memory.NewMemStorage(), nil)
+	}
+
 	serverContext, serverContextCancel := context.WithCancel(context.Background())
 	if err != nil {
 		log.Fatalf("couldn't create server with error: %s", err)
@@ -87,8 +101,8 @@ func init() {
 	arguments.StoreInterval = models.Duration{Duration: 300 * time.Second}
 }
 
-// Parses server.Config from environment variables or flags.
-func parseConfig() (*server.Config, error) {
+// Parses server.ServerConfig from environment variables or flags.
+func parseConfig() (*config.ServerConfig, error) {
 	flag.Parse()
 
 	// Parse from JSON configuration file.
@@ -116,7 +130,7 @@ func parseConfig() (*server.Config, error) {
 		return nil, fmt.Errorf("couldn't parse config from env: %s", err)
 	}
 
-	config, err := server.NewConfig(
+	config, err := config.NewServerConfig(
 		arguments.Address,
 		arguments.StoreInterval,
 		arguments.StoreFile,

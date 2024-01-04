@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func ExampleMetricsHandlers_Ping() {
+func ExampleHealthHandlers_Ping() {
 	address := "localhost:8080"
 
 	pingURL := fmt.Sprintf("%s/ping", address)

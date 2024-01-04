@@ -19,6 +19,14 @@ type DB struct {
 	conn *sql.DB
 }
 
+func (p *DB) SaveToDisk(filePath string) error {
+	return errors.New("saving to disk is not supported")
+}
+
+func (p *DB) RestoreFromDisk(filePath string) error {
+	return errors.New("restoring from disk is not supported")
+}
+
 func (p *DB) SupportsSavingToDisk() bool {
 	return false
 }
@@ -71,14 +79,6 @@ func (p *DB) Updates(ctx context.Context, metrics []models.Metric) error {
 	}
 
 	return tx.Commit()
-}
-
-func (p *DB) MarshalJSON() ([]byte, error) {
-	return nil, nil
-}
-
-func (p *DB) UnmarshalJSON(_ []byte) error {
-	return nil
 }
 
 func (p *DB) Ping(ctx context.Context) error {

@@ -3,6 +3,8 @@ package memory
 import (
 	"context"
 	"encoding/json"
+	"log"
+	"os"
 	"sort"
 
 	"go-metricscol/internal/models"
@@ -12,6 +14,40 @@ import (
 // MemStorage is a metrics in-memory storage which implements Repository interface.
 type MemStorage struct {
 	metrics Metrics
+}
+
+func (memStorage *MemStorage) RestoreFromDisk(filePath string) error {
+	file, err := os.OpenFile(filePath, os.O_RDONLY|os.O_SYNC, 0777)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(&memStorage.metrics.Collection); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (memStorage *MemStorage) SaveToDisk(filePath string) error {
+	log.Printf("saving to disk")
+
+	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	if err := encoder.Encode(memStorage.metrics.Collection); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (memStorage *MemStorage) SupportsSavingToDisk() bool {
@@ -31,20 +67,6 @@ func (memStorage *MemStorage) Updates(_ context.Context, metrics []models.Metric
 	}
 
 	return nil
-}
-
-func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
-	memStorage.metrics.mu.Lock()
-	defer memStorage.metrics.mu.Unlock()
-
-	return json.Unmarshal(bytes, &memStorage.metrics.Collection)
-}
-
-func (memStorage *MemStorage) MarshalJSON() ([]byte, error) {
-	memStorage.metrics.mu.RLock()
-	defer memStorage.metrics.mu.RUnlock()
-
-	return json.Marshal(memStorage.metrics.Collection)
 }
 
 func (memStorage *MemStorage) UpdateWithStruct(_ context.Context, metric *models.Metric) error {
@@ -70,7 +92,7 @@ func (memStorage *MemStorage) Update(ctx context.Context, metric models.Metric) 
 		// TODO: update signature
 		return memStorage.metrics.Update(metric.Name, models.Gauge, *metric.Value)
 	case models.Counter:
-		return memStorage.metrics.Update(metric.Name, models.Gauge, *metric.Delta)
+		return memStorage.metrics.Update(metric.Name, models.Counter, *metric.Delta)
 	default:
 		return apierror.UnknownMetricType
 	}

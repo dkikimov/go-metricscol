@@ -14,21 +14,30 @@ import (
 	"strconv"
 	"time"
 
+	"go-metricscol/internal/config"
 	"go-metricscol/internal/models"
-	"go-metricscol/internal/server"
 	"go-metricscol/internal/server/apierror"
 	"go-metricscol/internal/server/metrics"
 )
 
-type metricsHandlers struct {
+type MetricsHandlers struct {
 	metricsUC metrics.UseCase
-	config    *server.Config
+	config    *config.ServerConfig
+}
+
+func NewMetricsHandlers(metricsUC metrics.UseCase, config *config.ServerConfig) *MetricsHandlers {
+	return &MetricsHandlers{metricsUC: metricsUC, config: config}
+}
+
+func (m *MetricsHandlers) Register() http.HandlerFunc {
+	// TODO implement me
+	panic("implement me")
 }
 
 // Find is a handler that finds models.Metric based on the parameters in the URL.
 // If metric is not found 404 status code returned.
 // Otherwise, metric value is returned.
-func (m *metricsHandlers) Find(w http.ResponseWriter, r *http.Request) {
+func (m *MetricsHandlers) Find(w http.ResponseWriter, r *http.Request) {
 	urlData, err := models.ParseGetURLData(r)
 	if err != nil {
 		apierror.WriteHTTP(w, err)
@@ -58,7 +67,7 @@ func (m *metricsHandlers) Find(w http.ResponseWriter, r *http.Request) {
 // In case the json could not be parsed, the status code 400 is returned.
 // If metric is not found 404 status code returned.
 // Otherwise, metric value is returned.
-func (m *metricsHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
+func (m *MetricsHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
@@ -107,7 +116,7 @@ func (m *metricsHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 // Update is a handler that updates models.Metric with given key based on the parameters in the URL.
-func (m *metricsHandlers) Update(w http.ResponseWriter, r *http.Request) {
+func (m *MetricsHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	urlData, err := models.ParsePostURLData(r)
 	if err != nil {
 		apierror.WriteHTTP(w, err)
@@ -156,7 +165,7 @@ func (m *metricsHandlers) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateJSON is a handler that updates models.Metric with the given key based on the json in the request body.
-func (m *metricsHandlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
+func (m *MetricsHandlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
@@ -211,7 +220,7 @@ func (m *metricsHandlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 // Updates is a handler that updates []models.Metric based on the json in the request body.
-func (m *metricsHandlers) Updates(w http.ResponseWriter, r *http.Request) {
+func (m *MetricsHandlers) Updates(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "couldn't read body", http.StatusInternalServerError)
@@ -258,7 +267,7 @@ func (m *metricsHandlers) Updates(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetAll returns list of all metrics stored on repository.
-func (m *metricsHandlers) GetAll(w http.ResponseWriter, r *http.Request) {
+func (m *MetricsHandlers) GetAll(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	getHashSubstring := func(metric models.Metric) string {
 		if len(metric.Hash) == 0 {
@@ -288,7 +297,4 @@ func (m *metricsHandlers) GetAll(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Couldn't write response to GetAll request with error: %s", err)
 		}
 	}
-}
-func newMetricsHandlers(metricsUC metrics.UseCase, config *server.Config) *metricsHandlers {
-	return &metricsHandlers{metricsUC: metricsUC, config: config}
 }

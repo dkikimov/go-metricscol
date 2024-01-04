@@ -29,4 +29,9 @@ type Repository interface {
 
 	// SupportsSavingToDisk returns if repository supports saving to disk.
 	SupportsSavingToDisk() bool
+
+	// SaveToDisk saves contents of repository to disk.
+	SaveToDisk(filePath string) error
+
+	RestoreFromDisk(filePath string) error
 }
