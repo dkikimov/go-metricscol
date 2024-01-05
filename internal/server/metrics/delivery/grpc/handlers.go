@@ -2,7 +2,9 @@ package grpcpackage
 
 import (
 	"context"
-	"fmt"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"go-metricscol/internal/config"
 	"go-metricscol/internal/models"
@@ -21,11 +23,11 @@ func (g GrpcMetricsHandlers) UpdateMetric(ctx context.Context, request *proto.Up
 
 	requestMetric, err := parseMetricFromRequest(request.Metric)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't parse metric from request: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "couldn't parse metric from request: %s", err)
 	}
 
 	if err := g.metricsUC.Update(ctx, *requestMetric); err != nil {
-		return nil, fmt.Errorf("couldn't update metric: %w", err)
+		return nil, status.Errorf(codes.Internal, "couldn't update metric: %s", err)
 	}
 
 	return &response, nil
@@ -38,14 +40,14 @@ func (g GrpcMetricsHandlers) UpdatesMetric(ctx context.Context, request *proto.U
 	for i, metric := range request.Metric {
 		requestMetric, err := parseMetricFromRequest(metric)
 		if err != nil {
-			return nil, fmt.Errorf("couldn't parse metric from request: %w", err)
+			return nil, status.Errorf(codes.InvalidArgument, "couldn't parse metric from request: %s", err)
 		}
 
 		requestMetrics[i] = *requestMetric
 	}
 
 	if err := g.metricsUC.Updates(ctx, requestMetrics); err != nil {
-		return nil, fmt.Errorf("couldn't update metric: %w", err)
+		return nil, status.Errorf(codes.Internal, "couldn't update metric: %w", err)
 	}
 
 	return &response, nil
@@ -56,12 +58,12 @@ func (g GrpcMetricsHandlers) ValueMetric(ctx context.Context, request *proto.Val
 
 	metricType, err := parseTypeFromRequest(request.Type)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't parse metric type from request: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "couldn't parse metric type from request: %s", err)
 	}
 
 	foundMetric, err := g.metricsUC.Find(ctx, request.Name, metricType)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't find metric: %w", err)
+		return nil, status.Errorf(codes.Internal, "couldn't find metric: %s", err)
 	}
 
 	response.Metric = &proto.Metric{
