@@ -19,7 +19,7 @@ func (mw *Manager) HttpTrustedSubnetHandler(next http.Handler) http.Handler {
 		headerValue := r.Header.Get("X-Real-IP")
 
 		if err := trustedSubnetHandler(mw.cfg, headerValue); err != nil {
-			http.Error(w, err.Message, err.StatusCode)
+			apierror.WriteHTTP(w, err)
 			return
 		}
 
