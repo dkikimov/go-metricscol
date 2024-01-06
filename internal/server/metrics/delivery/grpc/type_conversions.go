@@ -1,4 +1,4 @@
-package grpcpackage
+package grpc
 
 import (
 	"strconv"

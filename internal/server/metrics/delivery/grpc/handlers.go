@@ -1,4 +1,4 @@
-package grpcpackage
+package grpc
 
 import (
 	"context"
@@ -12,13 +12,13 @@ import (
 	"go-metricscol/internal/server/metrics"
 )
 
-type GrpcMetricsHandlers struct {
+type MetricsHandlers struct {
 	metricsUC metrics.UseCase
 	config    *config.ServerConfig
 	proto.UnimplementedMetricsServer
 }
 
-func (g GrpcMetricsHandlers) UpdateMetric(ctx context.Context, request *proto.UpdateRequest) (*proto.UpdateResponse, error) {
+func (g MetricsHandlers) UpdateMetric(ctx context.Context, request *proto.UpdateRequest) (*proto.UpdateResponse, error) {
 	var response proto.UpdateResponse
 
 	requestMetric, err := parseMetricFromRequest(request.Metric)
@@ -33,7 +33,7 @@ func (g GrpcMetricsHandlers) UpdateMetric(ctx context.Context, request *proto.Up
 	return &response, nil
 }
 
-func (g GrpcMetricsHandlers) UpdatesMetric(ctx context.Context, request *proto.UpdatesRequest) (*proto.UpdatesResponse, error) {
+func (g MetricsHandlers) UpdatesMetric(ctx context.Context, request *proto.UpdatesRequest) (*proto.UpdatesResponse, error) {
 	var response proto.UpdatesResponse
 
 	var requestMetrics = make([]models.Metric, len(request.Metric))
@@ -53,7 +53,7 @@ func (g GrpcMetricsHandlers) UpdatesMetric(ctx context.Context, request *proto.U
 	return &response, nil
 }
 
-func (g GrpcMetricsHandlers) ValueMetric(ctx context.Context, request *proto.ValueRequest) (*proto.ValueResponse, error) {
+func (g MetricsHandlers) ValueMetric(ctx context.Context, request *proto.ValueRequest) (*proto.ValueResponse, error) {
 	var response proto.ValueResponse
 
 	metricType, err := parseTypeFromRequest(request.Type)
@@ -76,6 +76,6 @@ func (g GrpcMetricsHandlers) ValueMetric(ctx context.Context, request *proto.Val
 	return &response, nil
 }
 
-func NewGrpcMetricsHandlers(metricsUC metrics.UseCase, config *config.ServerConfig) *GrpcMetricsHandlers {
-	return &GrpcMetricsHandlers{metricsUC: metricsUC, config: config}
+func NewMetricsHandlers(metricsUC metrics.UseCase, config *config.ServerConfig) *MetricsHandlers {
+	return &MetricsHandlers{metricsUC: metricsUC, config: config}
 }
