@@ -1,19 +1,18 @@
-package grpc
+package proto
 
 import (
 	"strconv"
 
 	"go-metricscol/internal/models"
-	"go-metricscol/internal/proto"
 	"go-metricscol/internal/server/apierror"
 )
 
-func parseMetricFromRequest(metric *proto.Metric) (*models.Metric, error) {
+func ParseMetricFromRequest(metric *Metric) (*models.Metric, error) {
 	var resultMetric models.Metric
 
 	resultMetric.Name = metric.Name
 	switch metric.Type {
-	case proto.MetricType_GAUGE:
+	case MetricType_GAUGE:
 		resultMetric.MType = models.Gauge
 
 		floatVal, err := strconv.ParseFloat(metric.Value, 64)
@@ -22,7 +21,7 @@ func parseMetricFromRequest(metric *proto.Metric) (*models.Metric, error) {
 		}
 
 		resultMetric.Value = &floatVal
-	case proto.MetricType_COUNTER:
+	case MetricType_COUNTER:
 		resultMetric.MType = models.Counter
 
 		intVal, err := strconv.ParseInt(metric.Value, 10, 64)
@@ -38,11 +37,11 @@ func parseMetricFromRequest(metric *proto.Metric) (*models.Metric, error) {
 	return &resultMetric, nil
 }
 
-func parseTypeFromRequest(metricType proto.MetricType) (models.MetricType, error) {
+func ParseTypeFromRequest(metricType MetricType) (models.MetricType, error) {
 	switch metricType {
-	case proto.MetricType_GAUGE:
+	case MetricType_GAUGE:
 		return models.Gauge, nil
-	case proto.MetricType_COUNTER:
+	case MetricType_COUNTER:
 		return models.Counter, nil
 	default:
 		return "", apierror.UnknownMetricType
