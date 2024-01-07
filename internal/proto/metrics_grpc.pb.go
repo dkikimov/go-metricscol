@@ -22,6 +22,7 @@ const (
 	Metrics_UpdateMetric_FullMethodName  = "/proto.Metrics/UpdateMetric"
 	Metrics_UpdatesMetric_FullMethodName = "/proto.Metrics/UpdatesMetric"
 	Metrics_ValueMetric_FullMethodName   = "/proto.Metrics/ValueMetric"
+	Metrics_ListMetrics_FullMethodName   = "/proto.Metrics/ListMetrics"
 )
 
 // MetricsClient is the client API for Metrics service.
@@ -31,6 +32,7 @@ type MetricsClient interface {
 	UpdateMetric(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	UpdatesMetric(ctx context.Context, in *UpdatesRequest, opts ...grpc.CallOption) (*UpdatesResponse, error)
 	ValueMetric(ctx context.Context, in *ValueRequest, opts ...grpc.CallOption) (*ValueResponse, error)
+	ListMetrics(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 }
 
 type metricsClient struct {
@@ -68,6 +70,15 @@ func (c *metricsClient) ValueMetric(ctx context.Context, in *ValueRequest, opts 
 	return out, nil
 }
 
+func (c *metricsClient) ListMetrics(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
+	out := new(ListResponse)
+	err := c.cc.Invoke(ctx, Metrics_ListMetrics_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MetricsServer is the server API for Metrics service.
 // All implementations must embed UnimplementedMetricsServer
 // for forward compatibility
@@ -75,6 +86,7 @@ type MetricsServer interface {
 	UpdateMetric(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	UpdatesMetric(context.Context, *UpdatesRequest) (*UpdatesResponse, error)
 	ValueMetric(context.Context, *ValueRequest) (*ValueResponse, error)
+	ListMetrics(context.Context, *ListRequest) (*ListResponse, error)
 	mustEmbedUnimplementedMetricsServer()
 }
 
@@ -90,6 +102,9 @@ func (UnimplementedMetricsServer) UpdatesMetric(context.Context, *UpdatesRequest
 }
 func (UnimplementedMetricsServer) ValueMetric(context.Context, *ValueRequest) (*ValueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValueMetric not implemented")
+}
+func (UnimplementedMetricsServer) ListMetrics(context.Context, *ListRequest) (*ListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListMetrics not implemented")
 }
 func (UnimplementedMetricsServer) mustEmbedUnimplementedMetricsServer() {}
 
@@ -158,6 +173,24 @@ func _Metrics_ValueMetric_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Metrics_ListMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetricsServer).ListMetrics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Metrics_ListMetrics_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetricsServer).ListMetrics(ctx, req.(*ListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Metrics_ServiceDesc is the grpc.ServiceDesc for Metrics service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +209,10 @@ var Metrics_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ValueMetric",
 			Handler:    _Metrics_ValueMetric_Handler,
+		},
+		{
+			MethodName: "ListMetrics",
+			Handler:    _Metrics_ListMetrics_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

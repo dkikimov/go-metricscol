@@ -76,6 +76,27 @@ func (g MetricsHandlers) ValueMetric(ctx context.Context, request *proto.ValueRe
 	return &response, nil
 }
 
+func (g MetricsHandlers) ListMetrics(context.Context, *proto.ListRequest) (*proto.ListResponse, error) {
+	var response proto.ListResponse
+
+	metricsList, err := g.metricsUC.GetAll(context.Background())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "couldn't list metrics: %s", err)
+	}
+
+	response.Metric = make([]*proto.Metric, len(metricsList))
+	for i, metric := range metricsList {
+		response.Metric[i] = &proto.Metric{
+			Name:  metric.Name,
+			Type:  proto.MetricType(metric.MType.IntGrpc()),
+			Value: metric.StringValue(),
+			Hash:  metric.HashValue(g.config.HashKey),
+		}
+	}
+
+	return &response, nil
+}
+
 func NewMetricsHandlers(metricsUC metrics.UseCase, config *config.ServerConfig) *MetricsHandlers {
 	return &MetricsHandlers{metricsUC: metricsUC, config: config}
 }
