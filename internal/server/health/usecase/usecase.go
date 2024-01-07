@@ -3,17 +3,17 @@ package usecase
 import (
 	"context"
 
-	"go-metricscol/internal/repository/postgres"
+	"go-metricscol/internal/repository"
 )
 
 type HealthUC struct {
-	Postgres *postgres.DB
+	repository repository.Repository
 }
 
-func NewHealthUC(postgres *postgres.DB) *HealthUC {
-	return &HealthUC{Postgres: postgres}
+func NewHealthUC(repository repository.Repository) *HealthUC {
+	return &HealthUC{repository: repository}
 }
 
 func (h HealthUC) Ping(ctx context.Context) error {
-	return h.Postgres.Ping(ctx)
+	return h.repository.Ping(ctx)
 }

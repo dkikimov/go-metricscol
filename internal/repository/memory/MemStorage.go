@@ -16,6 +16,10 @@ type MemStorage struct {
 	metrics Metrics
 }
 
+func (memStorage *MemStorage) Ping(ctx context.Context) error {
+	return nil
+}
+
 func (memStorage *MemStorage) RestoreFromDisk(filePath string) error {
 	file, err := os.OpenFile(filePath, os.O_RDONLY|os.O_SYNC, 0777)
 	if err != nil {

@@ -6,6 +6,6 @@ import (
 	"go-metricscol/internal/server/health"
 )
 
-func MapMetricsRoutes(r *chi.Mux, h health.HttpHandlers) {
+func MapHealthRoutes(r *chi.Mux, h health.HttpHandlers) {
 	r.Get("/ping", h.Ping)
 }

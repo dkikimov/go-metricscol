@@ -21,7 +21,7 @@ type MetricsHandlers struct {
 func (g MetricsHandlers) UpdateMetric(ctx context.Context, request *proto.UpdateRequest) (*proto.UpdateResponse, error) {
 	var response proto.UpdateResponse
 
-	requestMetric, err := proto.parseMetricFromRequest(request.Metric)
+	requestMetric, err := proto.ParseMetricFromRequest(request.Metric)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "couldn't parse metric from request: %s", err)
 	}
@@ -38,7 +38,7 @@ func (g MetricsHandlers) UpdatesMetric(ctx context.Context, request *proto.Updat
 
 	var requestMetrics = make([]models.Metric, len(request.Metric))
 	for i, metric := range request.Metric {
-		requestMetric, err := proto.parseMetricFromRequest(metric)
+		requestMetric, err := proto.ParseMetricFromRequest(metric)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "couldn't parse metric from request: %s", err)
 		}
@@ -56,7 +56,7 @@ func (g MetricsHandlers) UpdatesMetric(ctx context.Context, request *proto.Updat
 func (g MetricsHandlers) ValueMetric(ctx context.Context, request *proto.ValueRequest) (*proto.ValueResponse, error) {
 	var response proto.ValueResponse
 
-	metricType, err := proto.parseTypeFromRequest(request.Type)
+	metricType, err := proto.ParseTypeFromRequest(request.Type)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "couldn't parse metric type from request: %s", err)
 	}

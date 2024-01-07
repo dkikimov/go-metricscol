@@ -12,6 +12,7 @@ import (
 	"go-metricscol/internal/config"
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/repository/memory"
+	"go-metricscol/internal/server/backends"
 	"go-metricscol/internal/utils"
 )
 
@@ -36,7 +37,12 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 	cfg, err := config.NewServerConfig("127.0.0.1:8080", models.Duration{Duration: storeInterval}, file.Name(), false, "", "", "", "")
 	require.NoError(t, err)
 
-	server := NewServer(cfg, memory.NewMemStorage(), nil)
+	storage := memory.NewMemStorage()
+
+	httpBackend, err := backends.NewHttp(storage, cfg)
+	require.NoError(t, err)
+
+	server := NewServer(cfg, storage, httpBackend)
 	require.NoError(t, server.Repo.UpdateWithStruct(context.Background(), &testMetric))
 	require.NoError(t, err)
 

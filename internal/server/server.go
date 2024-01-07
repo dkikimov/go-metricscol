@@ -2,58 +2,33 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"sync"
 
-	"github.com/go-chi/chi"
 	"golang.org/x/sync/errgroup"
 
 	"go-metricscol/internal/config"
 	"go-metricscol/internal/repository"
-	"go-metricscol/internal/repository/postgres"
+	"go-metricscol/internal/server/backends"
 )
 
 // Server defines config and repository for HTTP server instance.
 type Server struct {
-	Config   *config.ServerConfig
-	Repo     repository.Repository
-	Postgres *postgres.DB
+	Config  *config.ServerConfig
+	Repo    repository.Repository
+	Backend backends.Backend
 }
 
 // NewServer returns new Server with defined config.
-func NewServer(config *config.ServerConfig, repo repository.Repository, postgres *postgres.DB) *Server {
-	return &Server{Config: config, Repo: repo, Postgres: postgres}
+func NewServer(config *config.ServerConfig, repo repository.Repository, backendType backends.Backend) *Server {
+	return &Server{Config: config, Repo: repo, Backend: backendType}
 }
-
-// func createBackendBasedOnType(cfg *repository.Repository, backendType BackendType) (Backend, error) {
-// 	switch backendType {
-// 	case GRPC:
-// 		return NewGrpc(cfg)
-// 	case HTTP:
-// 		return newHttpRouter(cfg), nil
-// 	default:
-// 		return nil, fmt.Errorf("unknown backend type id: %d", backendType)
-// 	}
-// }
 
 // ListenAndServe listens on the TCP network address given in config and then calls Serve to handle requests on incoming connections.
 // Accepted connections are configured to enable TCP keep-alives.
 func (s Server) ListenAndServe(ctx context.Context) error {
-	r := chi.NewRouter()
-
-	if err := s.MapHandlers(r); err != nil {
-		return errors.New("couldn't map handlers")
-	}
-
-	httpServer := http.Server{
-		Addr:    s.Config.Address,
-		Handler: r,
-	}
-
 	if s.Config.Restore {
 		if err := s.Repo.RestoreFromDisk(s.Config.StoreFile); err != nil {
 			if !os.IsNotExist(err) {
@@ -80,7 +55,7 @@ func (s Server) ListenAndServe(ctx context.Context) error {
 	}
 
 	group.Go(func() error {
-		if err := httpServer.ListenAndServe(); err != nil {
+		if err := s.Backend.ListenAndServe(); err != nil {
 			return err
 		}
 
@@ -88,7 +63,7 @@ func (s Server) ListenAndServe(ctx context.Context) error {
 	})
 
 	<-ctx.Done()
-	err := httpServer.Shutdown(context.Background())
+	err := s.Backend.GracefulShutdown(context.Background())
 	cancel()
 
 	shutdownWg.Wait()

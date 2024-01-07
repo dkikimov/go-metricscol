@@ -34,4 +34,7 @@ type Repository interface {
 	SaveToDisk(filePath string) error
 
 	RestoreFromDisk(filePath string) error
+
+	// Ping returns no error if connection to repository is alive.
+	Ping(ctx context.Context) error
 }

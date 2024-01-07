@@ -3,11 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
+	"net"
 	"os"
 	"os/signal"
 	"reflect"
@@ -19,9 +18,11 @@ import (
 
 	"go-metricscol/internal/config"
 	"go-metricscol/internal/models"
+	"go-metricscol/internal/repository"
 	"go-metricscol/internal/repository/memory"
 	"go-metricscol/internal/repository/postgres"
 	"go-metricscol/internal/server"
+	"go-metricscol/internal/server/backends"
 )
 
 // go run -ldflags "-X main.buildVersion=v1.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d')' -X 'main.buildCommit=$(git rev-parse --short HEAD)'" main.go
@@ -41,17 +42,22 @@ func main() {
 
 	log.Printf("Starting server on %s", cfg.Address)
 
-	var s *server.Server
+	var repo repository.Repository
 	if len(cfg.DatabaseDSN) > 0 {
-		db, err := postgres.New(cfg.DatabaseDSN)
+		repo, err = postgres.New(cfg.DatabaseDSN)
 		if err != nil {
 			log.Fatalf("couldn't create new postgres db: %s", err)
 		}
-
-		s = server.NewServer(cfg, db, db)
 	} else {
-		s = server.NewServer(cfg, memory.NewMemStorage(), nil)
+		repo = memory.NewMemStorage()
 	}
+
+	createdBackend, err := createBackend(backends.HTTP, repo, cfg)
+	if err != nil {
+		log.Fatalf("couldn't create backend with error: %s", err)
+	}
+
+	s := server.NewServer(cfg, repo, createdBackend)
 
 	serverContext, serverContextCancel := context.WithCancel(context.Background())
 	if err != nil {
@@ -72,8 +78,8 @@ func main() {
 	group := sync.WaitGroup{}
 	group.Add(1)
 	go func() {
-		if err := s.ListenAndServe(serverContext); !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("HTTP server ListenAndServe: %v", err)
+		if err := s.ListenAndServe(serverContext); err != nil {
+			log.Fatalf("Server ListenAndServe: %s", err)
 		}
 		group.Done()
 	}()
@@ -81,6 +87,22 @@ func main() {
 	<-idleConnsClosed
 	group.Wait()
 	log.Println("Server Shutdown gracefully")
+}
+
+func createBackend(backendType backends.BackendType, repository repository.Repository, cfg *config.ServerConfig) (backends.Backend, error) {
+	switch backendType {
+	case backends.GRPC:
+		listen, err := net.Listen("tcp", ":3200")
+		if err != nil {
+			return nil, fmt.Errorf("couldn't listen: %s", err)
+		}
+
+		return backends.NewGrpc(repository, cfg, listen)
+	case backends.HTTP:
+		return backends.NewHttp(repository, cfg)
+	default:
+		return nil, fmt.Errorf("unknown backend type id: %d", backendType)
+	}
 }
 
 var jsonParsedArguments commandLineArguments
@@ -130,7 +152,7 @@ func parseConfig() (*config.ServerConfig, error) {
 		return nil, fmt.Errorf("couldn't parse config from env: %s", err)
 	}
 
-	config, err := config.NewServerConfig(
+	cfg, err := config.NewServerConfig(
 		arguments.Address,
 		arguments.StoreInterval,
 		arguments.StoreFile,
@@ -144,7 +166,7 @@ func parseConfig() (*config.ServerConfig, error) {
 		return nil, fmt.Errorf("couldn't create config: %s", err)
 	}
 
-	return config, nil
+	return cfg, nil
 }
 
 func printBuildProperties() {
