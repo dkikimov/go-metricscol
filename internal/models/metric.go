@@ -55,9 +55,9 @@ func (m *MetricType) Value() (driver.Value, error) {
 func (m *MetricType) IntGrpc() int {
 	switch *m {
 	case Gauge:
-		return 1
-	case Counter:
 		return 2
+	case Counter:
+		return 1
 	}
 
 	return 0
