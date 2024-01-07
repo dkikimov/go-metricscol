@@ -12,7 +12,7 @@ func MapMetricsRoutes(r *chi.Mux, h metrics.HTTPHandlers, mw *middleware.Manager
 	r.Post("/value/", h.FindJSON)
 	r.Post("/update/{type}/{name}/{value}", mw.DiskSaverHTTPMiddleware(h.Update))
 	r.Post("/update/", mw.ValidateHashHandler(mw.DiskSaverHTTPMiddleware(h.UpdateJSON)))
-	r.Post("/updates/", mw.ValidateHashHandler(mw.DiskSaverHTTPMiddleware(h.Updates)))
+	r.Post("/updates/", mw.ValidateHashesHandler(mw.DiskSaverHTTPMiddleware(h.Updates)))
 
 	r.HandleFunc("/", h.GetAll)
 }

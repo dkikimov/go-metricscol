@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	pb "go-metricscol/internal/proto"
@@ -37,7 +38,13 @@ func (agent Grpc) SendMetricsByOne(m *memory.Metrics) error {
 			Hash:  value.HashValue(agent.cfg.HashKey),
 		}
 
-		_, err := agent.client.UpdateMetric(context.Background(), &pb.UpdateRequest{Metric: &metric})
+		ip, err := getOutboundIP()
+		if err != nil {
+			return fmt.Errorf("couldn't get outbound ip: %s", err.Error())
+		}
+		ipCtx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("X-Real-IP", ip.String()))
+
+		_, err = agent.client.UpdateMetric(ipCtx, &pb.UpdateRequest{Metric: &metric})
 		if err != nil {
 			if e, ok := status.FromError(err); ok {
 				if e.Code() != codes.OK {
@@ -63,7 +70,13 @@ func (agent Grpc) SendMetricsAllTogether(m *memory.Metrics) error {
 		metrics = append(metrics, &metric)
 	}
 
-	_, err := agent.client.UpdatesMetric(context.Background(), &pb.UpdatesRequest{Metric: metrics})
+	ip, err := getOutboundIP()
+	if err != nil {
+		return fmt.Errorf("couldn't get outbound ip: %s", err.Error())
+	}
+	ipCtx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("X-Real-IP", ip.String()))
+
+	_, err = agent.client.UpdatesMetric(ipCtx, &pb.UpdatesRequest{Metric: metrics})
 	if err != nil {
 		if e, ok := status.FromError(err); ok {
 			if e.Code() != codes.OK {

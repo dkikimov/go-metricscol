@@ -29,11 +29,6 @@ func NewMetricsHandlers(metricsUC metrics.UseCase, config *config.ServerConfig) 
 	return &MetricsHandlers{metricsUC: metricsUC, config: config}
 }
 
-func (m *MetricsHandlers) Register() http.HandlerFunc {
-	// TODO implement me
-	panic("implement me")
-}
-
 // Find is a handler that finds models.Metric based on the parameters in the URL.
 // If metric is not found 404 status code returned.
 // Otherwise, metric value is returned.

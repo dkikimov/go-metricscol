@@ -33,7 +33,7 @@ func (mw *Manager) GrpcTrustedSubnetHandler(ctx context.Context, req interface{}
 	var headerValue string
 
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		values := md.Get("token")
+		values := md.Get("X-Real-IP")
 		if len(values) > 0 {
 			headerValue = values[0]
 		}

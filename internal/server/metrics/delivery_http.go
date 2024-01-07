@@ -5,7 +5,6 @@ import (
 )
 
 type HTTPHandlers interface {
-	Register() http.HandlerFunc
 	Find(w http.ResponseWriter, r *http.Request)
 	FindJSON(w http.ResponseWriter, r *http.Request)
 	Update(w http.ResponseWriter, r *http.Request)
