@@ -24,7 +24,7 @@ func createBackendBasedOnType(cfg *Config, backendType BackendType) (Backend, er
 	case GRPC:
 		return NewGrpc(cfg)
 	case HTTP:
-		return NewHttp(cfg), nil
+		return NewHTTPBackend(cfg), nil
 	default:
 		return nil, fmt.Errorf("unknown backend type id: %d", backendType)
 	}
@@ -55,7 +55,9 @@ func (agent Agent) SendMetricsToServer(m *memory.Metrics) error {
 				if agent.cfg.CryptoKey == nil {
 					return agent.backend.SendMetricsAllTogether(m)
 				}
-				return agent.backend.SendMetricsByOne(m)
+				if err := agent.backend.SendMetricsByOne(m); err != nil {
+					return fmt.Errorf("couldn't send metrics to server: %s", err)
+				}
 			}
 			return nil
 		})

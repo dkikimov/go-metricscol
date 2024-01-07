@@ -18,11 +18,11 @@ import (
 	"go-metricscol/internal/server/middleware"
 )
 
-type Http struct {
+type HTTP struct {
 	server *http.Server
 }
 
-func NewHttp(repo repository.Repository, config *config.ServerConfig) (*Http, error) {
+func NewHTTP(repo repository.Repository, config *config.ServerConfig) (*HTTP, error) {
 	r := chi.NewRouter()
 
 	metricsUC := metricsUseCase.NewMetricsUC(repo, config)
@@ -34,7 +34,7 @@ func NewHttp(repo repository.Repository, config *config.ServerConfig) (*Http, er
 	r.Use(chiMiddleware.Logger)
 	r.Use(mw.DecompressHandler)
 	r.Use(chiMiddleware.AllowContentEncoding("gzip"))
-	r.Use(mw.HttpTrustedSubnetHandler)
+	r.Use(mw.HTTPTrustedSubnetHandler)
 
 	healthHttp.NewHealthHandlers(healthUC)
 
@@ -46,16 +46,16 @@ func NewHttp(repo repository.Repository, config *config.ServerConfig) (*Http, er
 		Handler: r,
 	}
 
-	return &Http{server: &httpServer}, nil
+	return &HTTP{server: &httpServer}, nil
 }
 
-func (s Http) ListenAndServe() error {
+func (s HTTP) ListenAndServe() error {
 	if err := s.server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
 	return nil
 }
 
-func (s Http) GracefulShutdown(ctx context.Context) error {
+func (s HTTP) GracefulShutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }

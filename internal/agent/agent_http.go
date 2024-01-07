@@ -17,19 +17,19 @@ import (
 	"go-metricscol/internal/repository/memory"
 )
 
-type Http struct {
+type HTTPBackend struct {
 	cfg *Config
 }
 
-func NewHttp(cfg *Config) *Http {
-	return &Http{cfg: cfg}
+func NewHTTPBackend(cfg *Config) *HTTPBackend {
+	return &HTTPBackend{cfg: cfg}
 }
 
-func (h Http) Close() error {
+func (h HTTPBackend) Close() error {
 	return nil
 }
 
-func (h Http) SendMetricsByOne(m *memory.Metrics) error {
+func (h HTTPBackend) SendMetricsByOne(m *memory.Metrics) error {
 	postURL := url.URL{
 		Scheme: "http",
 		Host:   h.cfg.Address,
@@ -95,7 +95,7 @@ func (h Http) SendMetricsByOne(m *memory.Metrics) error {
 	return nil
 }
 
-func (h Http) SendMetricsAllTogether(m *memory.Metrics) error {
+func (h HTTPBackend) SendMetricsAllTogether(m *memory.Metrics) error {
 	postURL := url.URL{
 		Scheme: "http",
 		Host:   h.cfg.Address,

@@ -83,7 +83,7 @@ func Test_decompressHandler(t *testing.T) {
 			cfg, err := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, "", "", "", "")
 			require.NoError(t, err)
 
-			metricsUC := metricsUseCase.NewMetricsUC(repository, nil, cfg)
+			metricsUC := metricsUseCase.NewMetricsUC(repository, cfg)
 			healthUC := helathUseCase.NewHealthUC(nil)
 
 			mw := NewManager(metricsUC, healthUC, cfg, repository)

@@ -16,7 +16,7 @@ type MemStorage struct {
 	metrics Metrics
 }
 
-func (memStorage *MemStorage) Ping(ctx context.Context) error {
+func (memStorage *MemStorage) Ping(_ context.Context) error {
 	return nil
 }
 
@@ -90,7 +90,7 @@ func (memStorage *MemStorage) Get(_ context.Context, key string, valueType model
 	return result, err
 }
 
-func (memStorage *MemStorage) Update(ctx context.Context, metric models.Metric) error {
+func (memStorage *MemStorage) Update(_ context.Context, metric models.Metric) error {
 	switch metric.MType {
 	case models.Gauge:
 		// TODO: update signature

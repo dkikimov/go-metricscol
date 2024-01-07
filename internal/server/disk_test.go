@@ -39,7 +39,7 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 
 	storage := memory.NewMemStorage()
 
-	httpBackend, err := backends.NewHttp(storage, cfg)
+	httpBackend, err := backends.NewHTTP(storage, cfg)
 	require.NoError(t, err)
 
 	server := NewServer(cfg, storage, httpBackend)

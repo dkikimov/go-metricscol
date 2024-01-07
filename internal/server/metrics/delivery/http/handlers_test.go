@@ -29,7 +29,6 @@ var emptyConfig, _ = config.NewServerConfig("", models.Duration{Duration: time.S
 func TestMetricsHandlers_Find(t *testing.T) {
 	newMetricsUC := usecase.NewMetricsUC(
 		memory.NewMemStorage(),
-		nil,
 		emptyConfig,
 	)
 	h := NewMetricsHandlers(
@@ -144,7 +143,6 @@ func ExampleMetricsHandlers_Find() {
 func TestMetricsHandlers_GetAll(t *testing.T) {
 	newMetricsUC := usecase.NewMetricsUC(
 		memory.NewMemStorage(),
-		nil,
 		emptyConfig,
 	)
 	h := NewMetricsHandlers(
@@ -227,15 +225,14 @@ func ExampleMetricsHandlers_GetAll() {
 
 func TestMetricsHandlers_GetAllWithHash(t *testing.T) {
 	hashKey := "test"
-	config, _ := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, hashKey, "", "", "")
+	cfg, _ := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, hashKey, "", "", "")
 	newMetricsUC := usecase.NewMetricsUC(
 		memory.NewMemStorage(),
-		nil,
-		config,
+		cfg,
 	)
 	h := NewMetricsHandlers(
 		newMetricsUC,
-		config,
+		cfg,
 	)
 
 	alloc := models.Metric{
@@ -318,7 +315,6 @@ func TestMetricsHandlers_FindJSON(t *testing.T) {
 
 	newMetricsUC := usecase.NewMetricsUC(
 		storage,
-		nil,
 		emptyConfig,
 	)
 
@@ -458,16 +454,15 @@ func ExampleMetricsHandlers_FindJSON() {
 }
 
 func BenchmarkMetricsHandlers_Find_MemStorage(b *testing.B) {
-	config, _ := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, "hash", "", "", "")
+	cfg, _ := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, "hash", "", "", "")
 
 	newMetricsUC := usecase.NewMetricsUC(
 		memory.NewMemStorage(),
-		nil,
-		config,
+		cfg,
 	)
 	h := NewMetricsHandlers(
 		newMetricsUC,
-		config,
+		cfg,
 	)
 
 	require.NoError(b, h.metricsUC.Update(context.Background(), models.Metric{
@@ -497,16 +492,15 @@ func BenchmarkMetricsHandlers_Find_MemStorage(b *testing.B) {
 }
 
 func BenchmarkMetricsHandlers_FindJSON_MemStorage(b *testing.B) {
-	config, _ := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, "hash", "", "", "")
+	cfg, _ := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, "hash", "", "", "")
 
 	newMetricsUC := usecase.NewMetricsUC(
 		memory.NewMemStorage(),
-		nil,
-		config,
+		cfg,
 	)
 	h := NewMetricsHandlers(
 		newMetricsUC,
-		config,
+		cfg,
 	)
 
 	metric := models.Metric{Name: "Alloc", MType: models.Gauge, Value: utils.Ptr(123.4)}
@@ -532,16 +526,15 @@ func BenchmarkMetricsHandlers_FindJSON_MemStorage(b *testing.B) {
 }
 
 func BenchmarkMetricsHandlers_FindAllWithHash_MemStorage(b *testing.B) {
-	config, _ := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, "hash", "", "", "")
+	cfg, _ := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, "hash", "", "", "")
 
 	newMetricsUC := usecase.NewMetricsUC(
 		memory.NewMemStorage(),
-		nil,
-		config,
+		cfg,
 	)
 	h := NewMetricsHandlers(
 		newMetricsUC,
-		config,
+		cfg,
 	)
 
 	require.NoError(b, h.metricsUC.Update(context.Background(), models.Metric{
@@ -642,7 +635,6 @@ func TestMetricsHandlers_Update(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			newMetricsUC := usecase.NewMetricsUC(
 				memory.NewMemStorage(),
-				nil,
 				emptyConfig,
 			)
 			h := NewMetricsHandlers(
@@ -720,7 +712,6 @@ func TestMetricsHandlers_UpdateJSON(t *testing.T) {
 
 		newMetricsUC := usecase.NewMetricsUC(
 			storage,
-			nil,
 			emptyConfig,
 		)
 		h := NewMetricsHandlers(
@@ -767,16 +758,15 @@ func ExampleMetricsHandlers_Update() {
 }
 
 func BenchmarkMetricsHandlers_Update_MemStorage(b *testing.B) {
-	config, _ := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, "hash", "", "", "")
+	cfg, _ := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, "hash", "", "", "")
 
 	newMetricsUC := usecase.NewMetricsUC(
 		memory.NewMemStorage(),
-		nil,
-		config,
+		cfg,
 	)
 	h := NewMetricsHandlers(
 		newMetricsUC,
-		config,
+		cfg,
 	)
 
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/value/%s/%s/%s", "Alloc", models.Gauge, "121.14"), nil)
@@ -830,16 +820,15 @@ func ExampleMetricsHandlers_UpdateJSON() {
 }
 
 func BenchmarkMetricsHandlers_UpdateJSON_MemStorage(b *testing.B) {
-	config, _ := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, "hash", "", "", "")
+	cfg, _ := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, "hash", "", "", "")
 
 	newMetricsUC := usecase.NewMetricsUC(
 		memory.NewMemStorage(),
-		nil,
-		config,
+		cfg,
 	)
 	h := NewMetricsHandlers(
 		newMetricsUC,
-		config,
+		cfg,
 	)
 
 	rr := httptest.NewRecorder()

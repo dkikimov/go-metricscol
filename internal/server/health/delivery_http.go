@@ -2,6 +2,6 @@ package health
 
 import "net/http"
 
-type HttpHandlers interface {
+type HTTPHandlers interface {
 	Ping(w http.ResponseWriter, r *http.Request)
 }

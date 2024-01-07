@@ -47,7 +47,7 @@ func (mw *Manager) ValidateHashHandler(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func (mw *Manager) ValidateHashGrpcHandler(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func (mw *Manager) ValidateHashGrpcHandler(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	updateRequest, ok := req.(*proto.UpdateRequest)
 	if !ok {
 		return handler(ctx, req)
@@ -106,7 +106,7 @@ func (mw *Manager) ValidateHashesHandler(next http.HandlerFunc) http.HandlerFunc
 	}
 }
 
-func (mw *Manager) ValidateHashesGrpcHandler(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func (mw *Manager) ValidateHashesGrpcHandler(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	updateRequest, ok := req.(*proto.UpdatesRequest)
 	if !ok {
 		return handler(ctx, req)

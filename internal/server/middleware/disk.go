@@ -14,7 +14,7 @@ import (
 	"go-metricscol/internal/server/apierror"
 )
 
-func (mw *Manager) DiskSaverHttpMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func (mw *Manager) DiskSaverHTTPMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		next.ServeHTTP(w, r)
 
@@ -25,7 +25,7 @@ func (mw *Manager) DiskSaverHttpMiddleware(next http.HandlerFunc) http.HandlerFu
 	}
 }
 
-func (mw *Manager) DiskSaverGrpcMiddleware(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func (mw *Manager) DiskSaverGrpcMiddleware(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	resp, err := handler(ctx, req)
 
 	if err := diskSaverMiddleware(mw.cfg, mw.repo); err != nil {

@@ -7,12 +7,12 @@ import (
 	"go-metricscol/internal/server/middleware"
 )
 
-func MapMetricsRoutes(r *chi.Mux, h metrics.HttpHandlers, mw *middleware.Manager) {
+func MapMetricsRoutes(r *chi.Mux, h metrics.HTTPHandlers, mw *middleware.Manager) {
 	r.Get("/value/{type}/{name}", h.Find)
 	r.Post("/value/", h.FindJSON)
-	r.Post("/update/{type}/{name}/{value}", mw.DiskSaverHttpMiddleware(h.Update))
-	r.Post("/update/", mw.ValidateHashHandler(mw.DiskSaverHttpMiddleware(h.UpdateJSON)))
-	r.Post("/updates/", mw.ValidateHashHandler(mw.DiskSaverHttpMiddleware(h.Updates)))
+	r.Post("/update/{type}/{name}/{value}", mw.DiskSaverHTTPMiddleware(h.Update))
+	r.Post("/update/", mw.ValidateHashHandler(mw.DiskSaverHTTPMiddleware(h.UpdateJSON)))
+	r.Post("/updates/", mw.ValidateHashHandler(mw.DiskSaverHTTPMiddleware(h.Updates)))
 
 	r.HandleFunc("/", h.GetAll)
 }

@@ -5,8 +5,8 @@ import "context"
 type BackendType int
 
 const (
-	GRPC BackendType = iota
-	HTTP
+	GRPCBackend BackendType = iota
+	HTTPBackend
 )
 
 type Backend interface {

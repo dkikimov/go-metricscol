@@ -45,7 +45,7 @@ func (s Grpc) ListenAndServe() error {
 	return s.server.Serve(s.listener)
 }
 
-func (s Grpc) GracefulShutdown(ctx context.Context) error {
+func (s Grpc) GracefulShutdown(_ context.Context) error {
 	s.server.GracefulStop()
 	return nil
 }

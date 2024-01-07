@@ -47,7 +47,7 @@ func (g MetricsHandlers) UpdatesMetric(ctx context.Context, request *proto.Updat
 	}
 
 	if err := g.metricsUC.Updates(ctx, requestMetrics); err != nil {
-		return nil, status.Errorf(codes.Internal, "couldn't update metric: %w", err)
+		return nil, status.Errorf(codes.Internal, "couldn't update metric: %s", err)
 	}
 
 	return &response, nil

@@ -14,7 +14,7 @@ import (
 	"go-metricscol/internal/server/apierror"
 )
 
-func (mw *Manager) HttpTrustedSubnetHandler(next http.Handler) http.Handler {
+func (mw *Manager) HTTPTrustedSubnetHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		headerValue := r.Header.Get("X-Real-IP")
 
@@ -29,7 +29,7 @@ func (mw *Manager) HttpTrustedSubnetHandler(next http.Handler) http.Handler {
 	})
 }
 
-func (mw *Manager) GrpcTrustedSubnetHandler(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func (mw *Manager) GrpcTrustedSubnetHandler(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	var headerValue string
 
 	if md, ok := metadata.FromIncomingContext(ctx); ok {

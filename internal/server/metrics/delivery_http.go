@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-type HttpHandlers interface {
+type HTTPHandlers interface {
 	Register() http.HandlerFunc
 	Find(w http.ResponseWriter, r *http.Request)
 	FindJSON(w http.ResponseWriter, r *http.Request)
