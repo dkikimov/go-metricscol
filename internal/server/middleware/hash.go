@@ -48,21 +48,20 @@ func (mw *Manager) ValidateHashHandler(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func (mw *Manager) ValidateHashGrpcHandler(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	updateRequest, err := req.(proto.UpdateRequest)
-	if err {
+	updateRequest, ok := req.(*proto.UpdateRequest)
+	if !ok {
 		return handler(ctx, req)
 	}
 
 	hashKey := mw.cfg.HashKey
-	if len(hashKey) != 0 {
-		metric, err := proto.ParseMetricFromRequest(updateRequest.Metric)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "couldn't parse metric")
-		}
 
-		if err := validateHashHandler(hashKey, *metric); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, err.Message)
-		}
+	metric, err := proto.ParseMetricFromRequest(updateRequest.Metric)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "couldn't parse metric")
+	}
+
+	if err := validateHashHandler(hashKey, *metric); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Message)
 	}
 
 	return handler(ctx, req)
@@ -108,26 +107,24 @@ func (mw *Manager) ValidateHashesHandler(next http.HandlerFunc) http.HandlerFunc
 }
 
 func (mw *Manager) ValidateHashesGrpcHandler(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	updateRequest, err := req.(proto.UpdatesRequest)
-	if err {
+	updateRequest, ok := req.(*proto.UpdatesRequest)
+	if !ok {
 		return handler(ctx, req)
 	}
 
 	hashKey := mw.cfg.HashKey
-	if len(hashKey) != 0 {
-		var metrics []models.Metric
+	var metrics []models.Metric
 
-		for _, metric := range updateRequest.Metric {
-			m, err := proto.ParseMetricFromRequest(metric)
-			if err != nil {
-				return nil, status.Errorf(codes.InvalidArgument, "couldn't parse metrics")
-			}
-			metrics = append(metrics, *m)
+	for _, metric := range updateRequest.Metric {
+		m, err := proto.ParseMetricFromRequest(metric)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "couldn't parse metrics")
 		}
+		metrics = append(metrics, *m)
+	}
 
-		if err := validateHashesHandler(hashKey, metrics); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, err.Message)
-		}
+	if err := validateHashesHandler(hashKey, metrics); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Message)
 	}
 
 	return handler(ctx, req)

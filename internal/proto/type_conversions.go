@@ -11,6 +11,7 @@ func ParseMetricFromRequest(metric *Metric) (*models.Metric, error) {
 	var resultMetric models.Metric
 
 	resultMetric.Name = metric.Name
+	resultMetric.Hash = metric.Hash
 	switch metric.Type {
 	case MetricType_GAUGE:
 		resultMetric.MType = models.Gauge
