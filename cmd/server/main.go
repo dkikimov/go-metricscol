@@ -52,7 +52,7 @@ func main() {
 		repo = memory.NewMemStorage()
 	}
 
-	createdBackend, err := createBackend(backends.GRPCType, repo, cfg)
+	createdBackend, err := createBackend(backends.HTTPType, repo, cfg)
 	if err != nil {
 		log.Fatalf("couldn't create backend with error: %s", err)
 	}
