@@ -35,7 +35,7 @@ func main() {
 	}
 
 	metrics := memory.NewMetrics()
-	agentClient, err := agent.NewAgent(cfg, agent.HTTP)
+	agentClient, err := agent.NewAgent(cfg, agent.GRPC)
 	if err != nil {
 		log.Fatalf("couldn't create agent with error: %s", err)
 	}

@@ -52,7 +52,7 @@ func main() {
 		repo = memory.NewMemStorage()
 	}
 
-	createdBackend, err := createBackend(backends.HTTP, repo, cfg)
+	createdBackend, err := createBackend(backends.GRPCType, repo, cfg)
 	if err != nil {
 		log.Fatalf("couldn't create backend with error: %s", err)
 	}
@@ -91,15 +91,15 @@ func main() {
 
 func createBackend(backendType backends.BackendType, repository repository.Repository, cfg *config.ServerConfig) (backends.Backend, error) {
 	switch backendType {
-	case backends.GRPC:
-		listen, err := net.Listen("tcp", ":3200")
+	case backends.GRPCType:
+		listen, err := net.Listen("tcp", cfg.Address)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't listen: %s", err)
 		}
 
 		return backends.NewGrpc(repository, cfg, listen)
-	case backends.HTTP:
-		return backends.NewHttp(repository, cfg)
+	case backends.HTTPType:
+		return backends.NewHTTP(repository, cfg)
 	default:
 		return nil, fmt.Errorf("unknown backend type id: %d", backendType)
 	}

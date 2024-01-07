@@ -14,7 +14,7 @@ import (
 	"go-metricscol/internal/server/backends"
 )
 
-// Server defines config and repository for HTTPBackend server instance.
+// Server defines config and repository for HTTPType server instance.
 type Server struct {
 	Config  *config.ServerConfig
 	Repo    repository.Repository
