@@ -10,6 +10,10 @@ type APIError struct {
 	Message    string
 }
 
+func NewAPIError(statusCode int, message string) *APIError {
+	return &APIError{StatusCode: statusCode, Message: message}
+}
+
 func (apiError APIError) Error() string {
 	return apiError.Message
 }
@@ -47,5 +51,10 @@ var (
 	NotFound = APIError{
 		StatusCode: http.StatusNotFound,
 		Message:    "not found",
+	}
+
+	Unauthorized = APIError{
+		StatusCode: http.StatusUnauthorized,
+		Message:    "unauthorized",
 	}
 )

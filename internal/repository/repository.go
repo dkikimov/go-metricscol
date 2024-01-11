@@ -9,7 +9,7 @@ import (
 // Repository is interface that describes the storage of models.Metric.
 type Repository interface {
 	// Update adds or replaces existing metric with new one.
-	Update(ctx context.Context, name string, valueType models.MetricType, value string) error
+	Update(ctx context.Context, metric models.Metric) error
 
 	// Updates adds or replaces multiple metrics in storage.
 	Updates(ctx context.Context, metrics []models.Metric) error
@@ -29,4 +29,12 @@ type Repository interface {
 
 	// SupportsSavingToDisk returns if repository supports saving to disk.
 	SupportsSavingToDisk() bool
+
+	// SaveToDisk saves contents of repository to disk.
+	SaveToDisk(filePath string) error
+
+	RestoreFromDisk(filePath string) error
+
+	// Ping returns no error if connection to repository is alive.
+	Ping(ctx context.Context) error
 }

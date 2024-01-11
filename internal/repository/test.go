@@ -14,61 +14,36 @@ import (
 )
 
 func TestUpdate(ctx context.Context, t *testing.T, storage Repository) {
-	type args struct {
-		key       string
-		value     string
-		valueType models.MetricType
-	}
 	tests := []struct {
 		name    string
 		storage Repository
-		args    args
+		args    models.Metric
 		err     error
 	}{
 		{
 			name:    "Gauge float",
 			storage: storage,
-			args: args{
-				key:       "Alloc",
-				value:     "120.123",
-				valueType: models.Gauge,
+			args: models.Metric{
+				Name:  "Alloc",
+				Value: utils.Ptr(120.123),
+				MType: models.Gauge,
 			},
 			err: nil,
 		},
 		{
 			name:    "Counter int",
 			storage: storage,
-			args: args{
-				key:       "PollCount",
-				value:     "2",
-				valueType: models.Counter,
+			args: models.Metric{
+				Name:  "PollCount",
+				Delta: utils.Ptr(int64(2)),
+				MType: models.Counter,
 			},
 			err: nil,
-		},
-		{
-			name:    "Value is not number",
-			storage: storage,
-			args: args{
-				key:       "PollCount",
-				value:     "hello",
-				valueType: models.Counter,
-			},
-			err: apierror.NumberParse,
-		},
-		{
-			name:    "Type and value mismatch",
-			storage: storage,
-			args: args{
-				key:       "Alloc",
-				value:     "123.245",
-				valueType: models.Counter,
-			},
-			err: apierror.NumberParse,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.err, tt.storage.Update(ctx, tt.args.key, tt.args.valueType, tt.args.value))
+			assert.Equal(t, tt.err, tt.storage.Update(ctx, tt.args))
 		})
 	}
 }

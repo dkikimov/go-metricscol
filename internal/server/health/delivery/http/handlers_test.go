@@ -1,11 +1,11 @@
-package handlers
+package http
 
 import (
 	"fmt"
 	"net/http"
 )
 
-func ExampleHandlers_Ping() {
+func ExampleHealthHandlers_Ping() {
 	address := "localhost:8080"
 
 	pingURL := fmt.Sprintf("%s/ping", address)

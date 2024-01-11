@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -18,6 +17,14 @@ import (
 // DB is a Postgres database which implements Repository interface.
 type DB struct {
 	conn *sql.DB
+}
+
+func (p *DB) SaveToDisk(filePath string) error {
+	return errors.New("saving to disk is not supported")
+}
+
+func (p *DB) RestoreFromDisk(filePath string) error {
+	return errors.New("restoring from disk is not supported")
 }
 
 func (p *DB) SupportsSavingToDisk() bool {
@@ -74,35 +81,19 @@ func (p *DB) Updates(ctx context.Context, metrics []models.Metric) error {
 	return tx.Commit()
 }
 
-func (p *DB) MarshalJSON() ([]byte, error) {
-	return nil, nil
-}
-
-func (p *DB) UnmarshalJSON(_ []byte) error {
-	return nil
-}
-
 func (p *DB) Ping(ctx context.Context) error {
 	return p.conn.PingContext(ctx)
 }
 
-func (p *DB) Update(ctx context.Context, name string, valueType models.MetricType, value string) error {
-	switch valueType {
+func (p *DB) Update(ctx context.Context, metric models.Metric) error {
+	switch metric.MType {
 	case models.Gauge:
-		floatVal, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			return apierror.NumberParse
-		}
-		_, err = p.conn.ExecContext(ctx, "INSERT INTO metrics (name, type, value) VALUES ($1, $2, $3) ON CONFLICT (name) DO UPDATE SET type = $2, value = $3", name, valueType, floatVal)
+		_, err := p.conn.ExecContext(ctx, "INSERT INTO metrics (name, type, value) VALUES ($1, $2, $3) ON CONFLICT (name) DO UPDATE SET type = $2, value = $3", metric.Name, metric.MType, *metric.Value)
 		if err != nil {
 			return err
 		}
 	case models.Counter:
-		intVal, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			return apierror.NumberParse
-		}
-		_, err = p.conn.ExecContext(ctx, "INSERT INTO metrics (name, type, delta) VALUES ($1, $2, $3) ON CONFLICT (name) DO UPDATE SET type = $2, delta = metrics.delta + $3", name, valueType, intVal)
+		_, err := p.conn.ExecContext(ctx, "INSERT INTO metrics (name, type, delta) VALUES ($1, $2, $3) ON CONFLICT (name) DO UPDATE SET type = $2, delta = metrics.delta + $3", metric.Name, metric.MType, *metric.Delta)
 		if err != nil {
 			return err
 		}

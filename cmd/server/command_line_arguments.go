@@ -12,6 +12,7 @@ type commandLineArguments struct {
 	HashKey           string          `json:"hash_key,omitempty" env:"KEY"`
 	DatabaseDSN       string          `json:"database_dsn,omitempty" env:"DATABASE_DSN"`
 	CryptoKeyFilePath string          `json:"crypto_key_file_path,omitempty" env:"CRYPTO_KEY"`
+	TrustedSubnet     string          `json:"trusted_subnet,omitempty" env:"TRUSTED_SUBNET"`
 	JSONConfigPath    string          `env:"CONFIG"`
 }
 
@@ -47,5 +48,9 @@ func (c *commandLineArguments) Merge(other commandLineArguments) {
 
 	if len(c.JSONConfigPath) == 0 {
 		c.JSONConfigPath = other.JSONConfigPath
+	}
+
+	if len(c.TrustedSubnet) == 0 {
+		c.TrustedSubnet = other.TrustedSubnet
 	}
 }

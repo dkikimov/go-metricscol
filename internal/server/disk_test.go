@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"os"
 	"testing"
 	"time"
@@ -10,9 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"go-metricscol/internal/config"
 	"go-metricscol/internal/models"
-	"go-metricscol/internal/repository"
 	"go-metricscol/internal/repository/memory"
+	"go-metricscol/internal/server/backends"
 	"go-metricscol/internal/utils"
 )
 
@@ -34,15 +34,16 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 
 	storeInterval := 2 * time.Second
 
-	config := &Config{
-		Address:       "127.0.0.1:8080",
-		StoreInterval: storeInterval,
-		StoreFile:     file.Name(),
-		Restore:       false,
-	}
+	cfg, err := config.NewServerConfig("127.0.0.1:8080", models.Duration{Duration: storeInterval}, file.Name(), false, "", "", "", "")
+	require.NoError(t, err)
 
-	server, err := NewServer(config)
-	require.NoError(t, server.Repository.UpdateWithStruct(context.Background(), &testMetric))
+	storage := memory.NewMemStorage()
+
+	httpBackend, err := backends.NewHTTP(storage, cfg)
+	require.NoError(t, err)
+
+	server := NewServer(cfg, storage, httpBackend)
+	require.NoError(t, server.Repo.UpdateWithStruct(context.Background(), &testMetric))
 	require.NoError(t, err)
 
 	t.Run("Enable saving to disk", func(t *testing.T) {
@@ -56,110 +57,9 @@ func TestServer_enableSavingToDisk(t *testing.T) {
 
 		time.Sleep(1500 * time.Millisecond)
 
-		bytes, err = os.ReadFile(file.Name())
-		require.NoError(t, err)
-
 		savedStorage := memory.NewMemStorage()
-		err = json.Unmarshal(bytes, savedStorage)
-		require.NoError(t, err)
+		require.NoError(t, savedStorage.RestoreFromDisk(file.Name()))
 
-		assert.Equal(t, server.Repository, savedStorage)
+		assert.Equal(t, server.Repo, savedStorage)
 	})
-}
-
-func TestServer_restoreFromDisk(t *testing.T) {
-	file, err := os.CreateTemp("", "test_restoreFromDisk")
-
-	require.NoError(t, os.Remove(file.Name()))
-
-	require.NoError(t, file.Close())
-	require.NoError(t, err)
-
-	config := &Config{
-		Address:       "127.0.0.1:8080",
-		StoreInterval: 5 * time.Second,
-		StoreFile:     file.Name(),
-		Restore:       false,
-	}
-	storage := memory.NewMemStorage()
-
-	require.NoError(t, storage.UpdateWithStruct(context.Background(), &testMetric))
-
-	server, err := NewServer(config)
-	require.NoError(t, err)
-
-	require.NoError(t, server.saveToDisk())
-
-	t.Run("Restore from disk", func(t *testing.T) {
-		newServer, err := NewServer(config)
-		require.NoError(t, err)
-		require.NoError(t, newServer.restoreFromDisk())
-
-		assert.Equal(t, server, newServer)
-	})
-}
-
-func TestServer_saveToDisk(t *testing.T) {
-	type fields struct {
-		Config     *Config
-		Repository repository.Repository
-	}
-
-	file, err := os.CreateTemp("", "test_saveToDisk")
-
-	require.NoError(t, os.Remove(file.Name()))
-
-	require.NoError(t, file.Close())
-	require.NoError(t, err)
-
-	config := &Config{
-		Address:       "127.0.0.1:8080",
-		StoreInterval: 5 * time.Second,
-		StoreFile:     file.Name(),
-		Restore:       false,
-	}
-
-	storage := memory.NewMemStorage()
-
-	require.NoError(t, storage.UpdateWithStruct(context.Background(), &testMetric))
-
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr error
-	}{
-		{
-			name: "save to disk",
-			fields: fields{
-				Config:     config,
-				Repository: storage,
-			},
-			wantErr: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Server{
-				Config:     tt.fields.Config,
-				Repository: tt.fields.Repository,
-			}
-
-			err := s.saveToDisk()
-
-			if tt.wantErr != nil {
-				assert.Equal(t, tt.wantErr, err)
-				return
-			}
-
-			bytes, err := os.ReadFile(file.Name())
-			require.NoError(t, err)
-
-			savedStorage := memory.NewMemStorage()
-			err = json.Unmarshal(bytes, savedStorage)
-			require.NoError(t, err)
-
-			assert.Equal(t, storage, savedStorage)
-
-		})
-	}
 }

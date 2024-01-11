@@ -1,4 +1,4 @@
-package server
+package config
 
 import (
 	"crypto/rsa"
@@ -11,8 +11,8 @@ import (
 	"go-metricscol/internal/models"
 )
 
-// Config describes parameters required for Server.
-type Config struct {
+// ServerConfig describes parameters required for Server.
+type ServerConfig struct {
 	Address       string
 	StoreInterval time.Duration
 	StoreFile     string
@@ -20,6 +20,7 @@ type Config struct {
 	HashKey       string
 	DatabaseDSN   string
 	CryptoKey     *rsa.PrivateKey
+	TrustedSubnet string
 }
 
 func rsaPrivateKeyParser(input string) (*rsa.PrivateKey, error) {
@@ -40,8 +41,8 @@ func rsaPrivateKeyParser(input string) (*rsa.PrivateKey, error) {
 	return result, nil
 }
 
-// NewConfig returns new instance of Config with given parameters.
-func NewConfig(
+// NewServerConfig returns new instance of ServerConfig with given parameters.
+func NewServerConfig(
 	address string,
 	storeInterval models.Duration,
 	storeFile string,
@@ -49,13 +50,14 @@ func NewConfig(
 	hashKey string,
 	databaseDSN string,
 	cryptoKeyFilePath string,
-) (*Config, error) {
+	trustedSubnet string,
+) (*ServerConfig, error) {
 	cryptoKey, err := rsaPrivateKeyParser(cryptoKeyFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create config: %s", err)
 	}
 
-	return &Config{
+	return &ServerConfig{
 		Address:       address,
 		StoreInterval: storeInterval.Duration,
 		StoreFile:     storeFile,
@@ -63,5 +65,6 @@ func NewConfig(
 		HashKey:       hashKey,
 		DatabaseDSN:   databaseDSN,
 		CryptoKey:     cryptoKey,
+		TrustedSubnet: trustedSubnet,
 	}, nil
 }

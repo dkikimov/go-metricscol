@@ -2,18 +2,26 @@ package middleware
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"go-metricscol/internal/models"
+	"go-metricscol/internal/proto"
+	"go-metricscol/internal/server/apierror"
 )
 
 // ValidateHashHandler is a middleware which gets models.Metric from request, calculates hash and compares it with given.
 // If the hashes do not match, http.Error is called with code 400.
-func ValidateHashHandler(next http.HandlerFunc, key string) http.HandlerFunc {
+func (mw *Manager) ValidateHashHandler(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if len(key) != 0 {
+		hashKey := mw.cfg.HashKey
+		if len(hashKey) != 0 {
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
 				http.Error(w, "couldn't read body", http.StatusInternalServerError)
@@ -27,10 +35,11 @@ func ValidateHashHandler(next http.HandlerFunc, key string) http.HandlerFunc {
 				return
 			}
 
-			if metric.HashValue(key) != metric.Hash {
-				http.Error(w, "hash mismatch", http.StatusBadRequest)
+			if err := validateHashHandler(hashKey, metric); err != nil {
+				apierror.WriteHTTP(w, err)
 				return
 			}
+
 			r.Body = io.NopCloser(bytes.NewBuffer(body))
 		}
 
@@ -38,11 +47,40 @@ func ValidateHashHandler(next http.HandlerFunc, key string) http.HandlerFunc {
 	}
 }
 
+func (mw *Manager) ValidateHashGrpcHandler(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	updateRequest, ok := req.(*proto.UpdateRequest)
+	if !ok {
+		return handler(ctx, req)
+	}
+
+	hashKey := mw.cfg.HashKey
+
+	metric, err := proto.ParseMetricFromRequest(updateRequest.Metric)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "couldn't parse metric")
+	}
+
+	if err := validateHashHandler(hashKey, *metric); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Message)
+	}
+
+	return handler(ctx, req)
+}
+
+func validateHashHandler(hashKey string, metric models.Metric) *apierror.APIError {
+	if metric.HashValue(hashKey) != metric.Hash {
+		return apierror.NewAPIError(http.StatusBadRequest, "hash mismatch")
+	}
+
+	return nil
+}
+
 // ValidateHashesHandler is a middleware which gets []models.Metric from request, calculates hashes and compares them with given.
 // If at least one of the hashes do not match, http.Error is called with code 400.
-func ValidateHashesHandler(next http.HandlerFunc, key string) http.HandlerFunc {
+func (mw *Manager) ValidateHashesHandler(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if len(key) != 0 {
+		hashKey := mw.cfg.HashKey
+		if len(hashKey) != 0 {
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
 				http.Error(w, "couldn't read body", http.StatusInternalServerError)
@@ -56,15 +94,48 @@ func ValidateHashesHandler(next http.HandlerFunc, key string) http.HandlerFunc {
 				return
 			}
 
-			for _, metric := range metrics {
-				if metric.HashValue(key) != metric.Hash {
-					http.Error(w, "hash mismatch", http.StatusBadRequest)
-					return
-				}
+			if err := validateHashesHandler(hashKey, metrics); err != nil {
+				apierror.WriteHTTP(w, err)
+				return
 			}
+
 			r.Body = io.NopCloser(bytes.NewBuffer(body))
 		}
 
 		next.ServeHTTP(w, r)
 	}
+}
+
+func (mw *Manager) ValidateHashesGrpcHandler(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	updateRequest, ok := req.(*proto.UpdatesRequest)
+	if !ok {
+		return handler(ctx, req)
+	}
+
+	hashKey := mw.cfg.HashKey
+	var metrics []models.Metric
+
+	for _, metric := range updateRequest.Metric {
+		m, err := proto.ParseMetricFromRequest(metric)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "couldn't parse metrics")
+		}
+		metrics = append(metrics, *m)
+	}
+
+	if err := validateHashesHandler(hashKey, metrics); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Message)
+	}
+
+	return handler(ctx, req)
+}
+
+func validateHashesHandler(hashKey string, metrics []models.Metric) *apierror.APIError {
+	for _, metric := range metrics {
+		if metric.HashValue(hashKey) != metric.Hash {
+			return apierror.NewAPIError(http.StatusBadRequest, "hash mismatch")
+		}
+	}
+
+	return nil
 }

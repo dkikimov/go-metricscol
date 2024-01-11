@@ -2,15 +2,13 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log"
-	"os"
 	"time"
 )
 
 func (s Server) enableSavingToDisk(ctx context.Context) error {
-	if !s.Repository.SupportsSavingToDisk() {
+	if !s.Repo.SupportsSavingToDisk() {
 		return errors.New("selected repository doesn't support saving to disk")
 	}
 
@@ -19,54 +17,15 @@ func (s Server) enableSavingToDisk(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
-			if err := s.saveToDisk(); err != nil {
+			if err := s.Repo.SaveToDisk(s.Config.StoreFile); err != nil {
 				log.Printf("Couldn't save metrics to disk with error: %s", err)
 			}
 
 		case <-ctx.Done():
-			if err := s.saveToDisk(); err != nil {
+			if err := s.Repo.SaveToDisk(s.Config.StoreFile); err != nil {
 				log.Printf("Couldn't save metrics to disk with error: %s", err)
 			}
 			return nil
 		}
 	}
-}
-
-func (s Server) saveToDisk() error {
-	if !s.Repository.SupportsSavingToDisk() {
-		log.Printf("Selected repository doesn't support saving to disk")
-		return errors.New("unsupported storage")
-	}
-
-	log.Printf("saving to disk")
-
-	file, err := os.OpenFile(s.Config.StoreFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-	if err := encoder.Encode(s.Repository); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s Server) restoreFromDisk() error {
-	file, err := os.OpenFile(s.Config.StoreFile, os.O_RDONLY|os.O_SYNC, 0777)
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-
-	decoder := json.NewDecoder(file)
-	if err := decoder.Decode(s.Repository); err != nil {
-		return err
-	}
-
-	return nil
 }

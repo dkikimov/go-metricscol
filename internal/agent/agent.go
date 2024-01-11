@@ -1,18 +1,8 @@
 package agent
 
 import (
-	"bytes"
-	"compress/gzip"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/sha256"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	mathRand "math/rand"
-	"net/http"
-	"net/url"
 	"runtime"
 	"time"
 
@@ -24,16 +14,50 @@ import (
 	"go-metricscol/internal/repository/memory"
 )
 
+type Agent struct {
+	cfg     *Config
+	backend Backend
+}
+
+func createBackendBasedOnType(cfg *Config, backendType BackendType) (Backend, error) {
+	switch backendType {
+	case GRPC:
+		return NewGrpc(cfg)
+	case HTTP:
+		return NewHTTPBackend(cfg), nil
+	default:
+		return nil, fmt.Errorf("unknown backend type id: %d", backendType)
+	}
+}
+
+func NewAgent(cfg *Config, backendType BackendType) (*Agent, error) {
+	backend, err := createBackendBasedOnType(cfg, backendType)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create backend: %s", err)
+	}
+
+	return &Agent{cfg: cfg, backend: backend}, nil
+}
+
+func (agent Agent) Close() error {
+	return agent.backend.Close()
+}
+
 // SendMetricsToServer sends metrics stored is memory.Metrics to the address given in agent.Config.
 // Rate limit defined in config is not exceeded.
-func SendMetricsToServer(cfg *Config, m *memory.Metrics) error {
+func (agent Agent) SendMetricsToServer(m *memory.Metrics) error {
 	jobCh := make(chan bool)
 	g := errgroup.Group{}
 
-	for i := 0; i < cfg.RateLimit; i++ {
+	for i := 0; i < agent.cfg.RateLimit; i++ {
 		g.Go(func() error {
 			for range jobCh {
-				return makeRequest(cfg, m)
+				if agent.cfg.CryptoKey == nil {
+					return agent.backend.SendMetricsAllTogether(m)
+				}
+				if err := agent.backend.SendMetricsByOne(m); err != nil {
+					return fmt.Errorf("couldn't send metrics to server: %s", err)
+				}
 			}
 			return nil
 		})
@@ -48,127 +72,6 @@ func SendMetricsToServer(cfg *Config, m *memory.Metrics) error {
 
 	m.ResetPollCount()
 	return nil
-}
-
-func makeRequest(cfg *Config, m *memory.Metrics) error {
-	if cfg.CryptoKey == nil {
-		return sendMetricsAllTogether(cfg, m)
-	}
-	return sendMetricsByOne(cfg, m)
-}
-
-func sendMetricsByOne(cfg *Config, m *memory.Metrics) error {
-	postURL := url.URL{
-		Scheme: "http",
-		Host:   cfg.Address,
-		Path:   "/update/",
-	}
-
-	for _, value := range m.Collection {
-		value.Hash = value.HashValue(cfg.HashKey)
-
-		processedMetrics, err := json.Marshal(value)
-		if err != nil {
-			return errors.New("couldn't marshal metric")
-		}
-		processedMetrics, err = rsa.EncryptOAEP(sha256.New(), rand.Reader, cfg.CryptoKey, processedMetrics, nil)
-		if err != nil {
-			return fmt.Errorf("couldn't encrypt metric: %s", err)
-		}
-
-		gzipMetrics := bytes.NewBuffer([]byte{})
-		w := gzip.NewWriter(gzipMetrics)
-		_, err = w.Write(processedMetrics)
-		if err != nil {
-			return fmt.Errorf("couldn't gzip metric with error: %s", err)
-		}
-
-		err = w.Close()
-		if err != nil {
-			return fmt.Errorf("couldn't close gzip writer with error: %s", err)
-		}
-
-		request, err := http.NewRequest(http.MethodPost, postURL.String(), gzipMetrics)
-		if err != nil {
-			return fmt.Errorf("couldn't create request with error: %s", err)
-		}
-		request.Header.Set("Content-Encoding", "gzip")
-
-		resp, err := http.DefaultClient.Do(request)
-		if err != nil {
-			return fmt.Errorf("couldn't post url %s", postURL.String())
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return err
-			}
-			return fmt.Errorf("coudln't send metrics, status code: %d, response: %s", resp.StatusCode, body)
-		}
-
-		if err := resp.Body.Close(); err != nil {
-			return errors.New("couldn't close response body")
-		}
-	}
-
-	return nil
-}
-
-func sendMetricsAllTogether(cfg *Config, m *memory.Metrics) error {
-	postURL := url.URL{
-		Scheme: "http",
-		Host:   cfg.Address,
-		Path:   "/updates/",
-	}
-
-	metrics := make([]models.Metric, 0, len(m.Collection))
-	for _, value := range m.Collection {
-		value.Hash = value.HashValue(cfg.HashKey)
-		metrics = append(metrics, value)
-	}
-
-	processedMetrics, err := json.Marshal(metrics)
-	if err != nil {
-		return errors.New("couldn't marshal metrics")
-	}
-
-	gzipMetrics := bytes.NewBuffer([]byte{})
-	w := gzip.NewWriter(gzipMetrics)
-	_, err = w.Write(processedMetrics)
-	if err != nil {
-		return fmt.Errorf("couldn't gzip metrics with error: %s", err)
-	}
-
-	err = w.Close()
-	if err != nil {
-		return fmt.Errorf("couldn't close gzip writer with error: %s", err)
-	}
-
-	request, err := http.NewRequest(http.MethodPost, postURL.String(), gzipMetrics)
-	if err != nil {
-		return fmt.Errorf("couldn't create request with error: %s", err)
-	}
-	request.Header.Set("Content-Encoding", "gzip")
-
-	resp, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return fmt.Errorf("couldn't post url %s", postURL.String())
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("coudln't send metrics, status code: %d, response: %s", resp.StatusCode, body)
-	}
-
-	if err := resp.Body.Close(); err != nil {
-		return errors.New("couldn't close response body")
-	}
-
-	return err
 }
 
 // UpdateMetrics gets all metrics from runtime.MemStats and writes them to memory.Metrics.

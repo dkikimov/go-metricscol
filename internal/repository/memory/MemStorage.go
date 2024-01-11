@@ -3,8 +3,9 @@ package memory
 import (
 	"context"
 	"encoding/json"
+	"log"
+	"os"
 	"sort"
-	"strconv"
 
 	"go-metricscol/internal/models"
 	"go-metricscol/internal/server/apierror"
@@ -13,6 +14,44 @@ import (
 // MemStorage is a metrics in-memory storage which implements Repository interface.
 type MemStorage struct {
 	metrics Metrics
+}
+
+func (memStorage *MemStorage) Ping(_ context.Context) error {
+	return nil
+}
+
+func (memStorage *MemStorage) RestoreFromDisk(filePath string) error {
+	file, err := os.OpenFile(filePath, os.O_RDONLY|os.O_SYNC, 0777)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(&memStorage.metrics.Collection); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (memStorage *MemStorage) SaveToDisk(filePath string) error {
+	log.Printf("saving to disk")
+
+	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	if err := encoder.Encode(memStorage.metrics.Collection); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (memStorage *MemStorage) SupportsSavingToDisk() bool {
@@ -34,20 +73,6 @@ func (memStorage *MemStorage) Updates(_ context.Context, metrics []models.Metric
 	return nil
 }
 
-func (memStorage *MemStorage) UnmarshalJSON(bytes []byte) error {
-	memStorage.metrics.mu.Lock()
-	defer memStorage.metrics.mu.Unlock()
-
-	return json.Unmarshal(bytes, &memStorage.metrics.Collection)
-}
-
-func (memStorage *MemStorage) MarshalJSON() ([]byte, error) {
-	memStorage.metrics.mu.RLock()
-	defer memStorage.metrics.mu.RUnlock()
-
-	return json.Marshal(memStorage.metrics.Collection)
-}
-
 func (memStorage *MemStorage) UpdateWithStruct(_ context.Context, metric *models.Metric) error {
 	return memStorage.metrics.UpdateWithStruct(metric)
 }
@@ -65,20 +90,13 @@ func (memStorage *MemStorage) Get(_ context.Context, key string, valueType model
 	return result, err
 }
 
-func (memStorage *MemStorage) Update(_ context.Context, name string, valueType models.MetricType, value string) error {
-	switch valueType {
+func (memStorage *MemStorage) Update(_ context.Context, metric models.Metric) error {
+	switch metric.MType {
 	case models.Gauge:
-		floatVal, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			return apierror.NumberParse
-		}
-		return memStorage.metrics.Update(name, models.Gauge, floatVal)
+		// TODO: update signature
+		return memStorage.metrics.Update(metric.Name, models.Gauge, *metric.Value)
 	case models.Counter:
-		intVal, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			return apierror.NumberParse
-		}
-		return memStorage.metrics.Update(name, models.Counter, intVal)
+		return memStorage.metrics.Update(metric.Name, models.Counter, *metric.Delta)
 	default:
 		return apierror.UnknownMetricType
 	}

@@ -7,9 +7,16 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"go-metricscol/internal/config"
+	"go-metricscol/internal/models"
+	"go-metricscol/internal/repository/memory"
+	helathUseCase "go-metricscol/internal/server/health/usecase"
+	metricsUseCase "go-metricscol/internal/server/metrics/usecase"
 )
 
 func testHandler(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +78,17 @@ func Test_decompressHandler(t *testing.T) {
 			}
 
 			rr := httptest.NewRecorder()
-			handler := DecompressHandler(http.HandlerFunc(testHandler))
+
+			repository := memory.NewMemStorage()
+			cfg, err := config.NewServerConfig("", models.Duration{Duration: time.Second}, "", false, "", "", "", "")
+			require.NoError(t, err)
+
+			metricsUC := metricsUseCase.NewMetricsUC(repository, cfg)
+			healthUC := helathUseCase.NewHealthUC(nil)
+
+			mw := NewManager(metricsUC, healthUC, cfg, repository)
+
+			handler := mw.DecompressHandler(http.HandlerFunc(testHandler))
 
 			handler.ServeHTTP(rr, req)
 
