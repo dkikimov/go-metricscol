@@ -10,7 +10,7 @@ This project implements an agent and server system for managing metrics using th
 
 - **Configuration:** Supports flexible configuration via command-line flags, environment variables, and JSON files for customization.
 - **Communication:** Employs HTTP or gRPC for network communication between agent and server, ensuring interoperability and efficiency.
-- **Data Compression and Encryption:** Leverages gzip compression for reducing data size and AES encryption for protecting sensitive information in transit.
+- **Data Compression and Encryption:** Leverages gzip compression for reducing data size and RSA encryption for protecting sensitive information in transit.
 - **Checksum Validation:** Guarantees data integrity by calculating and verifying checksum hashes on the agent side, with the server returning Bad Request errors for mismatches.
 - **Storage Options:** Offers both in-memory and Postgresql storage options for metric data, providing flexibility and scalability.
 - **File Persistence:** Enables automatic saving of in-memory data to disk for improved fault tolerance and data recovery.
